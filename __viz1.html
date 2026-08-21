@@ -1,0 +1,168 @@
+<!doctype html><html><head><meta charset=utf-8><style>html,body{margin:0;background:#0c0e14}</style></head><body><canvas id=c width=1000 height=1000></canvas><script>
+const canvas=document.getElementById("c");const bgCtx=canvas.getContext("2d");const bgW=1000,bgH=1000;
+const freqData=new Uint8Array(128);for(let i=0;i<128;i++)freqData[i]=Math.max(0,Math.floor(150+90*Math.sin(i*0.35)));
+const analyser=true;const vol=0.5,sBass=0.55,sMid=0.4,sTreble=0.3,grow=1,emx=0.1,emy=0.15,energy=0.6,brightMul=1;
+window.__mistCols=null;window.__mistWeights=null;window.__mistSize=1;window.__mistMode=null;window.__noMandala=false;
+function draw3DMusicVisualizer(bgCtx, bgW, bgH, vol, sBass, sMid, sTreble, freqData, analyser, grow, emx, emy, energy, brightMul) {
+    // 1. 安全容错处理与基础配置
+    const volume = vol || 0;
+    const bass = sBass || 0;
+    const mid = sMid || 0;
+    const treble = sTreble || 0;
+    const intensity = energy || 1;
+    const opacity = (grow || 1) * (brightMul || 1);
+
+    const centerX = bgW / 2;
+    const centerY = bgH / 2;
+
+    const time = Date.now() * 0.001;
+
+    const rx = -emy * 0.4 - 0.30; // 俯仰角 (Pitch),稍微正一点更对称 / a bit more frontal
+    const ry = emx * 0.45 + Math.sin(time * 0.3) * 0.05; // 偏航角 (Yaw)
+    window.__rot = (window.__rot || 0) + 0.004 + energy * 0.012 + sMid * 0.03;   // 转速随滑块&旋律 / spin speed follows slider & melody
+    const rz = window.__rot + bass * 0.02; // 自转角 (Roll)
+
+    const fov = Math.min(bgW, bgH) * 1.0;    // 整体大小 / overall size
+    const cameraZ = 400;
+
+    function project(x, y, z) {
+        let x1 = x * Math.cos(rz) - y * Math.sin(rz);
+        let y1 = x * Math.sin(rz) + y * Math.cos(rz);
+        let z1 = z;
+        let x2 = x1 * Math.cos(ry) + z1 * Math.sin(ry);
+        let y2 = y1;
+        let z2 = -x1 * Math.sin(ry) + z1 * Math.cos(ry);
+        let x3 = x2;
+        let y3 = y2 * Math.cos(rx) - z2 * Math.sin(rx);
+        let z3 = y2 * Math.sin(rx) + z2 * Math.cos(rx);
+        const scale = fov / (cameraZ + z3);
+        return { x: centerX + x3 * scale, y: centerY + y3 * scale, scale: scale, depth: z3 };
+    }
+
+    function draw3DObjectCircle(cx, cy, cz, radius, segments, color, lineWidth) {
+        bgCtx.beginPath();
+        for (let i = 0; i <= segments; i++) {
+            let angle = (i / segments) * Math.PI * 2;
+            let p = project(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius, cz);
+            if (i === 0) bgCtx.moveTo(p.x, p.y);
+            else bgCtx.lineTo(p.x, p.y);
+        }
+        bgCtx.strokeStyle = color;
+        bgCtx.lineWidth = lineWidth;
+        bgCtx.stroke();
+    }
+
+    // (旧的环绕光点已去掉,改用中心外扩雾气 / orbiting halo removed; using outward mist instead)
+    // (方框已去掉 / frame removed)
+
+    if (!window.__noMandala) {                       // 某些歌只要雾、不要曼陀罗 / some songs: mist only, no mandala
+    // 图层 4：莲花 rosette —— 蓝/紫/红 交替,线条柔化发光(虚,不生硬)/ lotus, softened glowing lines
+    bgCtx.save();
+    const petalN = 9;                       // 3 的倍数 → 蓝紫红正好循环 / multiple of 3 so the cycle closes
+    const ringR = 58;
+    const petalR = 58 + mid * 8;            // ≈ringR → flower-of-life 花瓣
+    const petalCols = ['70, 150, 255', '170, 80, 245', '245, 60, 110'];   // 蓝 紫 红
+    for (let i = 0; i < petalN; i++) {
+        const ang = (i / petalN) * Math.PI * 2 + time * 0.05;
+        const col = petalCols[i % 3];
+        bgCtx.shadowColor = `rgba(${col}, 0.9)`;
+        bgCtx.shadowBlur = 8;               // 发光柔化 → 虚 / glow softens the line
+        draw3DObjectCircle(Math.cos(ang) * ringR, Math.sin(ang) * ringR, 0, petalR, 40, `rgba(${col}, ${0.26 * opacity})`, 1.0);
+    }
+    bgCtx.shadowBlur = 0;
+    bgCtx.restore();
+
+    // 图层 5：同心圆(同样柔化)/ concentric rings, softened too
+    bgCtx.save();
+    bgCtx.shadowBlur = 7;
+    bgCtx.shadowColor = 'rgba(150, 130, 245, 0.85)';
+    draw3DObjectCircle(0, 0,  0, 58 + bass * 6,   72, `rgba(150, 130, 245, ${0.4 * opacity})`, 1.0);
+    bgCtx.shadowColor = 'rgba(235, 120, 210, 0.85)';
+    draw3DObjectCircle(0, 0, 18, 92 + bass * 10,  72, `rgba(235, 120, 210, ${0.3 * opacity})`, 1.0);
+    bgCtx.shadowColor = 'rgba(130, 180, 255, 0.85)';
+    draw3DObjectCircle(0, 0, 36, 120 + bass * 12, 72, `rgba(130, 180, 255, ${0.26 * opacity})`, 1.0);
+    bgCtx.shadowBlur = 0;
+    bgCtx.restore();
+    }                                                // end mandala gate / 曼陀罗结束
+
+    // 图层 8：从中心向外扩散的雾气(柔团 / 颜色每首歌可配 / 滑块控制扩散远近+速度)
+    // mist spreading outward from center: soft blobs, blue/purple/red like the lotus, reach & speed driven by the SLIDER
+    const mistCols = window.__mistCols || [[70, 150, 255], [170, 80, 245], [245, 60, 110]];   // 每首歌可定制 / per-song
+    const mistW = window.__mistWeights || null;                          // 颜色占比(累积)/ cumulative color weights
+    const mistSize = window.__mistSize || 1;                             // 雾团大小倍数 / size multiplier
+    const reach = 110 + energy * 300;                                     // 滑块越大,雾扩得越远 / slider → reach
+    if (!window.__mist) {
+        window.__mist = [];
+        for (let i = 0; i < 70; i++) window.__mist.push({
+            a: Math.random() * Math.PI * 2,
+            r: Math.random(),                                             // 0..1 归一化进度 / normalized progress
+            z: (Math.random() - 0.5) * 60,
+            sp: 0.0014 + Math.random() * 0.003,
+            sz: 26 + Math.random() * 34,
+            cw: Math.random(),                                           // 颜色随机值 / color pick value
+            pk: Math.random()                                           // 粒子/雾 区分 / particle-vs-mist pick
+        });
+    }
+    if (window.__mistMode === 'burst') {
+        // 小粒子 + 雾从中心"冲出来",不转圈(2D 放射,越往外越大越快,朝观众扑面)
+        // particles + mist BURST out from centre — 2D radial, no spin, faster & bigger outward
+        bgCtx.save();
+        bgCtx.globalCompositeOperation = 'lighter';
+        const R = Math.min(bgW, bgH) * (0.40 + energy * 0.55);          // 滑块控制冲出距离 / slider controls burst reach
+        for (const m of window.__mist) {
+            m.r += m.sp * (1 + sBass * 2.2 + energy * 1.6);             // 滑块/鼓点加速冲出 / slider & bass speed the burst
+            if (m.r > 1) m.r -= 1;
+            const rr = m.r * m.r * R;                                    // 加速外冲 / accelerate outward
+            const px = centerX + Math.cos(m.a) * rr, py = centerY + Math.sin(m.a) * rr;
+            const fade = Math.sin(m.r * Math.PI);
+            let ci; if (mistW) { ci = 0; while (ci < mistW.length - 1 && m.cw >= mistW[ci]) ci++; } else ci = (m.cw * mistCols.length) | 0;
+            const [cr, cg, cb] = mistCols[ci % mistCols.length];
+            if (m.pk < 0.45) {                                           // 柔雾团 / soft mist blob
+                const size = (4 + m.r * 24) * mistSize;
+                const g = bgCtx.createRadialGradient(px, py, 0, px, py, size);
+                g.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, ${0.16 * fade * opacity})`);
+                g.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`);
+                bgCtx.fillStyle = g;
+                bgCtx.beginPath(); bgCtx.arc(px, py, size, 0, Math.PI * 2); bgCtx.fill();
+            } else {                                                    // 清晰小粒子 / crisp small particle
+                const size = Math.max(0.5, (0.6 + m.r * 2.4) * mistSize);
+                bgCtx.fillStyle = `rgba(${cr}, ${cg}, ${cb}, ${0.75 * fade * opacity})`;
+                bgCtx.beginPath(); bgCtx.arc(px, py, size, 0, Math.PI * 2); bgCtx.fill();
+            }
+        }
+        bgCtx.restore();
+    } else {
+        bgCtx.save();
+        bgCtx.globalCompositeOperation = 'lighter';
+        for (const m of window.__mist) {
+            m.r += m.sp * (1 + sBass * 2.4 + energy * 0.6);             // 鼓点+滑块 → 扩散更快 / bass & slider speed it
+            if (m.r > 1) m.r -= 1;
+            const rad = m.r * reach;
+            const p = project(Math.cos(m.a) * rad, Math.sin(m.a) * rad, m.z);
+            const fade = Math.sin(m.r * Math.PI);                        // 中心/边缘淡 / fade at both ends
+            const size = Math.max(1.5, m.sz * mistSize * p.scale * (0.7 + sBass * 0.8));
+            let ci; if (mistW) { ci = 0; while (ci < mistW.length - 1 && m.cw >= mistW[ci]) ci++; } else ci = (m.cw * mistCols.length) | 0;   // 选色 / pick color
+            const [cr, cg, cb] = mistCols[ci % mistCols.length];
+            const g = bgCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, size);
+            g.addColorStop(0, `rgba(${cr}, ${cg}, ${cb}, ${0.22 * fade * opacity})`);
+            g.addColorStop(1, `rgba(${cr}, ${cg}, ${cb}, 0)`);
+            bgCtx.fillStyle = g;
+            bgCtx.beginPath();
+            bgCtx.arc(p.x, p.y, size, 0, Math.PI * 2);
+            bgCtx.fill();
+        }
+        bgCtx.restore();
+    }
+
+    // (图层6 四节点 / 图层7 中心波形 已删除 / nodes & center waveform removed)
+}
+const im=new Image();im.onload=render;im.src="cover-dawn-bg.jpg";
+function render(){let n=0;(function loop(){
+ bgCtx.fillStyle="#0c0e14";bgCtx.fillRect(0,0,bgW,bgH);
+ const blurAmt=0.8,sc=0.9;const sw=Math.round(60+(1-blurAmt)*660);const w=sw,h=Math.round(sw*im.height/im.width);
+ const off=document.createElement("canvas");off.width=w;off.height=h;off.getContext("2d").drawImage(im,0,0,w,h);
+ const scale=Math.max(bgW/w,bgH/h)*sc,dw=w*scale,dh=h*scale;
+ bgCtx.save();bgCtx.globalAlpha=0.3;bgCtx.filter="blur("+(2+blurAmt*12)+"px)";bgCtx.drawImage(off,(bgW-dw)/2,(bgH-dh)/2,dw,dh);bgCtx.filter="none";bgCtx.restore();
+ draw3DMusicVisualizer(bgCtx,bgW,bgH,vol,sBass,sMid,sTreble,freqData,analyser,grow,emx,emy,energy,brightMul);
+ if(n++<90)requestAnimationFrame(loop);})();}
+</script></body></html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sound States — V1 Demo</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0c0e14" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sound States" />
+  <link rel="apple-touch-icon" href="cover-cinematic.jpg" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 动态背景层:声音驱动的颗粒/脉冲 / dynamic background, audio-driven -->
+  <canvas id="bgCanvas"></canvas>
+  <!-- 背景发光层:由声音驱动 / glow layer driven by audio -->
+  <div id="glow"></div>
+
+  <!-- 语言切换 + 声音开关 / language toggle + sound toggle (全局固定) -->
+  <div id="langToggle">
+    <button class="sound-toggle" id="soundToggle"></button>
+    <span>|</span>
+    <button data-lang="en" class="active">EN</button>
+    <span>|</span>
+    <button data-lang="zh">中</button>
+  </div>
+
+  <!-- 导航 / navigation -->
+  <button id="menuBtn" aria-label="menu">☰</button>
+  <nav id="menu">
+    <button data-go="landing"    data-i18n="navHome"></button>
+    <button data-go="selection"  data-i18n="navWorlds"></button>
+    <button data-go="browse"     data-i18n="navBrowse"></button>
+    <button data-go="navigator"  data-i18n="navNavigator"></button>
+    <button data-go="about"      data-i18n="navAbout"></button>
+  </nav>
+
+  <!-- ============ 01 Landing 首屏 ============ -->
+  <section id="landing" class="screen active">
+    <div class="landing-inner">
+      <h1 class="title">Sound States</h1>
+      <p class="subtitle" data-i18n="subtitle"></p>
+      <p class="guide" data-i18n="guide"></p>
+      <div class="sel-gate-btns landing-gate-btns">
+        <button id="landingYesBtn" class="sel-gate-btn sel-gate-btn--yes" data-i18n="gateYes"></button>
+        <button id="landingNoBtn"  class="sel-gate-btn sel-gate-btn--no"  data-i18n="gateNo"></button>
+      </div>
+      <p class="hint" data-i18n="hint"></p>
+    </div>
+  </section>
+
+  <!-- ============ 02 State Selection 状态选择 ============ -->
+  <section id="selection" class="screen">
+    <header class="top-bar">
+      <button class="back-btn" data-go="landing" data-i18n="backBtn"></button>
+    </header>
+
+    <!-- 板块区 / boards -->
+    <div class="sel-boards" id="selBoards">
+      <div class="cards" id="stateCards"><!-- 卡片由 JS 生成 / cards rendered by JS --></div>
+
+      <!-- 今日推荐 / daily recommendation ring -->
+      <div class="daily-section">
+        <div class="section-divider"><span data-i18n="dailySection"></span></div>
+        <button class="daily-ring" id="dailyBtn" aria-label="Today's picks">
+          <div class="daily-ring-inner">
+            <span class="ring-moon">☽</span>
+            <span class="ring-txt" data-i18n="dailyBtn"></span>
+          </div>
+        </button>
+        <p class="daily-hint" data-i18n="dailyHint"></p>
+      </div>
+
+      <button class="browse-all-link" id="browseAllBtn" data-i18n="browseAll"></button>
+    </div>
+  </section>
+
+  <!-- ============ 03 Scene 场景页(含弧形封面) ============ -->
+  <section id="scene" class="screen">
+    <header class="top-bar">
+      <button class="back-btn" data-go="selection" data-i18n="backBtn"></button>
+    </header>
+
+    <h2 class="screen-title" id="sceneTitle">Cinematic</h2>
+    <p class="screen-sub" id="sceneSub"></p>
+
+    <!-- 弧形封面瀑布流 / arc coverflow (sketch B) -->
+    <div class="coverflow" id="coverflow"></div>
+
+    <div class="cover-nav">
+      <button class="round-btn" id="prevCover">‹</button>
+      <button class="round-btn" id="nextCover">›</button>
+    </div>
+
+    <!-- 主播放器 / main player -->
+    <div class="player">
+      <div class="track-name" id="trackName">—</div>
+      <div class="track-desc" id="trackDesc"></div>
+      <button class="play-btn" id="playBtn"></button>
+
+      <!-- 进度条 / seek bar -->
+      <div class="seek-row">
+        <span class="time-label" id="timeCur">0:00</span>
+        <input type="range" id="seekBar" class="seek-bar" min="0" max="100" value="0" step="0.1" />
+        <span class="time-label" id="timeDur">0:00</span>
+      </div>
+
+      <div class="atmosphere">
+        <span class="var-label" data-i18n="atmosLabel"></span>
+        <span class="slider-end" data-i18n="veiled"></span>
+        <input type="range" id="atmosSlider" class="atmos-slider" min="0" max="100" value="100" />
+        <span class="slider-end" data-i18n="natural"></span>
+        <button class="reset-btn" id="atmosReset" title="Reset">↺</button>
+      </div>
+      <p class="eq-desc" id="atmosDesc"></p>
+      <div class="heart-mode-bar" id="heartModeBar">
+        <button class="hm-btn active" data-mode="auto" data-desc="心率传感器实时驱动音色与氛围深度">♥ 实时心率</button>
+        <button class="hm-btn" data-mode="free" data-desc="手动调整，专注于音乐本身">♪ 自由聆听</button>
+      </div>
+      <p class="hm-desc" id="hmDesc">心率传感器实时驱动音色与氛围深度</p>
+      <div class="heart-rate-bar" id="heartBar">
+        <button id="heartConnect" class="heart-btn">♡ 心率</button>
+        <span id="heartBPMDisplay" class="heart-bpm">--</span>
+      </div>
+      <div class="eq-strip">
+        <span class="var-label" data-i18n="eqLabel"></span>
+        <div class="eq-btns">
+          <button class="eq-btn" data-eq="flat"></button>
+          <button class="eq-btn" data-eq="grand"></button>
+          <button class="eq-btn" data-eq="power"></button>
+          <button class="eq-btn" data-eq="clear"></button>
+          <button class="eq-btn" data-eq="warm"></button>
+          <button class="eq-btn" data-eq="dark"></button>
+        </div>
+        <p class="eq-desc" id="eqDesc"></p>
+      </div>
+      <!-- 情绪坐标迷你指示器 / mini Russell indicator -->
+      <div class="mini-russell-wrap">
+        <canvas id="miniRussell"></canvas>
+        <div class="mini-russell-info">
+          <span class="mini-coord" id="miniCoord"></span>
+          <span class="mini-src">Russell (1980)</span>
+        </div>
+      </div>
+
+      <!-- 算法洞察面板 / Algorithm insight panel -->
+      <div class="algo-insight-wrap">
+        <button class="algo-insight-toggle" id="algoInsightToggle">◎ <span data-i18n="algoInsightLabel"></span></button>
+        <div class="algo-insight-panel" id="algoInsightPanel">
+          <div class="ai-row">
+            <span class="ai-label" data-i18n="algoInsightBPM"></span>
+            <span class="ai-bpm" id="aiBPM">--</span>
+          </div>
+          <div class="ai-row">
+            <span class="ai-label" data-i18n="algoInsightArousal"></span>
+            <div class="ai-bar-wrap"><div class="ai-bar" id="aiArousalBar"></div></div>
+            <span class="ai-num" id="aiArousalNum">--</span>
+          </div>
+          <div class="ai-row">
+            <span class="ai-label" data-i18n="algoInsightValence"></span>
+            <div class="ai-bar-wrap"><div class="ai-bar ai-bar-v" id="aiValenceBar"></div></div>
+            <span class="ai-num" id="aiValenceNum">--</span>
+          </div>
+          <div class="ai-divider"></div>
+          <div class="ai-output-row">
+            <span class="ai-arrow">→</span>
+            <span class="ai-out-label" data-i18n="algoBoard"></span>
+            <span class="ai-out-val ai-highlight" id="aiBoard">--</span>
+          </div>
+          <div class="ai-output-row">
+            <span class="ai-arrow">→</span>
+            <span class="ai-out-label" data-i18n="algoEQ"></span>
+            <span class="ai-out-val" id="aiEQPanel">--</span>
+          </div>
+          <div class="ai-output-row">
+            <span class="ai-arrow">→</span>
+            <span class="ai-out-label" data-i18n="algoAtmos"></span>
+            <span class="ai-out-val" id="aiAtmosPanel">--</span>
+          </div>
+          <p class="ai-src">Russell (1980) · BRECVEMA (Juslin, 2008) · Karageorghis (2012)</p>
+        </div>
+      </div>
+
+      <p class="hp-hint" id="hpHint" data-i18n="headphoneHint"></p>
+
+      <p class="player-note" id="varNote"></p>
+      <p class="placeholder-note" data-i18n="placeholderNote"></p>
+    </div>
+  </section>
+
+  <!-- ============ About / Process / Reflection — tabbed ============ -->
+  <section id="about" class="screen content-page">
+    <header class="top-bar">
+      <button class="back-btn" data-go="selection" data-i18n="backBtn"></button>
+    </header>
+
+    <!-- 标签栏 / tab bar -->
+    <div class="about-tab-bar" role="tablist">
+      <button class="about-tab active" data-about-tab="panel-about"      role="tab" data-i18n="aboutTitle"></button>
+      <button class="about-tab"        data-about-tab="panel-process"    role="tab" data-i18n="processTitle"></button>
+      <button class="about-tab"        data-about-tab="panel-reflection" role="tab" data-i18n="reflTitle"></button>
+    </div>
+
+    <!-- 面板 1：关于 / Panel 1: About -->
+    <div class="about-panel active" id="panel-about" role="tabpanel">
+      <div class="prose">
+        <p data-i18n="aboutP1"></p>
+        <p data-i18n="aboutP2"></p>
+        <p class="emphasis" data-i18n="aboutRole"></p>
+      </div>
+    </div>
+
+    <!-- 面板 2：制作过程 / Panel 2: Process -->
+    <div class="about-panel" id="panel-process" role="tabpanel">
+      <div class="prose">
+        <p data-i18n="processIntro"></p>
+        <p data-i18n="proc1"></p>
+        <p data-i18n="proc2"></p>
+        <p data-i18n="proc3"></p>
+        <p data-i18n="proc4"></p>
+        <p data-i18n="proc5"></p>
+        <p data-i18n="proc6"></p>
+        <p data-i18n="proc7"></p>
+      </div>
+    </div>
+
+    <!-- 面板 3：反思 / Panel 3: Reflection -->
+    <div class="about-panel" id="panel-reflection" role="tabpanel">
+      <div class="prose">
+        <h3 data-i18n="reflWorkedH"></h3>
+        <p data-i18n="reflWorked"></p>
+        <h3 data-i18n="reflLimitH"></h3>
+        <p data-i18n="reflLimit"></p>
+        <h3 data-i18n="reflFutureH"></h3>
+        <p data-i18n="reflFuture"></p>
+      </div>
+    </div>
+
+    <!-- 其他作品外链（始终可见，标签下方固定）/ other work links: always visible -->
+    <div class="about-links-section">
+      <h3 class="about-links-title" data-i18n="moreWorkTitle"></h3>
+      <ul class="about-links-list">
+        <li><a class="about-ext-link" href="https://your-music-link.com" target="_blank" rel="noopener" data-i18n="linkOriginalMusic"></a></li>
+        <li><a class="about-ext-link" href="https://your-world-music-link.com" target="_blank" rel="noopener" data-i18n="linkWorldMusic"></a></li>
+        <li><a class="about-ext-link" href="https://your-intelligence-link.com" target="_blank" rel="noopener" data-i18n="linkIntelligence"></a></li>
+        <li><a class="about-ext-link" href="https://bilibili.com" target="_blank" rel="noopener" data-i18n="linkBilibili"></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ Navigator 情绪导航器 ============ -->
+  <section id="navigator" class="screen content-page">
+    <header class="top-bar">
+      <button class="back-btn" id="navigatorBackBtn" data-i18n="backBtn"></button>
+    </header>
+    <h2 class="screen-title" data-i18n="navTitle"></h2>
+    <p class="screen-sub" data-i18n="navSub"></p>
+
+    <div class="nav-wrap">
+      <!-- 左：Russell 圆圈 / Left: Russell circumplex canvas -->
+      <div class="nav-circle-col">
+        <canvas id="navCanvas"></canvas>
+        <p class="nav-drag-hint" data-i18n="navDragHint"></p>
+      </div>
+
+      <!-- 右：模拟输入 + 算法输出 / Right: simulation + output -->
+      <div class="nav-right-col">
+
+        <!-- ① 状态输入 / Step 1: state input -->
+        <p class="nav-step-label" data-i18n="navStep1"></p>
+        <div class="sim-panel">
+          <div class="sim-row">
+            <span class="sim-label" data-i18n="simArousal"></span>
+            <span class="sim-end sim-lo" data-i18n="simLow"></span>
+            <input type="range" id="simArousalSlider" class="sim-slider" min="-100" max="100" value="0" />
+            <span class="sim-end sim-hi" data-i18n="simHigh"></span>
+          </div>
+          <p class="sim-note" data-i18n="simArousalNote"></p>
+
+          <div class="sim-row" style="margin-top:.9rem">
+            <span class="sim-label" data-i18n="simValence"></span>
+            <span class="sim-end sim-lo" data-i18n="simNeg"></span>
+            <input type="range" id="simValenceSlider" class="sim-slider" min="-100" max="100" value="20" />
+            <span class="sim-end sim-hi" data-i18n="simPos"></span>
+          </div>
+          <p class="sim-note" data-i18n="simValenceNote"></p>
+          <p class="nav-hardware-note" data-i18n="simHardwareNote"></p>
+        </div>
+
+        <!-- 心率扫描 / biometric BPM scan -->
+        <div class="nav-scan-row">
+          <button class="nav-scan-btn" id="navScanBtn">♡ 测量心率</button>
+          <span class="nav-scan-status" id="navScanStatus"></span>
+        </div>
+
+        <!-- ② 算法推荐 / Step 2: recommendation -->
+        <p class="nav-step-label" data-i18n="navStep2"></p>
+        <div class="algo-output">
+          <div class="algo-row">
+            <span class="algo-key" data-i18n="algoBoard"></span>
+            <span class="algo-val" id="algoBoardVal">—</span>
+          </div>
+          <div class="algo-row">
+            <span class="algo-key" data-i18n="algoEQ"></span>
+            <span class="algo-val" id="algoEQVal">—</span>
+          </div>
+          <div class="algo-row">
+            <span class="algo-key" data-i18n="algoAtmos"></span>
+            <span class="algo-val" id="algoAtmosVal">—</span>
+          </div>
+          <div class="algo-row">
+            <span class="algo-key" data-i18n="algoBPM"></span>
+            <span class="algo-val" id="algoBPMVal">—</span>
+          </div>
+          <div class="algo-row">
+            <span class="algo-key" data-i18n="algoCoord"></span>
+            <span class="algo-val algo-coord" id="algoCoordVal">—</span>
+          </div>
+        </div>
+
+        <!-- ③ 进入 / Step 3: enter -->
+        <p class="nav-step-label" data-i18n="navStep3"></p>
+        <button class="algo-enter-btn" id="algoEnterBtn" data-i18n="algoEnter"></button>
+        <p class="algo-src-note" data-i18n="algoSrcNote"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Browse 全部曲目 ============ -->
+  <section id="browse" class="screen content-page">
+    <header class="top-bar">
+      <button class="back-btn" data-go="selection" data-i18n="backBtn"></button>
+    </header>
+    <h2 class="screen-title" data-i18n="browseTitle"></h2>
+    <p class="screen-sub" data-i18n="browseSub"></p>
+    <div class="browse-search-wrap">
+      <input type="search" id="browseSearch" class="browse-search" data-i18n-placeholder="searchPlaceholder" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="browse-filters" id="browseFilters"></div>
+    <div class="browse-grid" id="browseGrid"></div>
+    <p class="browse-empty" id="browseEmpty"></p>
+  </section>
+
+  <!-- 真实音轨 ×2:双声道交叉淡化 / two decks for crossfade -->
+  <audio id="realAudio" src="glass-grid.wav" loop preload="none"></audio>
+  <audio id="realAudio2" loop preload="none"></audio>
+
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

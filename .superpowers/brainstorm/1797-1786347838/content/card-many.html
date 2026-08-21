@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Many Cards Arc</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0c0e14;
+    color: #d0d8e8;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  h1 { font-size: 1.05rem; color: #6080a0; letter-spacing: 0.14em; font-weight: 400; margin-bottom: 5px; }
+  .sub { font-size: 0.76rem; color: #3a4a60; margin-bottom: 48px; }
+
+  /* ── toggle ── */
+  .toggle-row {
+    display: flex; gap: 10px; margin-bottom: 32px;
+  }
+  .tog {
+    background: #141c2e; border: 1px solid #2a3a54;
+    color: #5070a0; border-radius: 20px;
+    padding: 6px 16px; font-size: 0.76rem; cursor: pointer;
+    transition: all 0.18s;
+  }
+  .tog.active { background: #1e3460; color: #80b0e8; border-color: #3a5480; }
+
+  /* ── stage ── */
+  .stage {
+    position: relative;
+    width: 860px;
+    height: 380px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  .info-panel {
+    position: absolute; right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 196px;
+    background: rgba(14,20,36,0.97);
+    border: 1px solid #24364e;
+    border-radius: 14px; padding: 18px;
+    opacity: 0; transition: opacity 0.18s ease;
+    pointer-events: none;
+  }
+  .info-panel.visible { opacity: 1; }
+  .state-tag {
+    font-size: 0.62rem; letter-spacing: 0.13em; color: #4a7090;
+    text-transform: uppercase; display: flex; align-items: center; gap: 6px; margin-bottom: 9px;
+  }
+  .state-tag::before { content:''; width:5px; height:5px; border-radius:50%; background:#4a7090; flex-shrink:0; }
+  .song-name { font-size: 0.95rem; color: #c8daf0; font-weight: 500; margin-bottom: 7px; }
+  .song-desc { font-size: 0.73rem; color: #506070; line-height: 1.65; margin-bottom: 16px; }
+  .btn-enter { display:block; width:100%; background:#1e3460; border:none; color:#70aae8; border-radius:8px; padding:8px; font-size:0.75rem; cursor:pointer; margin-bottom:7px; transition:background .18s; }
+  .btn-enter:hover { background:#2a4270; }
+  .btn-next { display:block; width:100%; background:transparent; border:1px solid #1e2e40; color:#3e5870; border-radius:8px; padding:7px; font-size:0.73rem; cursor:pointer; }
+
+  .cards-wrap {
+    position: relative;
+    width: 600px;
+    height: 340px;
+    margin-right: 40px;
+  }
+
+  .card {
+    position: absolute;
+    border-radius: 10px;
+    cursor: pointer;
+    transform-origin: 50% 108%;
+    transition: transform 0.34s cubic-bezier(.22,.68,0,1.28), box-shadow 0.26s ease;
+    box-shadow: 0 5px 18px rgba(0,0,0,0.6);
+    will-change: transform;
+  }
+  .cover {
+    width:100%; height:100%; border-radius:10px;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:flex-end; padding:8px;
+  }
+  .cover::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,0.76) 0%, transparent 55%);
+    border-radius:10px;
+  }
+  .badge { position:relative; z-index:1; font-size:0.54rem; color:#5880a8; letter-spacing:.12em; text-transform:uppercase; margin-bottom:2px; }
+  .title { position:relative; z-index:1; font-size:0.63rem; color:#ccdaf5; letter-spacing:.04em; line-height:1.25; }
+
+  .hint { margin-top: 40px; font-size: 0.68rem; color: #263040; letter-spacing: 0.08em; }
+  .count-note { margin-top: 8px; font-size: 0.68rem; color: #2a3a50; }
+</style>
+</head>
+<body>
+
+<h1>Sound States</h1>
+<p class="sub">多牌弧形展示 — 鼠标悬停任意封面</p>
+
+<div class="toggle-row">
+  <button class="tog active" onclick="setCount(8,  this)">8 张</button>
+  <button class="tog"        onclick="setCount(12, this)">12 张</button>
+  <button class="tog"        onclick="setCount(16, this)">16 张</button>
+</div>
+
+<div class="stage">
+  <div class="cards-wrap" id="wrap"></div>
+  <div class="info-panel"  id="panel">
+    <div class="state-tag" id="iState"></div>
+    <div class="song-name" id="iName"></div>
+    <div class="song-desc" id="iDesc"></div>
+    <button class="btn-enter">▶ 进入聆听</button>
+    <button class="btn-next">下一张 →</button>
+  </div>
+</div>
+
+<p class="hint">← 切换数量对比 · 悬停效果不变 →</p>
+
+<script>
+const POOL = [
+  { name:'Dawn Scene',         desc:'Gradual emotional rise, soft hope.',                state:'Cinematic', grad:['#2a3d5c','#b98a5a'] },
+  { name:'Lonely City',        desc:'Urban night, distance and isolation.',               state:'Cinematic', grad:['#1c2333','#4a5a7a'] },
+  { name:'Slow Memory',        desc:'Nostalgic texture, suspended feeling.',              state:'Cinematic', grad:['#3a2c44','#7a6a8a'] },
+  { name:'Imagined Landscape', desc:'Wider layered world for projection.',               state:'Cinematic', grad:['#22323a','#8aa0a0'] },
+  { name:'Glass Grid',         desc:'Transparent structures, low-frequency breath.',     state:'Cinematic', grad:['#1e3040','#6090b0'] },
+  { name:'Drift Signal',       desc:'A distant carrier wave slowly surfacing.',           state:'Cinematic', grad:['#2c2240','#805a80'] },
+  { name:'Phonk Drive',        desc:'Heavy pulse, distorted texture.',                   state:'Motion',    grad:['#1a0c12','#7a2030'] },
+  { name:'Trap Energy',        desc:'Sharp beat, strong low-end.',                       state:'Motion',    grad:['#0e0c1a','#5a2a7a'] },
+  { name:'Ritual Pulse',       desc:'Hypnotic loop, circular tension.',                  state:'Motion',    grad:['#160a1a','#7a3a6a'] },
+  { name:'Dark Cardio',        desc:'Repetitive rhythm for intense movement.',            state:'Motion',    grad:['#140c0c','#6a2a2a'] },
+  { name:'Soft Rain',          desc:'Layered water texture, no beat.',                   state:'Relax',     grad:['#1a2a3a','#4a7080'] },
+  { name:'Evening Still',      desc:'Quiet room tone with faint warmth.',                state:'Relax',     grad:['#2a2030','#6a5a70'] },
+  { name:'Deep Focus',         desc:'Steady low hum, minimal movement.',                 state:'Focus',     grad:['#102020','#2a5a5a'] },
+  { name:'White Noise Field',  desc:'Textured static for cognitive buffer.',             state:'Focus',     grad:['#1a2428','#3a6060'] },
+  { name:'Cloud Descent',      desc:'Slow fade into quiet before sleep.',                state:'Sleep',     grad:['#0c1020','#1a2a4a'] },
+  { name:'Deep Drift',         desc:'Almost-silent layers for winding down.',            state:'Sleep',     grad:['#0e0c1a','#2a2a4a'] },
+];
+
+const wrap  = document.getElementById('wrap');
+const panel = document.getElementById('panel');
+let panelTimer = null;
+let currentCount = 8;
+
+function buildCards(n) {
+  wrap.innerHTML = '';
+  const songs = POOL.slice(0, n);
+  const N = songs.length;
+
+  /* card size shrinks slightly as count rises */
+  const W = n <= 8 ? 110 : n <= 12 ? 96 : 82;
+  const H = Math.round(W * 1.52);
+  const SPREAD = n <= 8 ? 58 : n <= 12 ? 70 : 80; // wider arc for more cards
+  const LIFT   = n <= 8 ? 52 : n <= 12 ? 46 : 40;
+
+  songs.forEach((s, i) => {
+    const frac    = N === 1 ? 0.5 : i / (N - 1);
+    const baseRot = (frac - 0.5) * SPREAD;
+    /* organic micro-tilt: alternating small offset */
+    const organic = ((i % 3) - 1) * 2.5;
+    const rot     = baseRot + organic;
+
+    /* horizontal spread across the 600px wrap */
+    const leftPx = frac * (600 - W - 20) + 10;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = `width:${W}px;height:${H}px;left:${leftPx}px;bottom:6px;z-index:${i+1};transform:rotate(${rot}deg)`;
+    card.innerHTML = `
+      <div class="cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+        <div class="badge">${s.state}</div>
+        <div class="title">${s.name}</div>
+      </div>`;
+
+    let restoreTimer = null;
+
+    card.addEventListener('mouseenter', () => {
+      clearTimeout(restoreTimer);
+      card.style.transform  = `rotate(${rot * 0.1}deg) translateY(-${LIFT}px)`;
+      card.style.boxShadow  = '0 18px 44px rgba(0,0,0,0.78), 0 0 26px rgba(80,140,230,0.15)';
+      card.style.zIndex     = 30;
+      clearTimeout(panelTimer);
+      document.getElementById('iState').textContent = s.state;
+      document.getElementById('iName').textContent  = s.name;
+      document.getElementById('iDesc').textContent  = s.desc;
+      panel.classList.add('visible');
+    });
+
+    card.addEventListener('mouseleave', () => {
+      restoreTimer = setTimeout(() => {
+        card.style.transform = `rotate(${rot}deg)`;
+        card.style.boxShadow = '';
+        card.style.zIndex    = i + 1;
+      }, 80);
+      panelTimer = setTimeout(() => panel.classList.remove('visible'), 100);
+    });
+
+    wrap.appendChild(card);
+  });
+}
+
+function setCount(n, btn) {
+  currentCount = n;
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  panel.classList.remove('visible');
+  buildCards(n);
+}
+
+buildCards(8);
+</script>
+</body>
+</html>

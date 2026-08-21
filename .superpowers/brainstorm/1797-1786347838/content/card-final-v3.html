@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Sound States — v3</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #090b12;
+  color: #d0d8e8;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding: 28px 0 60px;
+  overflow-x: hidden;
+}
+h1 { font-size: 1rem; color: #4a6888; letter-spacing: .18em; font-weight: 400; margin-bottom: 3px; }
+.sub { font-size: .7rem; color: #263040; margin-bottom: 20px; }
+.toggle-row { display:flex; gap:8px; margin-bottom:30px; }
+.tog { background:#0f1820; border:1px solid #243444; color:#405878; border-radius:20px; padding:5px 16px; font-size:.73rem; cursor:pointer; transition:all .18s; }
+.tog.active { background:#182c46; color:#70a0d0; border-color:#2e4866; }
+
+/* ══════════════════════════════════════════════
+   DESKTOP VIEW
+══════════════════════════════════════════════ */
+#desktopView { display:flex; flex-direction:column; align-items:center; width:100%; }
+
+/* ── mood selector (desktop, top of page) ── */
+.desktop-mood {
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 0; position: relative; z-index: 50;
+}
+.dm-question { font-size:.78rem; color:#607898; letter-spacing:.06em; margin-bottom:14px; }
+.dm-grid { display:flex; gap:10px; margin-bottom:22px; }
+.dm-btn {
+  background: #0d1624; border: 1px solid #1c2c3e;
+  border-radius: 12px; padding: 10px 14px;
+  cursor: pointer; text-align: center; transition: all .2s;
+  min-width: 88px; position: relative; overflow: hidden;
+}
+.dm-btn::before {
+  content:''; position:absolute; inset:0; opacity:0;
+  background: radial-gradient(circle at 50% 0%, rgba(60,120,200,.14), transparent 70%);
+  transition: opacity .2s;
+}
+.dm-btn.sel { border-color:#2e4868; background:#111e30; }
+.dm-btn.sel::before { opacity:1; }
+.dm-icon  { font-size:1.1rem; margin-bottom:4px; }
+.dm-lbl   { font-size:.62rem; color:#486080; letter-spacing:.06em; }
+.dm-state { font-size:.52rem; color:#2e4060; letter-spacing:.1em; text-transform:uppercase; margin-top:1px; }
+
+/* ── the beautiful draw button ── */
+.draw-zone {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin-bottom: 0;
+}
+.draw-ring {
+  position: relative;
+  width: 116px; height: 116px;
+  cursor: pointer;
+}
+/* outer ring glow */
+.draw-ring::before {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    rgba(50,110,200,.0)   0deg,
+    rgba(50,110,200,.35)  90deg,
+    rgba(100,180,255,.15) 180deg,
+    rgba(50,110,200,.0)   270deg,
+    rgba(50,110,200,.0)   360deg
+  );
+  animation: ringRotate 6s linear infinite;
+  opacity: 0;
+  transition: opacity .4s;
+}
+.draw-ring:hover::before,
+.draw-ring.primed::before { opacity: 1; }
+@keyframes ringRotate { to { transform: rotate(360deg); } }
+
+.draw-ring-inner {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #182e4c, #0c1624);
+  border: 1px solid #2a4060;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px;
+  transition: border-color .3s, box-shadow .3s;
+  box-shadow: 0 0 0 0 rgba(50,120,220,0);
+}
+.draw-ring:hover .draw-ring-inner,
+.draw-ring.primed .draw-ring-inner {
+  border-color: #3a5880;
+  box-shadow: 0 0 28px rgba(40,100,200,.25), inset 0 0 20px rgba(40,100,200,.06);
+}
+.draw-moon { font-size:1.5rem; opacity:.55; line-height:1; }
+.draw-label { font-size:.6rem; color:#4a7098; letter-spacing:.14em; text-transform: uppercase; }
+
+.draw-hint { font-size:.63rem; color:#263444; letter-spacing:.1em; }
+
+.draw-browse {
+  margin-top: 6px;
+  background: transparent; border: none;
+  color: #2e4460; font-size:.62rem; letter-spacing:.1em;
+  cursor: pointer; text-decoration: underline;
+  text-underline-offset: 3px; transition: color .18s;
+}
+.draw-browse:hover { color: #4a6888; }
+
+/* ── stage ── */
+.stage {
+  position: relative;
+  width: 900px; height: 400px;
+  overflow: visible;
+  margin-top: -30px;   /* overlap with mood selector slightly */
+}
+
+/* info panel */
+.info-panel {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  width: 192px;
+  background: rgba(10,16,28,.97);
+  border: 1px solid #1e3040; border-radius: 14px; padding: 18px;
+  opacity: 0; transition: opacity .18s; pointer-events: none; z-index: 100;
+}
+.info-panel.visible { opacity: 1; }
+.state-tag { font-size:.58rem; letter-spacing:.14em; color:#3d6880; text-transform:uppercase; display:flex; align-items:center; gap:5px; margin-bottom:8px; }
+.state-tag::before { content:''; width:4px; height:4px; border-radius:50%; background:#3d6880; flex-shrink:0; }
+.song-name { font-size:.9rem; color:#b8d0ec; font-weight:500; margin-bottom:6px; }
+.song-desc { font-size:.7rem; color:#486070; line-height:1.65; margin-bottom:14px; }
+.btn-enter { display:block;width:100%;background:#182e4e;border:none;color:#60a0d8;border-radius:8px;padding:8px;font-size:.72rem;cursor:pointer;margin-bottom:6px;transition:background .18s; }
+.btn-enter:hover { background:#203a60; }
+.btn-next  { display:block;width:100%;background:transparent;border:1px solid #1c2c3c;color:#365870;border-radius:8px;padding:6px;font-size:.7rem;cursor:pointer; }
+.rec-badge {
+  display:inline-block; font-size:.5rem; color:#6090c0; letter-spacing:.1em;
+  background:#0f2030; border:1px solid #1e3a52; border-radius:4px;
+  padding:2px 6px; margin-bottom:8px; text-transform:uppercase;
+}
+
+/* card */
+.card {
+  position: absolute;
+  border-radius: 11px;
+  will-change: transform;
+  transition:
+    transform    .6s cubic-bezier(.34,1.2,.64,1),
+    box-shadow   .4s ease,
+    opacity      .35s ease;
+}
+.cover {
+  width:100%; height:100%; border-radius:11px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:flex-end; padding:9px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.65);
+}
+.cover::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 56%);
+  border-radius:11px;
+}
+.badge { position:relative;z-index:1;font-size:.5rem;color:#4a6898;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px; }
+.title { position:relative;z-index:1;font-size:.6rem;color:#ccdaf5;letter-spacing:.04em;line-height:1.25; }
+/* recommended card gets a soft glow ring */
+.card.recommended .cover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.65), 0 0 16px rgba(60,130,220,.2);
+}
+/* dimmed: non-recommended cards when draw mode active */
+.card.dimmed { opacity: .28; }
+
+/* state label below stage */
+.view-label { font-size:.65rem; color:#263040; letter-spacing:.08em; margin-top:50px; }
+
+/* ══════════════════════════════════════════════
+   MOBILE VIEW
+══════════════════════════════════════════════ */
+#mobileView { display:none; flex-direction:column; align-items:center; }
+.phone-frame {
+  width:344px; height:668px;
+  border:2px solid #1e2e42; border-radius:40px;
+  background:#090b12; position:relative; overflow:hidden;
+  box-shadow: 0 24px 72px rgba(0,0,0,.9);
+}
+.phone-frame::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(ellipse 60% 35% at 50% 0%, rgba(40,80,140,.1), transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.phone-notch {
+  width:96px; height:20px; background:#090b12;
+  border-radius:0 0 12px 12px; margin:0 auto;
+  border-left:2px solid #1e2e42; border-right:2px solid #1e2e42; border-bottom:2px solid #1e2e42;
+  position:relative; z-index:10;
+}
+#screenMood {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  padding:14px 22px 26px; z-index:1;
+}
+.m-brand { font-size:.58rem; color:#2a3e58; letter-spacing:.2em; text-transform:uppercase; text-align:center; margin-bottom:5px; margin-top:3px; }
+.m-date  { font-size:.72rem; color:#38566c; text-align:center; margin-bottom:14px; letter-spacing:.05em; }
+.moon-wrap { text-align:center; margin-bottom:14px; }
+.moon     { font-size:1.9rem; opacity:.42; display:block; line-height:1; }
+.moon-sub { font-size:.6rem; color:#2a3e58; letter-spacing:.14em; margin-top:3px; }
+.m-question { font-size:.78rem; color:#7090b0; text-align:center; margin-bottom:16px; line-height:1.55; letter-spacing:.03em; }
+.mood-grid  { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px; }
+.mood-btn {
+  background:#0d1624; border:1px solid #1c2c3e;
+  border-radius:12px; padding:12px 8px;
+  cursor:pointer; text-align:center; transition:all .2s; position:relative; overflow:hidden;
+}
+.mood-btn::before {
+  content:''; position:absolute; inset:0; opacity:0;
+  background: radial-gradient(circle at 50% 0%, rgba(60,120,180,.14), transparent 70%);
+  transition:opacity .2s;
+}
+.mood-btn.sel { border-color:#2e4868; background:#101e30; }
+.mood-btn.sel::before { opacity:1; }
+.mood-icon  { font-size:1.2rem; margin-bottom:4px; }
+.mood-lbl   { font-size:.62rem; color:#486080; letter-spacing:.06em; line-height:1.3; }
+.mood-state { font-size:.52rem; color:#2c3e54; letter-spacing:.09em; text-transform:uppercase; margin-top:2px; }
+
+/* mobile draw button — same ring concept, smaller */
+.m-draw-zone { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.m-draw-ring {
+  position:relative; width:80px; height:80px; cursor:pointer; margin-bottom:2px;
+}
+.m-draw-ring::before {
+  content:''; position:absolute; inset:-3px; border-radius:50%;
+  background: conic-gradient(rgba(50,110,200,.0) 0deg, rgba(50,110,200,.3) 90deg, rgba(100,180,255,.12) 180deg, rgba(50,110,200,.0) 270deg, rgba(50,110,200,.0) 360deg);
+  animation: ringRotate 6s linear infinite; opacity:0; transition:opacity .4s;
+}
+.m-draw-ring:hover::before { opacity:1; }
+.m-draw-ring-inner {
+  position:absolute; inset:0; border-radius:50%;
+  background: radial-gradient(circle at 50% 30%, #182e4c, #0c1624);
+  border:1px solid #2a4060;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  transition:border-color .3s, box-shadow .3s;
+}
+.m-draw-ring:hover .m-draw-ring-inner { border-color:#3a5880; box-shadow:0 0 22px rgba(40,100,200,.22); }
+.m-moon  { font-size:1.1rem; opacity:.55; }
+.m-label { font-size:.52rem; color:#4a7098; letter-spacing:.12em; text-transform:uppercase; }
+.m-hint  { font-size:.6rem; color:#263040; letter-spacing:.09em; }
+
+/* screen B */
+#screenReveal {
+  position:absolute; inset:0; z-index:1;
+  display:none; flex-direction:column; align-items:center;
+  padding:14px 22px 20px;
+}
+.rev-brand   { font-size:.56rem; color:#2a3e58; letter-spacing:.2em; text-transform:uppercase; margin-bottom:2px; margin-top:3px; }
+.rev-heading { font-size:.74rem; color:#385878; margin-bottom:2px; letter-spacing:.06em; }
+.rev-mood-tag { font-size:.58rem; color:#263e54; letter-spacing:.12em; text-transform:uppercase; margin-bottom:14px; }
+.reveal-fan { position:relative; width:260px; height:205px; margin-bottom:12px; flex-shrink:0; }
+.r-card {
+  position:absolute; width:104px; height:158px;
+  border-radius:12px; cursor:pointer; transform-origin:50% 112%;
+  transition:transform .3s cubic-bezier(.22,.68,0,1.28), box-shadow .22s;
+  box-shadow: 0 8px 26px rgba(0,0,0,.72);
+}
+.r-cover {
+  width:100%; height:100%; border-radius:12px; overflow:hidden;
+  position:relative; display:flex; flex-direction:column;
+  justify-content:flex-end; padding:10px;
+}
+.r-cover::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 55%); border-radius:12px;
+}
+.r-badge { position:relative;z-index:1;font-size:.5rem;color:#5070a0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px; }
+.r-name  { position:relative;z-index:1;font-size:.6rem;color:#c0d0ec;line-height:1.2; }
+.r-card:nth-child(1) { left:6px;   bottom:0; transform:rotate(-20deg); }
+.r-card:nth-child(2) { left:78px;  bottom:0; transform:rotate(0deg); z-index:5; }
+.r-card:nth-child(3) { left:150px; bottom:0; transform:rotate(20deg); }
+.r-card:nth-child(1):hover { transform:rotate(-20deg) translateY(-16px) scale(1.05)!important; z-index:10; }
+.r-card:nth-child(2):hover { transform:rotate(0deg)   translateY(-16px) scale(1.05)!important; z-index:10; }
+.r-card:nth-child(3):hover { transform:rotate(20deg)  translateY(-16px) scale(1.05)!important; z-index:10; }
+.fortune-box {
+  width:100%; background:#0c1622; border:1px solid #1a2a3a;
+  border-radius:12px; padding:12px 14px; margin-bottom:12px;
+}
+.fortune-label { font-size:.52rem; color:#2a4056; letter-spacing:.16em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+.fortune-label::before { content:''; display:inline-block; width:14px; height:1px; background:#2a4056; }
+.fortune-text  { font-size:.7rem; color:#4a6682; line-height:1.7; }
+.rev-enter {
+  display:block; width:100%;
+  background:linear-gradient(135deg,#162848,#1e3660);
+  border:1px solid #2a4268; color:#70a8e0;
+  border-radius:14px; padding:12px; font-size:.76rem;
+  cursor:pointer; letter-spacing:.05em; margin-bottom:8px; transition:background .2s;
+}
+.rev-enter:hover { background:linear-gradient(135deg,#1e3660,#263e70); }
+.rev-back {
+  display:block; width:100%; background:transparent;
+  border:1px solid #141e2c; color:#283848;
+  border-radius:12px; padding:8px; font-size:.68rem; cursor:pointer;
+}
+
+/* ── block rec button preview ── */
+.block-rec-preview {
+  margin-top: 10px; width:100%;
+  background:#0c1420; border:1px solid #1a2830;
+  border-radius:10px; padding:10px 14px;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.brp-label { font-size:.62rem; color:#2e4456; }
+.brp-btn {
+  background:transparent; border:1px solid #1e3040; color:#385870;
+  border-radius:8px; padding:5px 12px; font-size:.6rem; cursor:pointer;
+  transition:all .18s;
+}
+.brp-btn:hover { border-color:#2e4860; color:#5080a0; }
+</style>
+</head>
+<body>
+<h1>Sound States</h1>
+<p class="sub">选择查看桌面端或移动端</p>
+<div class="toggle-row">
+  <button class="tog active" onclick="showView('desktop',this)">🖥 桌面端</button>
+  <button class="tog"        onclick="showView('mobile', this)">📱 移动端</button>
+</div>
+
+<!-- ══════════ DESKTOP ══════════ -->
+<div id="desktopView">
+
+  <!-- mood selector -->
+  <div class="desktop-mood">
+    <div class="dm-question">此刻，你的状态是？</div>
+    <div class="dm-grid">
+      <div class="dm-btn" data-mood="relax"     onclick="dmPick(this)"><div class="dm-icon">🌙</div><div class="dm-lbl">慢下来</div><div class="dm-state">Relax</div></div>
+      <div class="dm-btn" data-mood="focus"     onclick="dmPick(this)"><div class="dm-icon">🔮</div><div class="dm-lbl">沉进去</div><div class="dm-state">Focus</div></div>
+      <div class="dm-btn" data-mood="cinematic" onclick="dmPick(this)"><div class="dm-icon">✨</div><div class="dm-lbl">想象某些东西</div><div class="dm-state">Cinematic</div></div>
+      <div class="dm-btn" data-mood="motion"    onclick="dmPick(this)"><div class="dm-icon">⚡</div><div class="dm-lbl">动起来</div><div class="dm-state">Motion</div></div>
+    </div>
+    <div class="draw-zone">
+      <div class="draw-ring" id="drawRing" onclick="deskDraw()">
+        <div class="draw-ring-inner">
+          <span class="draw-moon">☽</span>
+          <span class="draw-label">今日抽牌</span>
+        </div>
+      </div>
+      <span class="draw-hint" id="drawHint">选择状态后抽牌，或</span>
+      <button class="draw-browse" onclick="browseAll()">直接浏览全部曲目 →</button>
+    </div>
+  </div>
+
+  <!-- card stage -->
+  <div class="stage" id="stage">
+    <div class="info-panel" id="infoPanel">
+      <div class="state-tag" id="iState"></div>
+      <div id="iRecBadge" class="rec-badge" style="display:none">今日推荐</div>
+      <div class="song-name" id="iName"></div>
+      <div class="song-desc" id="iDesc"></div>
+      <button class="btn-enter">▶ 进入聆听</button>
+      <button class="btn-next">下一张 →</button>
+    </div>
+  </div>
+
+  <!-- reset button (only visible after draw) -->
+  <button class="draw-browse" id="resetBtn" style="display:none;margin-top:52px;font-size:.68rem;" onclick="resetDeck()">↩ 重置 / 重新选择</button>
+  <p class="view-label" id="deskLabel">选择心情 → 抽牌 → 圆弧展开推荐曲目（最多 8 首）</p>
+</div>
+
+<!-- ══════════ MOBILE ══════════ -->
+<div id="mobileView">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div id="screenMood">
+      <div class="m-brand">Sound States</div>
+      <div class="m-date" id="todayDate"></div>
+      <div class="moon-wrap">
+        <span class="moon">☽</span>
+        <span class="moon-sub">今日音乐运势</span>
+      </div>
+      <div class="m-question">此刻，你想进入哪种状态？</div>
+      <div class="mood-grid">
+        <div class="mood-btn" data-mood="relax"     onclick="pickMood(this)"><div class="mood-icon">🌙</div><div class="mood-lbl">慢下来</div><div class="mood-state">Relax</div></div>
+        <div class="mood-btn" data-mood="focus"     onclick="pickMood(this)"><div class="mood-icon">🔮</div><div class="mood-lbl">沉进去</div><div class="mood-state">Focus</div></div>
+        <div class="mood-btn" data-mood="cinematic" onclick="pickMood(this)"><div class="mood-icon">✨</div><div class="mood-lbl">想象某些东西</div><div class="mood-state">Cinematic</div></div>
+        <div class="mood-btn" data-mood="motion"    onclick="pickMood(this)"><div class="mood-icon">⚡</div><div class="mood-lbl">动起来</div><div class="mood-state">Motion</div></div>
+      </div>
+      <div class="m-draw-zone">
+        <div class="m-draw-ring" onclick="mobileDraw()">
+          <div class="m-draw-ring-inner">
+            <span class="m-moon">☽</span>
+            <span class="m-label">今日抽牌</span>
+          </div>
+        </div>
+        <span class="m-hint">点击圆圈抽牌</span>
+      </div>
+    </div>
+
+    <div id="screenReveal">
+      <div class="rev-brand">Sound States</div>
+      <div class="rev-heading">今日推荐</div>
+      <div class="rev-mood-tag" id="revMoodTag"></div>
+      <div class="reveal-fan" id="revFan"></div>
+      <div class="fortune-box">
+        <div class="fortune-label">今日频率</div>
+        <div class="fortune-text" id="fortuneText"></div>
+      </div>
+      <button class="rev-enter" id="revEnter">▶ 开始聆听</button>
+
+      <!-- block recommendation preview -->
+      <div class="block-rec-preview">
+        <span class="brp-label">想要某个板块的专属推荐？</span>
+        <button class="brp-btn">进入板块 →</button>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:.65rem;color:#263040;letter-spacing:.08em;margin-top:14px">移动端 · 3 首核心推荐 · 板块推荐在各板块内</p>
+</div>
+
+<script>
+const SONGS = [
+  { name:'Dawn Scene',         desc:'缓缓升起的情绪，带着柔和的希望与开阔感。',   state:'Cinematic', mood:'cinematic', grad:['#2a3d5c','#b98a5a'] },
+  { name:'Lonely City',        desc:'城市夜晚的氛围，带着情绪上的疏离感。',        state:'Cinematic', mood:'cinematic', grad:['#1c2333','#4a5a7a'] },
+  { name:'Slow Memory',        desc:'怀旧的电影质感，带着悬停般的感觉。',          state:'Cinematic', mood:'cinematic', grad:['#3a2c44','#7a6a8a'] },
+  { name:'Imagined Landscape', desc:'更开阔、更有层次的声音世界，供情绪投射。',    state:'Cinematic', mood:'cinematic', grad:['#22323a','#8aa0a0'] },
+  { name:'Phonk Drive',        desc:'沉重的脉冲、失真的纹理与向前的冲劲。',        state:'Motion',    mood:'motion',    grad:['#1a0c12','#7a2030'] },
+  { name:'Trap Energy',        desc:'更锐利的节拍结构，强劲的低频。',             state:'Motion',    mood:'motion',    grad:['#0e0c1a','#5a2a7a'] },
+  { name:'Ritual Pulse',       desc:'催眠般的打击循环，带着环形的张力。',          state:'Motion',    mood:'motion',    grad:['#160a1a','#7a3a6a'] },
+  { name:'Dark Cardio',        desc:'更暗的重复节奏，适合高强度运动。',           state:'Motion',    mood:'motion',    grad:['#140c0c','#6a2a2a'] },
+  { name:'Soft Rain',          desc:'柔和的多层雨声，让你慢下来。',               state:'Relax',     mood:'relax',     grad:['#1a2a3a','#4a7080'] },
+  { name:'Evening Still',      desc:'安静的房间底噪，带着一丝暖意。',             state:'Relax',     mood:'relax',     grad:['#2a2030','#6a5a70'] },
+  { name:'Deep Focus',         desc:'稳定的低鸣，最小的声音运动。',               state:'Focus',     mood:'focus',     grad:['#102020','#2a5a5a'] },
+  { name:'White Noise Field',  desc:'带纹理的白噪声，认知缓冲层。',               state:'Focus',     mood:'focus',     grad:['#1a2428','#3a6060'] },
+  { name:'Glass Grid',         desc:'透明结构中的低频呼吸，悬浮感。',             state:'Cinematic', mood:'cinematic', grad:['#1e3040','#6090b0'] },
+  { name:'Drift Signal',       desc:'一个渐渐浮出水面的远方信号。',                state:'Cinematic', mood:'cinematic', grad:['#2c2240','#805a80'] },
+];
+
+const FORTUNES = {
+  relax:     '今天不需要做很多。声音会在这里陪着你，不要求任何回应。慢下来就好。',
+  focus:     '今天适合只做一件事。把这个声音当作一堵墙，把其余的东西挡在外面。',
+  cinematic: '今天你的感受力很强。进去，让声音把你带到某个你自己也不确定的地方。',
+  motion:    '今天的能量正在上升。把这个节奏交给身体，让它决定接下来怎么走。',
+};
+const MOOD_NAMES = { relax:'放松 Relax', focus:'专注 Focus', cinematic:'沉浸 Cinematic', motion:'运动 Motion' };
+
+/* ══════ DESKTOP ══════ */
+const stage   = document.getElementById('stage');
+const panel   = document.getElementById('infoPanel');
+const N       = SONGS.length;
+const W = 86, H = 130;
+const CX = 330, CY = 680, R = 490;
+const A1 = 148 * Math.PI / 180;
+const A2 =  32 * Math.PI / 180;
+
+/* Tiny stacked tilts — max ±3° so deck looks neat */
+const STACK_ROTS = [2,-1,3,-2,1,-3,2,-1,3,-2,1,-3,2,-1];
+const cardEls = [], spreadTf = [], stackTf = [];
+const SCX = 310, SCY = 145;
+
+let isOpen = false, drawMode = false;
+let dmMood = null;
+let panelTimer = null;
+
+SONGS.forEach((s, i) => {
+  const frac    = i / (N - 1);
+  const theta   = A1 + (A2 - A1) * frac;
+  const sx      = CX + R * Math.cos(theta) - W / 2;
+  const sy      = CY - R * Math.sin(theta) - H;
+  const rotDeg  = 90 - theta * 180 / Math.PI;
+  const liftX   = Math.cos(theta) * 38;
+  const liftY   = -Math.sin(theta) * 38;
+  spreadTf.push({ x:sx, y:sy, rot:rotDeg, liftX, liftY });
+
+  const jx = ((i % 5) - 2) * 1.2;
+  const jy = ((i % 3) - 1) * 1.2;
+  stackTf.push({ x: SCX + jx, y: SCY + jy, rot: STACK_ROTS[i] || 0 });
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.cssText = `width:${W}px;height:${H}px;left:${stackTf[i].x}px;top:${stackTf[i].y}px;z-index:${i+1};transform:rotate(${stackTf[i].rot}deg);opacity:${i < 5 ? 1 : 0}`;
+  card.innerHTML = `<div class="cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+    <div class="badge">${s.state}</div><div class="title">${s.name}</div></div>`;
+
+  let rt = null;
+  card.addEventListener('mouseenter', () => {
+    if (!isOpen) return;
+    clearTimeout(rt);
+    card.style.transform = `rotate(${spreadTf[i].rot * 0.07}deg) translate(${spreadTf[i].liftX}px,${spreadTf[i].liftY}px)`;
+    card.style.boxShadow = '0 18px 44px rgba(0,0,0,.82), 0 0 24px rgba(70,130,220,.15)';
+    card.style.zIndex    = 30;
+    clearTimeout(panelTimer);
+    document.getElementById('iState').textContent = s.state;
+    document.getElementById('iName').textContent  = s.name;
+    document.getElementById('iDesc').textContent  = s.desc;
+    const rb = document.getElementById('iRecBadge');
+    rb.style.display = card.classList.contains('recommended') ? 'inline-block' : 'none';
+    panel.classList.add('visible');
+  });
+  card.addEventListener('mouseleave', () => {
+    if (!isOpen) return;
+    rt = setTimeout(() => {
+      card.style.transform = `rotate(${spreadTf[i].rot}deg)`;
+      card.style.boxShadow = '';
+      card.style.zIndex    = i + 1;
+    }, 80);
+    panelTimer = setTimeout(() => panel.classList.remove('visible'), 100);
+  });
+
+  stage.appendChild(card);
+  cardEls.push(card);
+});
+
+function openDeck(picks) {
+  isOpen = true;
+  cardEls.forEach((card, i) => {
+    card.style.transitionDelay = (i * 36) + 'ms';
+    card.style.left      = spreadTf[i].x + 'px';
+    card.style.top       = spreadTf[i].y + 'px';
+    card.style.transform = `rotate(${spreadTf[i].rot}deg)`;
+    card.style.opacity   = '1';
+    card.style.zIndex    = i + 1;
+    /* draw mode: highlight picks, dim others */
+    if (picks) {
+      if (picks.includes(i)) {
+        card.classList.add('recommended');
+        card.classList.remove('dimmed');
+      } else {
+        card.classList.add('dimmed');
+        card.classList.remove('recommended');
+      }
+    } else {
+      card.classList.remove('recommended', 'dimmed');
+    }
+  });
+}
+
+function closeDeck() {
+  isOpen = false; drawMode = false;
+  panel.classList.remove('visible');
+  cardEls.forEach((card, i) => {
+    const revDelay = (N - 1 - i) * 28;
+    card.style.transitionDelay = revDelay + 'ms';
+    card.style.left      = stackTf[i].x + 'px';
+    card.style.top       = stackTf[i].y + 'px';
+    card.style.transform = `rotate(${stackTf[i].rot}deg)`;
+    card.style.boxShadow = '';
+    card.classList.remove('recommended','dimmed');
+    setTimeout(() => { if (!isOpen) card.style.opacity = i < 5 ? '1' : '0'; }, revDelay + 650);
+  });
+}
+
+function browseAll() { openDeck(null); document.getElementById('resetBtn').style.display='block'; document.getElementById('deskLabel').textContent='全部曲目展开 · 悬停查看简介 · 点击进入'; }
+
+function seededRand(seed) { let s=seed; return ()=>{ s=(s*9301+49297)%233280; return s/233280; }; }
+function todaySeed() { const d=new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate(); }
+
+function deskDraw() {
+  const mood = dmMood || 'cinematic';
+  const rand = seededRand(todaySeed() + mood.charCodeAt(0)*7);
+  /* priority: songs matching mood first, then others */
+  const priority = SONGS.map((_,i)=>i).sort((a,b)=>{
+    const ma = SONGS[a].mood === mood ? 0 : 1;
+    const mb = SONGS[b].mood === mood ? 0 : 1;
+    return ma - mb + (rand() - 0.5) * 0.4;
+  });
+  const picks = priority.slice(0, 8);  /* top 8 on desktop */
+  drawMode = true;
+  openDeck(picks);
+  document.getElementById('drawRing').classList.add('primed');
+  document.getElementById('drawHint').textContent = '高亮为今日推荐 · 悬停查看详情';
+  document.getElementById('resetBtn').style.display = 'block';
+  document.getElementById('deskLabel').textContent = '今日推荐（高亮）已展开 · 其余曲目可继续浏览';
+}
+
+function resetDeck() {
+  closeDeck();
+  dmMood = null;
+  document.getElementById('resetBtn').style.display = 'none';
+  document.getElementById('drawRing').classList.remove('primed');
+  document.getElementById('drawHint').textContent = '选择状态后抽牌，或';
+  document.getElementById('deskLabel').textContent = '选择心情 → 抽牌 → 圆弧展开推荐曲目（最多 8 首）';
+  document.querySelectorAll('.dm-btn').forEach(b=>b.classList.remove('sel'));
+}
+
+function dmPick(el) {
+  document.querySelectorAll('.dm-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); dmMood = el.dataset.mood;
+  document.getElementById('drawRing').classList.add('primed');
+}
+
+/* ══ MOBILE ══ */
+document.getElementById('todayDate').textContent =
+  new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+let chosenMood = null;
+function pickMood(el) { document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel')); el.classList.add('sel'); chosenMood=el.dataset.mood; }
+function mobileDraw() {
+  const mood = chosenMood||'cinematic';
+  const pool = SONGS.filter(s=>s.mood===mood);
+  const all  = [...pool,...SONGS.filter(s=>s.mood!==mood)];
+  const rand = seededRand(todaySeed()+mood.charCodeAt(0)*7);
+  const picks=[],seen=new Set();
+  while(picks.length<3){const i=Math.floor(rand()*all.length);if(!seen.has(i)){seen.add(i);picks.push(all[i]);}}
+  const fan=document.getElementById('revFan'); fan.innerHTML='';
+  picks.forEach(s=>{
+    const c=document.createElement('div'); c.className='r-card';
+    c.innerHTML=`<div class="r-cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+      <div class="r-badge">${s.state}</div><div class="r-name">${s.name}</div></div>`;
+    fan.appendChild(c);
+  });
+  document.getElementById('revMoodTag').textContent  = MOOD_NAMES[mood]||mood;
+  document.getElementById('fortuneText').textContent = FORTUNES[mood]||FORTUNES.cinematic;
+  document.getElementById('revEnter').textContent    = `▶ 从「${picks[0].name}」开始`;
+  document.getElementById('screenMood').style.display='none';
+  document.getElementById('screenReveal').style.display='flex';
+}
+
+/* ══ VIEW TOGGLE ══ */
+function showView(v,btn){
+  document.querySelectorAll('.tog').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('desktopView').style.display=v==='desktop'?'flex':'none';
+  document.getElementById('mobileView').style.display =v==='mobile'?'flex':'none';
+}
+</script>
+</body>
+</html>

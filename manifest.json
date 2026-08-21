@@ -1,0 +1,24 @@
+{
+  "name": "Sound States",
+  "short_name": "Sound States",
+  "description": "AI-generated sound environments for rest, focus, sleep, imagination and motion",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0e14",
+  "theme_color": "#0c0e14",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "cover-cinematic.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "cover-cinematic.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

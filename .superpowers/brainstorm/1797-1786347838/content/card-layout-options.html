@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Card Layout Options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0c0e14;
+    color: #d0d8e8;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  h1 { text-align: center; padding: 32px 0 8px; font-size: 1.3rem; color: #8aa0c0; letter-spacing: 0.12em; font-weight: 400; }
+  .instruction { text-align: center; color: #506080; font-size: 0.85rem; margin-bottom: 40px; }
+
+  /* ────── OPTION LABEL ────── */
+  .section {
+    margin: 0 auto 80px;
+    max-width: 900px;
+    padding: 0 24px;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 24px;
+  }
+  .section-label {
+    background: #1e2640;
+    border: 1px solid #2e3a5a;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: #7090c0;
+    white-space: nowrap;
+  }
+  .section-desc { color: #6080a0; font-size: 0.85rem; line-height: 1.5; }
+
+  .select-btn {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid #3a5080;
+    color: #7090c0;
+    border-radius: 20px;
+    padding: 6px 18px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .select-btn:hover, .select-btn.chosen { background: #2a3d5c; color: #a0c0e0; border-color: #5070a0; }
+  .select-btn.chosen { background: #1e3a6a; color: #80c0ff; border-color: #4080c0; }
+
+  /* ────── OPTION A: FAN ARC ────── */
+  .fan-stage {
+    position: relative;
+    height: 320px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: visible;
+  }
+  .fan-info-panel {
+    position: absolute;
+    right: 0; top: 20px;
+    width: 220px;
+    background: rgba(20,28,48,0.95);
+    border: 1px solid #2a3a5a;
+    border-radius: 12px;
+    padding: 18px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+  }
+  .fan-info-panel.visible { opacity: 1; }
+  .fan-info-panel .state-tag {
+    font-size: 0.68rem; letter-spacing: 0.12em; color: #6090c0;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .fan-info-panel .song-name { font-size: 1rem; color: #c0d4f0; margin-bottom: 6px; }
+  .fan-info-panel .song-desc { font-size: 0.78rem; color: #607090; line-height: 1.6; margin-bottom: 14px; }
+  .fan-info-panel .action-row { display: flex; gap: 8px; }
+  .fan-info-panel .btn-enter {
+    flex: 1; background: #2a4070; border: none; color: #90c0f0;
+    border-radius: 6px; padding: 7px; font-size: 0.75rem; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .fan-info-panel .btn-enter:hover { background: #3a5080; }
+  .fan-info-panel .btn-next {
+    flex: 1; background: transparent; border: 1px solid #2a3a5a; color: #607090;
+    border-radius: 6px; padding: 7px; font-size: 0.75rem; cursor: pointer;
+  }
+
+  .fan-cards {
+    position: relative;
+    width: 420px;
+    height: 280px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    margin-right: 40px;
+  }
+  .fan-card {
+    position: absolute;
+    bottom: 0;
+    width: 110px;
+    height: 170px;
+    border-radius: 10px;
+    cursor: pointer;
+    transform-origin: bottom center;
+    transition: transform 0.35s cubic-bezier(.22,.68,0,1.3), box-shadow 0.3s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .fan-card .card-cover {
+    width: 100%; height: 100%;
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fan-card .card-cover::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
+    border-radius: 10px;
+  }
+  .fan-card .card-title {
+    position: relative; z-index: 1;
+    font-size: 0.7rem; color: #d0e0f8; letter-spacing: 0.06em;
+  }
+  .fan-card:nth-child(1) { transform: rotate(-28deg) translateY(10px); }
+  .fan-card:nth-child(2) { transform: rotate(-14deg) translateY(4px); }
+  .fan-card:nth-child(3) { transform: rotate(0deg); }
+  .fan-card:nth-child(4) { transform: rotate(14deg) translateY(4px); }
+  .fan-card:nth-child(5) { transform: rotate(28deg) translateY(10px); }
+  .fan-card:hover {
+    transform: translateY(-40px) rotate(0deg) scale(1.06) !important;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.7), 0 0 30px rgba(100,160,255,0.2);
+    z-index: 10;
+  }
+
+  /* ────── OPTION B: SCATTERED ────── */
+  .scatter-stage {
+    position: relative;
+    height: 340px;
+    display: flex;
+    align-items: center;
+  }
+  .scatter-area {
+    position: relative;
+    flex: 1;
+    height: 320px;
+  }
+  .scatter-info {
+    width: 200px;
+    flex-shrink: 0;
+    background: rgba(20,28,48,0.95);
+    border: 1px solid #2a3a5a;
+    border-radius: 12px;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    margin-left: 20px;
+    height: fit-content;
+    align-self: center;
+  }
+  .scatter-info.visible { opacity: 1; }
+  .scatter-info .state-tag { font-size: 0.68rem; letter-spacing: 0.12em; color: #6090c0; text-transform: uppercase; margin-bottom: 8px; }
+  .scatter-info .song-name { font-size: 0.95rem; color: #c0d4f0; margin-bottom: 6px; }
+  .scatter-info .song-desc { font-size: 0.75rem; color: #607090; line-height: 1.6; margin-bottom: 14px; }
+  .scatter-info .btn-enter { width: 100%; background: #2a4070; border: none; color: #90c0f0; border-radius: 6px; padding: 8px; font-size: 0.75rem; cursor: pointer; margin-bottom: 6px; }
+  .scatter-info .btn-next { width: 100%; background: transparent; border: 1px solid #2a3a5a; color: #607090; border-radius: 6px; padding: 8px; font-size: 0.75rem; cursor: pointer; }
+
+  .sc {
+    position: absolute;
+    width: 100px; height: 154px;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: transform 0.3s cubic-bezier(.22,.68,0,1.3), box-shadow 0.3s;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  }
+  .sc-cover {
+    width: 100%; height: 100%;
+    border-radius: 9px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end; padding: 8px;
+    position: relative; overflow: hidden;
+  }
+  .sc-cover::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%);
+    border-radius: 9px;
+  }
+  .sc-title { position: relative; z-index: 1; font-size: 0.65rem; color: #d0e0f8; letter-spacing: 0.05em; }
+  .sc:hover {
+    transform: scale(1.1) rotate(0deg) !important;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 24px rgba(100,160,255,0.25);
+    z-index: 10;
+  }
+
+  /* ────── OPTION C: DEAL ANIMATION ────── */
+  .deal-stage {
+    position: relative;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .deal-area {
+    position: relative;
+    flex: 1;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .deal-info {
+    width: 200px;
+    flex-shrink: 0;
+    background: rgba(20,28,48,0.95);
+    border: 1px solid #2a3a5a;
+    border-radius: 12px;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.25s;
+    margin-left: 20px;
+    height: fit-content;
+    align-self: center;
+  }
+  .deal-info.visible { opacity: 1; }
+  .deal-info .state-tag { font-size: 0.68rem; letter-spacing: 0.12em; color: #6090c0; text-transform: uppercase; margin-bottom: 8px; }
+  .deal-info .song-name { font-size: 0.95rem; color: #c0d4f0; margin-bottom: 6px; }
+  .deal-info .song-desc { font-size: 0.75rem; color: #607090; line-height: 1.6; margin-bottom: 14px; }
+  .deal-info .btn-enter { width: 100%; background: #2a4070; border: none; color: #90c0f0; border-radius: 6px; padding: 8px; font-size: 0.75rem; cursor: pointer; margin-bottom: 6px; }
+  .deal-info .btn-next { width: 100%; background: transparent; border: 1px solid #2a3a5a; color: #607090; border-radius: 6px; padding: 8px; font-size: 0.75rem; cursor: pointer; }
+
+  .dc {
+    position: absolute;
+    width: 108px; height: 164px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    transition: transform 0.35s cubic-bezier(.22,.68,0,1.3), box-shadow 0.3s;
+    /* stacked initial state */
+    transform: translateX(0) rotate(0deg);
+  }
+  .dc-cover {
+    width: 100%; height: 100%;
+    border-radius: 10px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end; padding: 10px;
+    position: relative; overflow: hidden;
+  }
+  .dc-cover::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%);
+    border-radius: 10px;
+  }
+  .dc-title { position: relative; z-index: 1; font-size: 0.68rem; color: #d0e0f8; letter-spacing: 0.05em; }
+  .dc.dealt { /* dealt positions set by JS */ }
+  .dc:hover {
+    transform: translateY(-16px) scale(1.06) !important;
+    box-shadow: 0 14px 36px rgba(0,0,0,0.7), 0 0 24px rgba(100,160,255,0.22);
+    z-index: 10;
+  }
+  .deal-btn {
+    position: absolute;
+    bottom: 12px; left: 50%;
+    transform: translateX(-50%);
+    background: #1e2a42;
+    border: 1px solid #3a4a6a;
+    color: #7090c0;
+    border-radius: 20px;
+    padding: 7px 20px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    z-index: 20;
+    transition: all 0.2s;
+  }
+  .deal-btn:hover { background: #2a3a54; color: #a0c0e0; }
+
+  /* ────── SONG DATA ────── */
+</style>
+</head>
+<body>
+
+<h1>Sound States — 封面卡牌交互方案</h1>
+<p class="instruction">鼠标悬停在卡牌上查看效果，选择你喜欢的方案</p>
+
+<!-- ═══════════════════════════════ OPTION A ═══════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-label">方案 A · 扇形展开</div>
+    <div class="section-desc">卡牌以弧形扇开排列在底部，像握在手里的牌。悬停时该牌上浮，右侧出现信息面板。</div>
+    <button class="select-btn" onclick="choose(this,'A')">选这个 →</button>
+  </div>
+
+  <div style="position:relative;">
+    <div class="fan-stage">
+      <div class="fan-cards" id="fanCards">
+        <!-- cards injected by JS -->
+      </div>
+      <div class="fan-info-panel" id="fanInfo">
+        <div class="state-tag" id="fanState"></div>
+        <div class="song-name" id="fanName"></div>
+        <div class="song-desc" id="fanDesc"></div>
+        <div class="action-row">
+          <button class="btn-enter">▶ 进入聆听</button>
+          <button class="btn-next">下一张 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ OPTION B ═══════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-label">方案 B · 随机散落</div>
+    <div class="section-desc">卡牌像被随手丢在桌上，带有随机角度，无规律分布。悬停时正立放大，右侧显示信息。</div>
+    <button class="select-btn" onclick="choose(this,'B')">选这个 →</button>
+  </div>
+  <div class="scatter-stage">
+    <div class="scatter-area" id="scatterArea">
+      <!-- injected -->
+    </div>
+    <div class="scatter-info" id="scatterInfo">
+      <div class="state-tag" id="scState"></div>
+      <div class="song-name" id="scName"></div>
+      <div class="song-desc" id="scDesc"></div>
+      <button class="btn-enter">▶ 进入聆听</button>
+      <button class="btn-next">下一张 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ OPTION C ═══════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-label">方案 C · 发牌动画</div>
+    <div class="section-desc">点击「洗牌」时，卡牌从中央一张张飞出落定，像真实发牌。之后悬停每张显示信息。</div>
+    <button class="select-btn" onclick="choose(this,'C')">选这个 →</button>
+  </div>
+  <div class="deal-stage">
+    <div class="deal-area" id="dealArea">
+      <!-- injected -->
+      <button class="deal-btn" id="dealBtn" onclick="dealCards()">🃏 发牌</button>
+    </div>
+    <div class="deal-info" id="dealInfo">
+      <div class="state-tag" id="dlState"></div>
+      <div class="song-name" id="dlName"></div>
+      <div class="song-desc" id="dlDesc"></div>
+      <button class="btn-enter">▶ 进入聆听</button>
+      <button class="btn-next">下一张 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SONGS = [
+  { name: 'Dawn Scene',       desc: 'A gradual emotional rise with soft hope.',       state: 'Cinematic', grad: ['#2a3d5c','#b98a5a'] },
+  { name: 'Lonely City',      desc: 'Urban night atmosphere, emotional distance.',     state: 'Cinematic', grad: ['#1c2333','#4a5a7a'] },
+  { name: 'Slow Memory',      desc: 'Nostalgic cinematic texture, suspended feeling.', state: 'Cinematic', grad: ['#3a2c44','#7a6a8a'] },
+  { name: 'Phonk Drive',      desc: 'Heavy pulse, distorted texture, forward momentum.', state: 'Motion', grad: ['#1a0c12','#7a2030'] },
+  { name: 'Trap Energy',      desc: 'Sharper beat structure with strong low-end.',     state: 'Motion',   grad: ['#0e0c1a','#5a2a7a'] },
+  { name: 'Dark Cardio',      desc: 'Darker repetitive rhythm for intense movement.',  state: 'Motion',   grad: ['#140c0c','#6a2a2a'] },
+  { name: 'Imagined Landscape', desc: 'Wider layered world for emotional projection.', state: 'Cinematic', grad: ['#22323a','#8aa0a0'] },
+  { name: 'Ritual Pulse',     desc: 'Hypnotic percussive loop, circular tension.',     state: 'Motion',   grad: ['#160a1a','#7a3a6a'] },
+];
+
+function gradCss(g) { return `linear-gradient(150deg, ${g[0]}, ${g[1]})`; }
+
+// ─── OPTION A: FAN ───
+const fanSongs = [0,1,2,3,4].map(i => SONGS[i]);
+const fanCards = document.getElementById('fanCards');
+const fanInfo  = document.getElementById('fanInfo');
+fanSongs.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'fan-card';
+  el.innerHTML = `<div class="card-cover" style="background:${gradCss(s.grad)}">
+    <div class="card-title">${s.name}</div></div>`;
+  el.addEventListener('mouseenter', () => {
+    document.getElementById('fanState').textContent = s.state;
+    document.getElementById('fanName').textContent  = s.name;
+    document.getElementById('fanDesc').textContent  = s.desc;
+    fanInfo.classList.add('visible');
+  });
+  el.addEventListener('mouseleave', () => { fanInfo.classList.remove('visible'); });
+  fanCards.appendChild(el);
+});
+
+// ─── OPTION B: SCATTER ───
+const scSongs  = [0,1,2,3,4,5,6].map(i => SONGS[i]);
+const scArea   = document.getElementById('scatterArea');
+const scInfo   = document.getElementById('scatterInfo');
+// Random-feeling but deterministic positions
+const positions = [
+  { left: 20,  top: 30,  rot: -18 },
+  { left: 110, top: 10,  rot: 8  },
+  { left: 210, top: 50,  rot: -6 },
+  { left: 300, top: 15,  rot: 14 },
+  { left: 390, top: 55,  rot: -22 },
+  { left: 480, top: 20,  rot: 5  },
+  { left: 560, top: 60,  rot: -10 },
+];
+scSongs.forEach((s, i) => {
+  const p = positions[i] || { left: i*90, top: 40, rot: (i%3)*10-10 };
+  const el = document.createElement('div');
+  el.className = 'sc';
+  el.style.cssText = `left:${p.left}px;top:${p.top}px;transform:rotate(${p.rot}deg);`;
+  el.innerHTML = `<div class="sc-cover" style="background:${gradCss(s.grad)}">
+    <div class="sc-title">${s.name}</div></div>`;
+  el.dataset.rot = p.rot;
+  el.addEventListener('mouseenter', () => {
+    document.getElementById('scState').textContent = s.state;
+    document.getElementById('scName').textContent  = s.name;
+    document.getElementById('scDesc').textContent  = s.desc;
+    scInfo.classList.add('visible');
+  });
+  el.addEventListener('mouseleave', () => scInfo.classList.remove('visible'));
+  scArea.appendChild(el);
+});
+
+// ─── OPTION C: DEAL ───
+const dlSongs = [0,1,2,3,4,5].map(i => SONGS[i]);
+const dlArea  = document.getElementById('dealArea');
+const dlInfo  = document.getElementById('dealInfo');
+const dealPositions = [
+  { x: -200, rot: -5  },
+  { x: -108, rot: 3   },
+  { x: -6,   rot: -2  },
+  { x: 100,  rot: 6   },
+  { x: 200,  rot: -4  },
+  { x: 290,  rot: 2   },
+];
+const dealEls = [];
+dlSongs.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'dc';
+  el.innerHTML = `<div class="dc-cover" style="background:${gradCss(s.grad)}">
+    <div class="dc-title">${s.name}</div></div>`;
+  el.addEventListener('mouseenter', () => {
+    document.getElementById('dlState').textContent = s.state;
+    document.getElementById('dlName').textContent  = s.name;
+    document.getElementById('dlDesc').textContent  = s.desc;
+    dlInfo.classList.add('visible');
+  });
+  el.addEventListener('mouseleave', () => dlInfo.classList.remove('visible'));
+  dlArea.appendChild(el);
+  dealEls.push({ el, pos: dealPositions[i] });
+});
+let dealt = false;
+function dealCards() {
+  if (dealt) {
+    // reshuffle
+    dealEls.forEach(({el}) => { el.style.transition = 'transform 0.3s ease-in'; el.style.transform = 'translateX(0) rotate(0deg)'; });
+    dealt = false;
+    document.getElementById('dealBtn').textContent = '🃏 发牌';
+    return;
+  }
+  document.getElementById('dealBtn').textContent = '🔀 重新洗牌';
+  dealEls.forEach(({el, pos}, i) => {
+    setTimeout(() => {
+      el.style.transition = 'transform 0.45s cubic-bezier(.22,.68,0,1.3)';
+      el.style.transform  = `translateX(${pos.x}px) rotate(${pos.rot}deg)`;
+    }, i * 90);
+  });
+  dealt = true;
+}
+
+// ─── CHOOSE HANDLER ───
+let chosen = null;
+function choose(btn, opt) {
+  if (chosen) chosen.classList.remove('chosen');
+  btn.classList.add('chosen');
+  chosen = btn;
+  // record for event file
+  fetch('/event', { method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({type:'click', choice: opt.toLowerCase(), text: 'Option ' + opt}) }).catch(()=>{});
+}
+</script>
+</body>
+</html>

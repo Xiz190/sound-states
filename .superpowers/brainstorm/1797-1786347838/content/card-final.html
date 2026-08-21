@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Sound States — Final Layout</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #090b12;
+  color: #d0d8e8;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding: 32px 0 60px;
+  overflow-x: hidden;
+}
+h1 { font-size: 1.05rem; color: #5a7898; letter-spacing: .16em; font-weight: 400; margin-bottom: 4px; }
+.sub { font-size: .73rem; color: #2e3e50; margin-bottom: 24px; }
+
+.toggle-row { display:flex; gap:10px; margin-bottom:36px; }
+.tog { background:#0f1820; border:1px solid #263848; color:#486080; border-radius:20px; padding:6px 18px; font-size:.76rem; cursor:pointer; transition:all .18s; }
+.tog.active { background:#192e48; color:#78a8d8; border-color:#324a68; }
+
+/* ══════════════════════════════════
+   DESKTOP — circle arc (回到圆弧版)
+══════════════════════════════════ */
+#desktopView { display:flex; flex-direction:column; align-items:center; width:100%; }
+
+.stage {
+  position: relative;
+  width: 880px; height: 420px;
+  overflow: visible;
+}
+.info-panel {
+  position: absolute; right: 16px; top: 50%;
+  transform: translateY(-50%);
+  width: 194px;
+  background: rgba(10,16,28,.97);
+  border: 1px solid #1e3040; border-radius: 14px; padding: 18px;
+  opacity: 0; transition: opacity .18s; pointer-events: none; z-index: 100;
+}
+.info-panel.visible { opacity: 1; }
+.state-tag { font-size:.6rem; letter-spacing:.14em; color:#3d6880; text-transform:uppercase; display:flex; align-items:center; gap:6px; margin-bottom:9px; }
+.state-tag::before { content:''; width:5px; height:5px; border-radius:50%; background:#3d6880; flex-shrink:0; }
+.song-name { font-size:.94rem; color:#b8d0ec; font-weight:500; margin-bottom:7px; }
+.song-desc { font-size:.72rem; color:#486070; line-height:1.65; margin-bottom:15px; }
+.btn-enter { display:block;width:100%;background:#182e4e;border:none;color:#60a0d8;border-radius:8px;padding:8px;font-size:.74rem;cursor:pointer;margin-bottom:7px;transition:background .18s; }
+.btn-enter:hover { background:#203a60; }
+.btn-next  { display:block;width:100%;background:transparent;border:1px solid #1c2c3c;color:#365870;border-radius:8px;padding:7px;font-size:.72rem;cursor:pointer; }
+
+.card {
+  position: absolute;
+  border-radius: 11px; cursor: pointer;
+  transition: transform .34s cubic-bezier(.22,.68,0,1.28), box-shadow .26s ease;
+  box-shadow: 0 6px 22px rgba(0,0,0,.62);
+  will-change: transform;
+}
+.cover {
+  width:100%; height:100%; border-radius:11px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:flex-end; padding:10px;
+}
+.cover::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(to top, rgba(0,0,0,.78) 0%, transparent 56%);
+  border-radius:11px;
+}
+.badge { position:relative;z-index:1;font-size:.52rem;color:#5070a0;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px; }
+.title { position:relative;z-index:1;font-size:.63rem;color:#ccdaf5;letter-spacing:.04em;line-height:1.25; }
+
+.view-label { font-size:.67rem; color:#263040; letter-spacing:.08em; margin-top:12px; }
+
+/* ══════════════════════════════════
+   MOBILE — 今日音乐运势 (美化版)
+══════════════════════════════════ */
+#mobileView { display:none; flex-direction:column; align-items:center; }
+
+.phone-frame {
+  width:344px; height:668px;
+  border:2px solid #1e2e42; border-radius:40px;
+  background:#090b12; position:relative; overflow:hidden;
+  box-shadow: 0 24px 72px rgba(0,0,0,.9), inset 0 0 0 1px rgba(255,255,255,.03);
+}
+.phone-notch {
+  width:96px; height:20px; background:#090b12;
+  border-radius:0 0 12px 12px; margin:0 auto;
+  border-left:2px solid #1e2e42; border-right:2px solid #1e2e42; border-bottom:2px solid #1e2e42;
+  position:relative; z-index:10;
+}
+
+/* subtle ambient glow behind everything */
+.phone-frame::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(40,80,140,.12), transparent 70%);
+  pointer-events:none; z-index:0;
+}
+
+/* ── SCREEN A: mood picker ── */
+#screenMood {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  padding:16px 22px 28px; z-index:1;
+}
+.m-brand { font-size:.6rem; color:#2e4260; letter-spacing:.2em; text-transform:uppercase; text-align:center; margin-bottom:6px; margin-top:4px; }
+.m-date  { font-size:.75rem; color:#3a5878; text-align:center; margin-bottom:22px; letter-spacing:.05em; }
+
+/* moon icon */
+.moon-wrap { text-align:center; margin-bottom:18px; }
+.moon { font-size:2rem; opacity:.45; display:block; line-height:1; }
+.moon-sub { font-size:.62rem; color:#2e4260; letter-spacing:.14em; margin-top:4px; }
+
+.m-question { font-size:.82rem; color:#7a9ab8; text-align:center; margin-bottom:18px; line-height:1.55; letter-spacing:.03em; }
+
+.mood-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px; }
+.mood-btn {
+  background:#0d1624; border:1px solid #1c2c3e;
+  border-radius:12px; padding:14px 8px;
+  cursor:pointer; text-align:center;
+  transition:all .22s; position:relative; overflow:hidden;
+}
+.mood-btn::before {
+  content:''; position:absolute; inset:0; opacity:0;
+  background: radial-gradient(circle at 50% 0%, rgba(60,120,180,.15), transparent 70%);
+  transition:opacity .22s;
+}
+.mood-btn:hover::before, .mood-btn.sel::before { opacity:1; }
+.mood-btn.sel { border-color:#2e4a68; background:#101e30; }
+.mood-icon { font-size:1.3rem; margin-bottom:5px; }
+.mood-lbl  { font-size:.63rem; color:#4a6888; letter-spacing:.06em; line-height:1.35; }
+.mood-state { font-size:.54rem; color:#2e4058; letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
+
+.draw-btn {
+  width:100%;
+  background: linear-gradient(135deg, #162848 0%, #1e3660 100%);
+  border:1px solid #2a4268; color:#78b0e8;
+  border-radius:14px; padding:15px;
+  font-size:.8rem; cursor:pointer; letter-spacing:.08em;
+  transition:all .22s;
+  box-shadow: 0 4px 24px rgba(24,56,100,.35), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.draw-btn:hover {
+  background:linear-gradient(135deg,#1e3660,#263e70);
+  box-shadow:0 6px 32px rgba(30,70,130,.45);
+}
+.draw-btn:active { transform:scale(.98); }
+
+/* ── SCREEN B: reveal ── */
+#screenReveal {
+  position:absolute; inset:0; z-index:1;
+  display:none; flex-direction:column; align-items:center;
+  padding:16px 22px 22px;
+}
+.rev-brand   { font-size:.58rem; color:#2e4260; letter-spacing:.2em; text-transform:uppercase; margin-bottom:2px; margin-top:4px; align-self:center; }
+.rev-heading { font-size:.76rem; color:#3a5a78; margin-bottom:3px; align-self:center; letter-spacing:.06em; }
+.rev-mood-tag { font-size:.6rem; color:#2a4258; letter-spacing:.12em; text-transform:uppercase; align-self:center; margin-bottom:16px; }
+
+/* fan of 3 cards */
+.reveal-fan {
+  position:relative; width:260px; height:210px;
+  margin-bottom:16px; flex-shrink:0;
+}
+.r-card {
+  position:absolute;
+  width:104px; height:160px;
+  border-radius:12px; cursor:pointer;
+  transform-origin: 50% 112%;
+  transition:transform .32s cubic-bezier(.22,.68,0,1.28), box-shadow .24s;
+  box-shadow: 0 8px 28px rgba(0,0,0,.72);
+}
+.r-cover {
+  width:100%; height:100%; border-radius:12px; overflow:hidden;
+  position:relative; display:flex; flex-direction:column;
+  justify-content:flex-end; padding:10px;
+}
+.r-cover::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 55%);
+  border-radius:12px;
+}
+.r-badge { position:relative;z-index:1;font-size:.5rem;color:#5070a0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px; }
+.r-name  { position:relative;z-index:1;font-size:.62rem;color:#c0d0ec;line-height:1.2; }
+/* fan positions */
+.r-card:nth-child(1) { left:6px;   bottom:0; transform:rotate(-20deg); }
+.r-card:nth-child(2) { left:78px;  bottom:0; transform:rotate(0deg);   z-index:5; }
+.r-card:nth-child(3) { left:150px; bottom:0; transform:rotate(20deg); }
+.r-card:nth-child(1):hover { transform:rotate(-20deg) translateY(-18px) scale(1.06) !important; z-index:10; box-shadow:0 14px 36px rgba(0,0,0,.85),0 0 18px rgba(60,120,200,.18); }
+.r-card:nth-child(2):hover { transform:rotate(0deg)   translateY(-18px) scale(1.06) !important; z-index:10; box-shadow:0 14px 36px rgba(0,0,0,.85),0 0 18px rgba(60,120,200,.18); }
+.r-card:nth-child(3):hover { transform:rotate(20deg)  translateY(-18px) scale(1.06) !important; z-index:10; box-shadow:0 14px 36px rgba(0,0,0,.85),0 0 18px rgba(60,120,200,.18); }
+
+/* fortune */
+.fortune-box {
+  width:100%;
+  background:#0c1622; border:1px solid #1a2a3a;
+  border-radius:12px; padding:14px 16px; margin-bottom:14px;
+}
+.fortune-label { font-size:.54rem; color:#2c4258; letter-spacing:.16em; text-transform:uppercase; margin-bottom:7px; display:flex; align-items:center; gap:6px; }
+.fortune-label::before { content:''; display:inline-block; width:16px; height:1px; background:#2c4258; }
+.fortune-text  { font-size:.72rem; color:#4e6a84; line-height:1.72; }
+
+.rev-enter {
+  display:block; width:100%;
+  background:linear-gradient(135deg,#162848,#1e3660);
+  border:1px solid #2a4268; color:#70a8e0;
+  border-radius:14px; padding:13px; font-size:.78rem;
+  cursor:pointer; letter-spacing:.05em; margin-bottom:9px;
+  box-shadow:0 4px 20px rgba(20,50,90,.3);
+  transition:background .2s;
+}
+.rev-enter:hover { background:linear-gradient(135deg,#1e3660,#263e70); }
+.rev-back  {
+  display:block; width:100%; background:transparent;
+  border:1px solid #161e2c; color:#2c3e50;
+  border-radius:12px; padding:9px; font-size:.7rem; cursor:pointer;
+  transition:border-color .18s, color .18s;
+}
+.rev-back:hover { border-color:#263040; color:#405060; }
+
+/* divider line */
+.rev-divider { width:40px; height:1px; background:#1a2a3a; margin:0 auto 10px; }
+</style>
+</head>
+<body>
+<h1>Sound States</h1>
+<p class="sub">选择查看桌面端或移动端版本</p>
+<div class="toggle-row">
+  <button class="tog active" onclick="showView('desktop',this)">🖥 桌面端 — 圆弧排列</button>
+  <button class="tog"        onclick="showView('mobile', this)">🃏 移动端 — 今日音乐运势</button>
+</div>
+
+<!-- ════════ DESKTOP ════════ -->
+<div id="desktopView">
+  <div class="stage" id="stage">
+    <div class="info-panel" id="infoPanel">
+      <div class="state-tag" id="iState"></div>
+      <div class="song-name"  id="iName"></div>
+      <div class="song-desc"  id="iDesc"></div>
+      <button class="btn-enter">▶ 进入聆听</button>
+      <button class="btn-next">下一张 →</button>
+    </div>
+  </div>
+  <p class="view-label">圆弧位置排列 · 悬停突出 · 右侧出现简介</p>
+</div>
+
+<!-- ════════ MOBILE ════════ -->
+<div id="mobileView">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+
+    <!-- Screen A -->
+    <div id="screenMood">
+      <div class="m-brand">Sound States</div>
+      <div class="m-date" id="todayDate"></div>
+      <div class="moon-wrap">
+        <span class="moon">☽</span>
+        <span class="moon-sub">今日音乐运势</span>
+      </div>
+      <div class="m-question">此刻，你想进入哪种状态？</div>
+      <div class="mood-grid">
+        <div class="mood-btn" data-mood="relax" onclick="pickMood(this)">
+          <div class="mood-icon">🌙</div>
+          <div class="mood-lbl">慢下来</div>
+          <div class="mood-state">Relax</div>
+        </div>
+        <div class="mood-btn" data-mood="focus" onclick="pickMood(this)">
+          <div class="mood-icon">🔮</div>
+          <div class="mood-lbl">沉进去</div>
+          <div class="mood-state">Focus</div>
+        </div>
+        <div class="mood-btn" data-mood="cinematic" onclick="pickMood(this)">
+          <div class="mood-icon">✨</div>
+          <div class="mood-lbl">想象一些东西</div>
+          <div class="mood-state">Cinematic</div>
+        </div>
+        <div class="mood-btn" data-mood="motion" onclick="pickMood(this)">
+          <div class="mood-icon">⚡</div>
+          <div class="mood-lbl">动起来</div>
+          <div class="mood-state">Motion</div>
+        </div>
+      </div>
+      <button class="draw-btn" onclick="doDraw()">☽ &nbsp;今日抽牌</button>
+    </div>
+
+    <!-- Screen B -->
+    <div id="screenReveal">
+      <div class="rev-brand">Sound States</div>
+      <div class="rev-heading">今日推荐</div>
+      <div class="rev-mood-tag" id="revMoodTag"></div>
+      <div class="reveal-fan" id="revFan"></div>
+      <div class="rev-divider"></div>
+      <div class="fortune-box">
+        <div class="fortune-label">今日频率</div>
+        <div class="fortune-text" id="fortuneText"></div>
+      </div>
+      <button class="rev-enter" id="revEnter">▶ 开始聆听</button>
+      <button class="rev-back"  onclick="goBack()">↩ 重新选择状态</button>
+    </div>
+  </div>
+  <p class="view-label" style="margin-top:16px">移动端 · 选状态 → 今日抽牌 → 3 首推荐</p>
+</div>
+
+<script>
+const SONGS = [
+  { name:'Dawn Scene',         desc:'缓缓升起的情绪，带着柔和的希望与开阔感。',     state:'Cinematic', mood:'cinematic', grad:['#2a3d5c','#b98a5a'] },
+  { name:'Lonely City',        desc:'城市夜晚的氛围，带着情绪上的疏离感。',          state:'Cinematic', mood:'cinematic', grad:['#1c2333','#4a5a7a'] },
+  { name:'Slow Memory',        desc:'怀旧的电影质感，带着悬停般的感觉。',            state:'Cinematic', mood:'cinematic', grad:['#3a2c44','#7a6a8a'] },
+  { name:'Imagined Landscape', desc:'更开阔、更有层次的声音世界，供情绪投射。',      state:'Cinematic', mood:'cinematic', grad:['#22323a','#8aa0a0'] },
+  { name:'Glass Grid',         desc:'透明结构中的低频呼吸，悬浮感。',               state:'Cinematic', mood:'cinematic', grad:['#1e3040','#6090b0'] },
+  { name:'Drift Signal',       desc:'一个渐渐浮出水面的远方信号。',                  state:'Cinematic', mood:'cinematic', grad:['#2c2240','#805a80'] },
+  { name:'Phonk Drive',        desc:'沉重的脉冲、失真的纹理与向前的冲劲。',          state:'Motion',    mood:'motion',    grad:['#1a0c12','#7a2030'] },
+  { name:'Trap Energy',        desc:'更锐利的节拍结构，强劲的低频。',               state:'Motion',    mood:'motion',    grad:['#0e0c1a','#5a2a7a'] },
+  { name:'Ritual Pulse',       desc:'催眠般的打击循环，带着环形的张力。',            state:'Motion',    mood:'motion',    grad:['#160a1a','#7a3a6a'] },
+  { name:'Dark Cardio',        desc:'更暗的重复节奏，适合高强度运动。',             state:'Motion',    mood:'motion',    grad:['#140c0c','#6a2a2a'] },
+  { name:'Soft Rain',          desc:'柔和的多层雨声，让你慢下来。',                 state:'Relax',     mood:'relax',     grad:['#1a2a3a','#4a7080'] },
+  { name:'Evening Still',      desc:'安静的房间底噪，带着一丝暖意。',               state:'Relax',     mood:'relax',     grad:['#2a2030','#6a5a70'] },
+  { name:'Deep Focus',         desc:'稳定的低鸣，最小的声音运动。',                 state:'Focus',     mood:'focus',     grad:['#102020','#2a5a5a'] },
+  { name:'White Noise Field',  desc:'带纹理的白噪声，认知缓冲层。',                 state:'Focus',     mood:'focus',     grad:['#1a2428','#3a6060'] },
+];
+
+const FORTUNES = {
+  relax:     '今天不需要做很多。声音会在这里陪着你，不要求任何回应。慢下来就好。',
+  focus:     '今天适合只做一件事。把这个声音当作一堵墙，把其余的东西挡在外面。',
+  cinematic: '今天你的感受力很强。进去，让声音把你带到某个你自己也不确定的地方。',
+  motion:    '今天的能量正在上升。把这个节奏交给身体，让它决定接下来怎么走。',
+  sleep:     '今晚可以放下一切。这几首会陪你从高刺激慢慢降落，直到你睡着。',
+};
+
+const MOOD_NAMES = {
+  relax:'放松 Relax', focus:'专注 Focus', cinematic:'沉浸 Cinematic', motion:'运动 Motion', sleep:'睡前 Sleep'
+};
+
+/* ══ DESKTOP: circle arc ══ */
+const stage  = document.getElementById('stage');
+const panel  = document.getElementById('infoPanel');
+let panelTimer = null;
+
+(function buildDesktop() {
+  const songs = SONGS;
+  const N = songs.length;
+  const W = 88, H = 134;
+
+  /* Circle: center placed below stage so only top arc is visible */
+  const CX = 340;    // shift left to leave room for info panel
+  const CY = 700;    // well below 420px stage
+  const R  = 520;    // large radius = gently curved arc
+
+  /* Arc: from ~148° to ~32° (standard math coords) = left to right across top */
+  const A1 = 148 * Math.PI / 180;
+  const A2 =  32 * Math.PI / 180;
+
+  for (let i = 0; i < N; i++) {
+    const s     = songs[i];
+    const frac  = N === 1 ? 0.5 : i / (N - 1);
+    const theta = A1 + (A2 - A1) * frac;
+
+    const x = CX + R * Math.cos(theta) - W / 2;
+    const y = CY - R * Math.sin(theta) - H;
+
+    /* card rotation: tangent to circle (faces outward) */
+    const rotDeg = 90 - theta * 180 / Math.PI;
+
+    /* outward lift vector (away from circle center) */
+    const liftX = Math.cos(theta) * 40;
+    const liftY = -Math.sin(theta) * 40;
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = `width:${W}px;height:${H}px;left:${x}px;top:${y}px;z-index:${i+1};transform:rotate(${rotDeg}deg)`;
+    card.innerHTML = `<div class="cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+      <div class="badge">${s.state}</div><div class="title">${s.name}</div></div>`;
+
+    let rt = null;
+    card.addEventListener('mouseenter', () => {
+      clearTimeout(rt);
+      card.style.transform = `rotate(${rotDeg * 0.07}deg) translate(${liftX}px,${liftY}px)`;
+      card.style.boxShadow = '0 20px 48px rgba(0,0,0,.82), 0 0 28px rgba(70,130,220,.15)';
+      card.style.zIndex    = 30;
+      clearTimeout(panelTimer);
+      document.getElementById('iState').textContent = s.state;
+      document.getElementById('iName').textContent  = s.name;
+      document.getElementById('iDesc').textContent  = s.desc;
+      panel.classList.add('visible');
+    });
+    card.addEventListener('mouseleave', () => {
+      rt = setTimeout(() => {
+        card.style.transform = `rotate(${rotDeg}deg)`;
+        card.style.boxShadow = '';
+        card.style.zIndex    = i + 1;
+      }, 80);
+      panelTimer = setTimeout(() => panel.classList.remove('visible'), 100);
+    });
+    stage.appendChild(card);
+  }
+})();
+
+/* ══ MOBILE ══ */
+const now = new Date();
+document.getElementById('todayDate').textContent =
+  now.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+let chosenMood = null;
+function pickMood(el) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  chosenMood = el.dataset.mood;
+}
+
+function seededRand(seed) {
+  let s = seed;
+  return () => { s=(s*9301+49297)%233280; return s/233280; };
+}
+function todaySeed() {
+  const d=new Date(); return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+}
+
+function doDraw() {
+  const mood  = chosenMood || 'cinematic';
+  const pool  = SONGS.filter(s => s.mood === mood);
+  const extra = SONGS.filter(s => s.mood !== mood); // fallback if pool too small
+  const all   = [...pool, ...extra];
+  const rand  = seededRand(todaySeed() + mood.charCodeAt(0) * 7);
+  const picks = [];
+  const seen  = new Set();
+  while (picks.length < 3) {
+    const i = Math.floor(rand() * all.length);
+    if (!seen.has(i)) { seen.add(i); picks.push(all[i]); }
+  }
+
+  const fan = document.getElementById('revFan');
+  fan.innerHTML = '';
+  picks.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'r-card';
+    c.innerHTML = `<div class="r-cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+      <div class="r-badge">${s.state}</div><div class="r-name">${s.name}</div></div>`;
+    fan.appendChild(c);
+  });
+
+  document.getElementById('revMoodTag').textContent = MOOD_NAMES[mood] || mood;
+  document.getElementById('fortuneText').textContent = FORTUNES[mood] || FORTUNES.cinematic;
+  document.getElementById('revEnter').textContent = `▶ 从「${picks[0].name}」开始`;
+
+  document.getElementById('screenMood').style.display   = 'none';
+  document.getElementById('screenReveal').style.display = 'flex';
+}
+function goBack() {
+  document.getElementById('screenReveal').style.display = 'none';
+  document.getElementById('screenMood').style.display   = 'flex';
+}
+
+/* ══ VIEW TOGGLE ══ */
+function showView(v,btn) {
+  document.querySelectorAll('.tog').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('desktopView').style.display = v==='desktop'?'flex':'none';
+  document.getElementById('mobileView').style.display  = v==='mobile' ?'flex':'none';
+}
+</script>
+</body>
+</html>

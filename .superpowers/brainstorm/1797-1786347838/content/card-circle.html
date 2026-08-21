@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Circle Arc + Mobile</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0c0e14;
+    color: #d0d8e8;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: 36px 0 60px;
+    overflow-x: hidden;
+  }
+  h1 { font-size: 1.05rem; color: #6080a0; letter-spacing: 0.14em; font-weight: 400; margin-bottom: 5px; }
+  .sub { font-size: 0.76rem; color: #3a4a60; margin-bottom: 26px; }
+
+  /* view toggle */
+  .toggle-row { display:flex; gap:10px; margin-bottom:36px; }
+  .tog { background:#141c2e; border:1px solid #2a3a54; color:#5070a0; border-radius:20px; padding:6px 18px; font-size:0.76rem; cursor:pointer; transition:all .18s; }
+  .tog.active { background:#1e3460; color:#80b0e8; border-color:#3a5480; }
+
+  /* ═══════════ DESKTOP VIEW ═══════════ */
+  #desktopView { display:flex; flex-direction:column; align-items:center; }
+
+  .stage {
+    position: relative;
+    width: 860px;
+    height: 400px;
+    overflow: visible;
+  }
+  /* info panel */
+  .info-panel {
+    position: absolute; right: 14px; top: 50%;
+    transform: translateY(-50%);
+    width: 194px;
+    background: rgba(14,20,36,0.97);
+    border: 1px solid #24364e; border-radius: 14px; padding: 18px;
+    opacity: 0; transition: opacity .18s ease; pointer-events: none;
+    z-index: 100;
+  }
+  .info-panel.visible { opacity: 1; }
+  .state-tag { font-size:.62rem; letter-spacing:.13em; color:#4a7090; text-transform:uppercase; display:flex; align-items:center; gap:6px; margin-bottom:9px; }
+  .state-tag::before { content:''; width:5px; height:5px; border-radius:50%; background:#4a7090; flex-shrink:0; }
+  .song-name { font-size:.95rem; color:#c8daf0; font-weight:500; margin-bottom:7px; }
+  .song-desc { font-size:.73rem; color:#506070; line-height:1.65; margin-bottom:16px; }
+  .btn-enter { display:block; width:100%; background:#1e3460; border:none; color:#70aae8; border-radius:8px; padding:8px; font-size:.75rem; cursor:pointer; margin-bottom:7px; transition:background .18s; }
+  .btn-enter:hover { background:#2a4270; }
+  .btn-next { display:block; width:100%; background:transparent; border:1px solid #1e2e40; color:#3e5870; border-radius:8px; padding:7px; font-size:.73rem; cursor:pointer; }
+
+  .card {
+    position: absolute;
+    border-radius: 11px; cursor: pointer;
+    transition: transform .34s cubic-bezier(.22,.68,0,1.28), box-shadow .26s ease;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    will-change: transform;
+  }
+  .cover {
+    width:100%; height:100%; border-radius:11px;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:flex-end; padding:9px;
+  }
+  .cover::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,0.76) 0%, transparent 56%);
+    border-radius:11px;
+  }
+  .badge { position:relative; z-index:1; font-size:.54rem; color:#5880a8; letter-spacing:.12em; text-transform:uppercase; margin-bottom:2px; }
+  .title { position:relative; z-index:1; font-size:.64rem; color:#ccdaf5; letter-spacing:.04em; line-height:1.25; }
+
+  .hint-desktop { font-size:.68rem; color:#263040; letter-spacing:.08em; margin-top:14px; }
+
+  /* ═══════════ MOBILE VIEW ═══════════ */
+  #mobileView { display:none; flex-direction:column; align-items:center; }
+
+  .phone-frame {
+    width: 340px; height: 620px;
+    border: 2px solid #2a3a54; border-radius: 36px;
+    background: #0c0e14; position: relative; overflow: hidden;
+    box-shadow: 0 16px 56px rgba(0,0,0,0.7);
+  }
+  .phone-notch {
+    width: 110px; height: 22px;
+    background: #0c0e14; border-bottom-left-radius: 14px; border-bottom-right-radius: 14px;
+    margin: 0 auto; position:relative; z-index:10;
+    border-left:2px solid #2a3a54; border-right:2px solid #2a3a54; border-bottom:2px solid #2a3a54;
+  }
+
+  /* header */
+  .m-header { padding: 12px 20px 8px; }
+  .m-title { font-size:.9rem; color:#8aa4c0; letter-spacing:.12em; font-weight:400; }
+  .m-sub   { font-size:.65rem; color:#3a4a60; margin-top:2px; }
+
+  /* swipe row */
+  .m-row-label { padding: 16px 20px 8px; font-size:.6rem; color:#3a5070; letter-spacing:.12em; text-transform:uppercase; }
+  .m-scroll {
+    display: flex; gap: 10px;
+    overflow-x: auto; padding: 4px 20px 14px;
+    scrollbar-width: none;
+  }
+  .m-scroll::-webkit-scrollbar { display:none; }
+  .m-card {
+    flex-shrink: 0; width: 80px; height: 120px;
+    border-radius: 9px; cursor: pointer;
+    transition: transform .22s ease, box-shadow .2s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+    position: relative;
+  }
+  .m-card.active { transform: translateY(-10px) scale(1.05); box-shadow: 0 10px 28px rgba(0,0,0,0.7), 0 0 18px rgba(80,140,220,.2); z-index:5; }
+  .m-cover {
+    width:100%; height:100%; border-radius:9px;
+    position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:flex-end; padding:7px;
+  }
+  .m-cover::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,0.76) 0%, transparent 55%);
+    border-radius:9px;
+  }
+  .m-badge { position:relative; z-index:1; font-size:.48rem; color:#5880a8; letter-spacing:.1em; text-transform:uppercase; margin-bottom:2px; }
+  .m-name  { position:relative; z-index:1; font-size:.56rem; color:#ccdaf5; line-height:1.2; }
+
+  /* bottom sheet */
+  .m-sheet {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(14,20,38,0.98);
+    border-top: 1px solid #2a3a54;
+    border-top-left-radius: 20px; border-top-right-radius: 20px;
+    padding: 18px 20px 24px;
+    transform: translateY(100%);
+    transition: transform .3s cubic-bezier(.22,.68,0,1.1);
+    z-index: 20;
+  }
+  .m-sheet.open { transform: translateY(0); }
+  .m-sheet-handle {
+    width: 32px; height: 3px; background: #2a3a54; border-radius: 2px;
+    margin: 0 auto 14px;
+  }
+  .m-sheet-state { font-size:.6rem; color:#4a7090; letter-spacing:.13em; text-transform:uppercase; margin-bottom:6px; }
+  .m-sheet-name  { font-size:1rem; color:#c8daf0; font-weight:500; margin-bottom:6px; }
+  .m-sheet-desc  { font-size:.72rem; color:#506070; line-height:1.6; margin-bottom:14px; }
+  .m-btn-enter   { display:block; width:100%; background:#1e3460; border:none; color:#70aae8; border-radius:10px; padding:11px; font-size:.78rem; cursor:pointer; margin-bottom:8px; }
+  .m-btn-close   { display:block; width:100%; background:transparent; border:1px solid #1e2e40; color:#3e5870; border-radius:10px; padding:9px; font-size:.74rem; cursor:pointer; }
+
+  .hint-mobile { font-size:.68rem; color:#263040; letter-spacing:.08em; margin-top:18px; }
+
+  /* label below views */
+  .view-label { font-size:.7rem; color:#3a5070; margin-top:10px; letter-spacing:.08em; }
+</style>
+</head>
+<body>
+
+<h1>Sound States</h1>
+<p class="sub">选择查看桌面端或移动端版本</p>
+
+<div class="toggle-row">
+  <button class="tog active" onclick="showView('desktop',this)">🖥 桌面端 — 圆弧排列</button>
+  <button class="tog"        onclick="showView('mobile', this)">📱 移动端 — 滑动选卡</button>
+</div>
+
+<!-- ════════════ DESKTOP ════════════ -->
+<div id="desktopView">
+  <div class="stage" id="stage">
+    <div class="info-panel" id="infoPanel">
+      <div class="state-tag" id="iState"></div>
+      <div class="song-name"  id="iName"></div>
+      <div class="song-desc"  id="iDesc"></div>
+      <button class="btn-enter">▶ 进入聆听</button>
+      <button class="btn-next">下一张 →</button>
+    </div>
+  </div>
+  <p class="hint-desktop">悬停任意封面 · 右侧出现简介</p>
+  <p class="view-label">桌面端 · 圆弧位置排列 · 悬停交互</p>
+</div>
+
+<!-- ════════════ MOBILE ════════════ -->
+<div id="mobileView">
+  <div class="phone-frame" id="phoneFrame">
+    <div class="phone-notch"></div>
+    <div class="m-header">
+      <div class="m-title">Sound States</div>
+      <div class="m-sub">点击封面选择</div>
+    </div>
+    <div class="m-row-label">Cinematic</div>
+    <div class="m-scroll" id="mRowA"></div>
+    <div class="m-row-label">Motion</div>
+    <div class="m-scroll" id="mRowB"></div>
+    <div class="m-sheet" id="mSheet">
+      <div class="m-sheet-handle"></div>
+      <div class="m-sheet-state" id="msState"></div>
+      <div class="m-sheet-name"  id="msName"></div>
+      <div class="m-sheet-desc"  id="msDesc"></div>
+      <button class="m-btn-enter">▶ 进入聆听</button>
+      <button class="m-btn-close" onclick="closeSheet()">✕ 关闭</button>
+    </div>
+  </div>
+  <p class="hint-mobile">点击封面 → 底部弹出简介 · 滑动浏览更多</p>
+  <p class="view-label">移动端 · 分 State 横向滚动 · 点击底部弹层</p>
+</div>
+
+<script>
+/* ── SONG POOL ── */
+const SONGS = [
+  { name:'Dawn Scene',         desc:'Gradual emotional rise with soft hope.',    state:'Cinematic', grad:['#2a3d5c','#b98a5a'] },
+  { name:'Lonely City',        desc:'Urban night, distance and isolation.',       state:'Cinematic', grad:['#1c2333','#4a5a7a'] },
+  { name:'Slow Memory',        desc:'Nostalgic texture, suspended feeling.',      state:'Cinematic', grad:['#3a2c44','#7a6a8a'] },
+  { name:'Imagined Landscape', desc:'Wider layered world for projection.',         state:'Cinematic', grad:['#22323a','#8aa0a0'] },
+  { name:'Glass Grid',         desc:'Transparent structures, low-freq breath.',   state:'Cinematic', grad:['#1e3040','#6090b0'] },
+  { name:'Drift Signal',       desc:'A distant carrier wave surfacing.',           state:'Cinematic', grad:['#2c2240','#805a80'] },
+  { name:'Phonk Drive',        desc:'Heavy pulse, distorted texture.',             state:'Motion',    grad:['#1a0c12','#7a2030'] },
+  { name:'Trap Energy',        desc:'Sharp beat, strong low-end presence.',        state:'Motion',    grad:['#0e0c1a','#5a2a7a'] },
+  { name:'Ritual Pulse',       desc:'Hypnotic loop with circular tension.',        state:'Motion',    grad:['#160a1a','#7a3a6a'] },
+  { name:'Dark Cardio',        desc:'Repetitive rhythm for intense movement.',     state:'Motion',    grad:['#140c0c','#6a2a2a'] },
+  { name:'Soft Rain',          desc:'Layered water texture, no beat.',             state:'Relax',     grad:['#1a2a3a','#4a7080'] },
+  { name:'Evening Still',      desc:'Quiet room tone with faint warmth.',          state:'Relax',     grad:['#2a2030','#6a5a70'] },
+];
+
+/* ══════════════ DESKTOP: circle arc ══════════════ */
+const stage  = document.getElementById('stage');
+const panel  = document.getElementById('infoPanel');
+let panelTimer = null;
+
+(function buildDesktop() {
+  const N  = SONGS.length;
+  const W  = 90, H = 136;
+
+  /* Circle geometry:
+     Center is placed BELOW the stage so only the top arc is visible.
+     This gives the "cards arranged on a circle rim" look.   */
+  const CX = 330;           // circle centre x (shift left to leave room for info panel)
+  const CY = 680;           // circle centre y (well below the 400px stage)
+  const R  = 500;           // radius — larger = flatter arc, more "spread"
+
+  /* Arc spans from angle A1 to A2 (standard math: 0=east, CCW positive)
+     We want top-left → top → top-right:  roughly 145° down to 35°        */
+  const A1 = (145 * Math.PI) / 180;
+  const A2 = ( 35 * Math.PI) / 180;
+
+  for (let i = 0; i < N; i++) {
+    const s    = SONGS[i];
+    const frac = N === 1 ? 0.5 : i / (N - 1);
+    // interpolate angle from A1 to A2 (A1 > A2 going CW)
+    const theta = A1 + (A2 - A1) * frac;
+
+    const x = CX + R * Math.cos(theta) - W / 2;
+    const y = CY - R * Math.sin(theta) - H;    // CSS y is flipped
+
+    // Card rotation: perpendicular to radius, facing outward
+    // At theta=90° (top) card is upright. CSS rotation = -(theta-90°) = 90-theta in deg
+    const rotDeg = 90 - theta * (180 / Math.PI);
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.cssText = `width:${W}px;height:${H}px;left:${x}px;top:${y}px;z-index:${i+1};transform:rotate(${rotDeg}deg)`;
+    card.innerHTML = `<div class="cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+      <div class="badge">${s.state}</div><div class="title">${s.name}</div></div>`;
+
+    /* outward lift direction: opposite of radius vector toward center */
+    const dx = Math.cos(theta) * 38;
+    const dy = -Math.sin(theta) * 38;   // flip y for CSS
+
+    let restoreTimer = null;
+    card.addEventListener('mouseenter', () => {
+      clearTimeout(restoreTimer);
+      card.style.transform = `rotate(${rotDeg * 0.08}deg) translate(${dx}px,${dy}px)`;
+      card.style.boxShadow = '0 18px 44px rgba(0,0,0,0.8), 0 0 26px rgba(80,140,230,0.16)';
+      card.style.zIndex    = 30;
+      clearTimeout(panelTimer);
+      document.getElementById('iState').textContent = s.state;
+      document.getElementById('iName').textContent  = s.name;
+      document.getElementById('iDesc').textContent  = s.desc;
+      panel.classList.add('visible');
+    });
+    card.addEventListener('mouseleave', () => {
+      restoreTimer = setTimeout(() => {
+        card.style.transform = `rotate(${rotDeg}deg)`;
+        card.style.boxShadow = '';
+        card.style.zIndex    = i + 1;
+      }, 80);
+      panelTimer = setTimeout(() => panel.classList.remove('visible'), 100);
+    });
+    stage.appendChild(card);
+  }
+})();
+
+/* ══════════════ MOBILE: rows + bottom sheet ══════════════ */
+function buildMobileRow(containerId, songs) {
+  const el = document.getElementById(containerId);
+  songs.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'm-card';
+    card.innerHTML = `<div class="m-cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+      <div class="m-badge">${s.state}</div><div class="m-name">${s.name}</div></div>`;
+    card.addEventListener('click', () => openSheet(s, card));
+    el.appendChild(card);
+  });
+}
+buildMobileRow('mRowA', SONGS.filter(s => s.state === 'Cinematic'));
+buildMobileRow('mRowB', SONGS.filter(s => s.state === 'Motion'));
+
+let activeCard = null;
+function openSheet(s, card) {
+  if (activeCard) activeCard.classList.remove('active');
+  activeCard = card;
+  card.classList.add('active');
+  document.getElementById('msState').textContent = s.state;
+  document.getElementById('msName').textContent  = s.name;
+  document.getElementById('msDesc').textContent  = s.desc;
+  document.getElementById('mSheet').classList.add('open');
+}
+function closeSheet() {
+  document.getElementById('mSheet').classList.remove('open');
+  if (activeCard) { activeCard.classList.remove('active'); activeCard = null; }
+}
+
+/* ══════════════ VIEW TOGGLE ══════════════ */
+function showView(v, btn) {
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('desktopView').style.display = v === 'desktop' ? 'flex' : 'none';
+  document.getElementById('mobileView').style.display  = v === 'mobile'  ? 'flex' : 'none';
+}
+</script>
+</body>
+</html>

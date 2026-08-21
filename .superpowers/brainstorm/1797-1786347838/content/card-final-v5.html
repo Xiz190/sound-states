@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Sound States — v5</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #090b12;
+  color: #d0d8e8;
+  font-family: -apple-system, 'PingFang SC', sans-serif;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 28px 0 60px;
+  overflow-x: hidden;
+}
+h1 { font-size: 1rem; color: #4a6888; letter-spacing:.18em; font-weight:400; margin-bottom:3px; }
+.sub { font-size:.7rem; color:#263040; margin-bottom:20px; }
+.toggle-row { display:flex; gap:8px; margin-bottom:28px; }
+.tog { background:#0f1820; border:1px solid #243444; color:#405878; border-radius:20px; padding:5px 16px; font-size:.72rem; cursor:pointer; transition:all .18s; }
+.tog.active { background:#182c46; color:#70a0d0; border-color:#2e4866; }
+
+/* ════════════════════════════════
+   DESKTOP
+════════════════════════════════ */
+#desktopView { display:flex; flex-direction:column; align-items:center; width:100%; gap:0; }
+
+/* card stage — zero height until open */
+.stage-outer {
+  width: 880px;
+  height: 0;
+  overflow: visible;
+  transition: height .5s ease;
+  position: relative;
+}
+.stage-outer.open { height: 460px; }
+
+.stage {
+  position: absolute;
+  top: 0; left: 0;
+  width: 880px; height: 400px;
+  overflow: visible;
+}
+
+/* info panel */
+.info-panel {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  width: 192px;
+  background: rgba(10,16,28,.97);
+  border: 1px solid #1e3040; border-radius: 14px; padding: 18px;
+  opacity: 0; transition: opacity .18s; pointer-events: none; z-index: 100;
+}
+.info-panel.visible { opacity: 1; }
+.state-tag { font-size:.58rem; letter-spacing:.14em; color:#3d6880; text-transform:uppercase; display:flex; align-items:center; gap:5px; margin-bottom:8px; }
+.state-tag::before { content:''; width:4px; height:4px; border-radius:50%; background:#3d6880; flex-shrink:0; }
+.song-name { font-size:.9rem; color:#b8d0ec; font-weight:500; margin-bottom:6px; }
+.song-desc { font-size:.7rem; color:#486070; line-height:1.65; margin-bottom:14px; }
+.rec-badge { display:inline-block; font-size:.5rem; color:#6090c0; letter-spacing:.1em; background:#0f2030; border:1px solid #1e3a52; border-radius:4px; padding:2px 6px; margin-bottom:8px; text-transform:uppercase; }
+.btn-enter { display:block;width:100%;background:#182e4e;border:none;color:#60a0d8;border-radius:8px;padding:8px;font-size:.72rem;cursor:pointer;margin-bottom:6px;transition:background .18s; }
+.btn-enter:hover { background:#203a60; }
+.btn-next  { display:block;width:100%;background:transparent;border:1px solid #1c2c3c;color:#365870;border-radius:8px;padding:6px;font-size:.7rem;cursor:pointer; }
+
+/* cards */
+.card {
+  position: absolute;
+  border-radius: 11px;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition: transform .6s cubic-bezier(.34,1.15,.64,1), opacity .4s ease, box-shadow .3s ease;
+}
+.card.visible { opacity: 1; pointer-events: auto; }
+.card.hidden-board { opacity: 0 !important; pointer-events: none !important; transition: opacity .3s ease; }
+.cover {
+  width:100%; height:100%; border-radius:11px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:flex-end; padding:9px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.65);
+}
+.cover::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 56%);
+  border-radius:11px;
+}
+.badge { position:relative;z-index:1;font-size:.5rem;color:#4a6898;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px; }
+.title { position:relative;z-index:1;font-size:.6rem;color:#ccdaf5;letter-spacing:.04em;line-height:1.25; }
+.card.recommended .cover { box-shadow: 0 6px 20px rgba(0,0,0,.65), 0 0 18px rgba(60,130,220,.22); }
+.card.dimmed { opacity: .2 !important; }
+
+/* ── control block (always visible, below stage) ── */
+.ctrl-block {
+  width: 820px;
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin-top: 16px;
+  position: relative; z-index: 20;
+}
+
+/* close strip — sits at top of ctrl block when visible */
+.close-strip {
+  display: none;
+  width: 100%;
+  align-items: center; justify-content: space-between;
+  background: #0d1824; border: 1px solid #1e2e40; border-radius: 10px;
+  padding: 10px 18px; margin-bottom: 20px;
+}
+.close-strip.visible { display: flex; }
+.strip-label { font-size:.68rem; color:#4a6888; letter-spacing:.06em; }
+.strip-btns  { display:flex; gap:8px; flex-shrink:0; }
+.close-btn {
+  background:transparent; border:1px solid #1e3040; color:#3a5870;
+  border-radius:16px; padding:5px 14px; font-size:.66rem; cursor:pointer;
+  transition:all .18s; white-space:nowrap;
+}
+.close-btn:hover { border-color:#2e4860; color:#5080a0; }
+
+/* board tiles (formerly chips) */
+.chips-section { width:100%; margin-bottom:6px; }
+.chips-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:290px; margin-bottom:10px; }
+.chips-note { font-size:.6rem; color:#2a3e54; letter-spacing:.08em; text-align:center; }
+.state-chip {
+  background:#0d1624; border:1px solid #1c2c3e;
+  border-radius:14px; padding:16px 22px;
+  cursor:pointer; text-align:center; transition:all .22s;
+  position:relative; overflow:hidden; min-width:120px;
+}
+.state-chip::before {
+  content:''; position:absolute; inset:0; opacity:0;
+  background: radial-gradient(circle at 50% 0%, rgba(60,120,200,.18), transparent 70%);
+  transition:opacity .22s;
+}
+.state-chip:hover { border-color:#243848; background:#0f1e2e; }
+.state-chip.sel { border-color:#2e4868; background:#111e30; }
+.state-chip.sel::before { opacity:1; }
+.chip-icon  { font-size:1.3rem; margin-bottom:6px; line-height:1; }
+.chip-lbl   { font-size:.72rem; color:#486080; letter-spacing:.05em; }
+.chip-state { font-size:.54rem; color:#2a3c56; letter-spacing:.1em; text-transform:uppercase; margin-top:3px; }
+
+/* main button row */
+.main-row {
+  display: flex; align-items: center; gap: 28px;
+  margin-top: 18px; margin-bottom: 14px;
+}
+
+/* ring button */
+.draw-ring {
+  position:relative; width:104px; height:104px; cursor:pointer; flex-shrink:0;
+}
+.draw-ring::before {
+  content:''; position:absolute; inset:-3px; border-radius:50%;
+  background: conic-gradient(rgba(50,110,200,0) 0deg, rgba(50,110,200,.35) 90deg, rgba(100,180,255,.14) 180deg, rgba(50,110,200,0) 270deg);
+  animation: ringRotate 6s linear infinite; opacity:0; transition:opacity .5s;
+}
+.draw-ring.ready::before { opacity:1; }
+@keyframes ringRotate { to { transform:rotate(360deg); } }
+.draw-ring-inner {
+  position:absolute; inset:0; border-radius:50%;
+  background: radial-gradient(circle at 50% 30%, #182e4c, #0c1624);
+  border:1px solid #253d58;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  transition:border-color .3s, box-shadow .3s;
+}
+.draw-ring.ready .draw-ring-inner { border-color:#3a5880; box-shadow:0 0 26px rgba(40,100,200,.22), inset 0 0 18px rgba(40,100,200,.05); }
+.ring-moon  { font-size:1.4rem; opacity:.5; line-height:1; }
+.ring-label { font-size:.56rem; color:#4a7098; letter-spacing:.12em; text-transform:uppercase; }
+
+.or-line { font-size:.6rem; color:#1e2e3e; letter-spacing:.12em; align-self:center; }
+
+/* secondary buttons */
+.sec-btns { display:flex; flex-direction:column; gap:8px; }
+.sec-btn {
+  background:transparent; border:1px solid #1a2a38;
+  color:#3a5870; border-radius:10px;
+  padding:9px 18px; font-size:.7rem; cursor:pointer;
+  transition:all .2s; letter-spacing:.04em; text-align:left;
+}
+.sec-btn span { color:#263646; font-size:.6rem; display:block; margin-top:2px; letter-spacing:.06em; }
+.sec-btn:hover { border-color:#2a4060; color:#5080a0; background:#0d1828; }
+.sec-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+.status-msg { font-size:.64rem; color:#304858; letter-spacing:.08em; min-height:1.2em; }
+
+/* ════════════════════════════════
+   MOBILE
+════════════════════════════════ */
+#mobileView { display:none; flex-direction:column; align-items:center; }
+.phone-frame {
+  width:344px; height:668px;
+  border:2px solid #1e2e42; border-radius:40px;
+  background:#090b12; position:relative; overflow:hidden;
+  box-shadow:0 24px 72px rgba(0,0,0,.9);
+}
+.phone-frame::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 60% 35% at 50% 0%, rgba(40,80,140,.1), transparent 70%);
+  pointer-events:none; z-index:0;
+}
+.phone-notch {
+  width:96px; height:20px; background:#090b12;
+  border-radius:0 0 12px 12px; margin:0 auto;
+  border-left:2px solid #1e2e42; border-right:2px solid #1e2e42; border-bottom:2px solid #1e2e42;
+  position:relative; z-index:10;
+}
+#screenMood {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  padding:14px 22px 26px; z-index:1;
+}
+.m-brand { font-size:.58rem; color:#2a3e58; letter-spacing:.2em; text-transform:uppercase; text-align:center; margin-bottom:5px; margin-top:3px; }
+.m-date  { font-size:.72rem; color:#38566c; text-align:center; margin-bottom:12px; letter-spacing:.05em; }
+.moon-wrap { text-align:center; margin-bottom:12px; }
+.moon     { font-size:1.8rem; opacity:.42; display:block; line-height:1; }
+.moon-sub { font-size:.58rem; color:#2a3e58; letter-spacing:.14em; margin-top:3px; }
+.how-note {
+  background:#0c1624; border:1px solid #182838; border-radius:10px;
+  padding:10px 12px; margin-bottom:12px; font-size:.65rem; color:#3a5570; line-height:1.65;
+}
+.how-note b { color:#4a6888; font-weight:500; }
+.m-question { font-size:.74rem; color:#6888a8; text-align:center; margin-bottom:10px; line-height:1.5; }
+.mood-grid  { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:14px; }
+.mood-btn {
+  background:#0d1624; border:1px solid #1c2c3e;
+  border-radius:12px; padding:10px 8px;
+  cursor:pointer; text-align:center; transition:all .2s; position:relative; overflow:hidden;
+}
+.mood-btn::before { content:''; position:absolute; inset:0; opacity:0; background:radial-gradient(circle at 50% 0%, rgba(60,120,180,.14), transparent 70%); transition:opacity .2s; }
+.mood-btn.sel { border-color:#2e4868; background:#101e30; }
+.mood-btn.sel::before { opacity:1; }
+.mood-icon  { font-size:1.1rem; margin-bottom:3px; }
+.mood-lbl   { font-size:.6rem; color:#486080; letter-spacing:.06em; line-height:1.3; }
+.mood-state { font-size:.5rem; color:#2c3e54; letter-spacing:.09em; text-transform:uppercase; margin-top:1px; }
+.m-draw-zone { display:flex; align-items:center; gap:14px; }
+.m-draw-ring {
+  position:relative; width:74px; height:74px; cursor:pointer; flex-shrink:0;
+}
+.m-draw-ring::before {
+  content:''; position:absolute; inset:-3px; border-radius:50%;
+  background:conic-gradient(rgba(50,110,200,0) 0deg, rgba(50,110,200,.3) 90deg, rgba(100,180,255,.12) 180deg, rgba(50,110,200,0) 270deg);
+  animation:ringRotate 6s linear infinite; opacity:0; transition:opacity .4s;
+}
+.m-draw-ring:hover::before { opacity:1; }
+.m-draw-ring-inner {
+  position:absolute; inset:0; border-radius:50%;
+  background:radial-gradient(circle at 50% 30%, #182e4c, #0c1624);
+  border:1px solid #253d58;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  transition:border-color .3s, box-shadow .3s;
+}
+.m-draw-ring:hover .m-draw-ring-inner { border-color:#3a5880; box-shadow:0 0 20px rgba(40,100,200,.2); }
+.m-moon  { font-size:1rem; opacity:.5; }
+.m-label { font-size:.5rem; color:#4a7098; letter-spacing:.11em; text-transform:uppercase; }
+.m-draw-desc { flex:1; }
+.m-draw-title { font-size:.7rem; color:#507090; margin-bottom:3px; }
+.m-draw-sub   { font-size:.6rem; color:#2e4258; line-height:1.5; }
+#screenReveal {
+  position:absolute; inset:0; z-index:1;
+  display:none; flex-direction:column; align-items:center;
+  padding:14px 22px 20px;
+}
+.rev-brand   { font-size:.56rem; color:#2a3e58; letter-spacing:.2em; text-transform:uppercase; margin-bottom:2px; margin-top:3px; }
+.rev-heading { font-size:.74rem; color:#385878; margin-bottom:2px; letter-spacing:.06em; }
+.rev-mood-tag { font-size:.58rem; color:#263e54; letter-spacing:.12em; text-transform:uppercase; margin-bottom:14px; }
+.reveal-fan { position:relative; width:258px; height:202px; margin-bottom:12px; flex-shrink:0; }
+.r-card {
+  position:absolute; width:102px; height:156px;
+  border-radius:12px; cursor:pointer; transform-origin:50% 112%;
+  transition:transform .3s cubic-bezier(.22,.68,0,1.28), box-shadow .22s;
+  box-shadow:0 8px 26px rgba(0,0,0,.72);
+}
+.r-cover {
+  width:100%; height:100%; border-radius:12px; overflow:hidden;
+  position:relative; display:flex; flex-direction:column;
+  justify-content:flex-end; padding:10px;
+}
+.r-cover::after { content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.8) 0%, transparent 55%); border-radius:12px; }
+.r-badge { position:relative;z-index:1;font-size:.5rem;color:#5070a0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px; }
+.r-name  { position:relative;z-index:1;font-size:.6rem;color:#c0d0ec;line-height:1.2; }
+.r-card:nth-child(1) { left:4px;   bottom:0; transform:rotate(-12deg); }
+.r-card:nth-child(2) { left:80px;  bottom:0; transform:rotate(0deg); z-index:5; }
+.r-card:nth-child(3) { left:156px; bottom:0; transform:rotate(12deg); }
+.r-card:nth-child(1):hover { transform:rotate(-12deg) translateY(-12px) scale(1.04)!important; z-index:10; }
+.r-card:nth-child(2):hover { transform:rotate(0deg)   translateY(-12px) scale(1.04)!important; z-index:10; }
+.r-card:nth-child(3):hover { transform:rotate(12deg)  translateY(-12px) scale(1.04)!important; z-index:10; }
+.fortune-box { width:100%; background:#0c1622; border:1px solid #1a2a3a; border-radius:12px; padding:12px 14px; margin-bottom:12px; }
+.fortune-label { font-size:.52rem; color:#2a4056; letter-spacing:.16em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+.fortune-label::before { content:''; display:inline-block; width:14px; height:1px; background:#2a4056; }
+.fortune-text  { font-size:.7rem; color:#4a6682; line-height:1.7; }
+.rev-enter { display:block; width:100%; background:linear-gradient(135deg,#162848,#1e3660); border:1px solid #2a4268; color:#70a8e0; border-radius:14px; padding:12px; font-size:.76rem; cursor:pointer; letter-spacing:.05em; margin-bottom:8px; transition:background .2s; }
+.rev-enter:hover { background:linear-gradient(135deg,#1e3660,#263e70); }
+.rev-back { display:block; width:100%; background:transparent; border:1px solid #141e2c; color:#283848; border-radius:12px; padding:8px; font-size:.68rem; cursor:pointer; }
+.block-tip { margin-top:8px; width:100%; background:#0b1420; border:1px solid #172232; border-radius:10px; padding:9px 12px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.bt-text { font-size:.6rem; color:#2a3e54; line-height:1.45; }
+.bt-btn  { background:transparent; border:1px solid #1e3040; color:#385060; border-radius:8px; padding:5px 10px; font-size:.58rem; cursor:pointer; white-space:nowrap; transition:all .18s; flex-shrink:0; }
+.bt-btn:hover { border-color:#2e4860; color:#507080; }
+</style>
+</head>
+<body>
+<h1>Sound States</h1>
+<p class="sub">选择查看桌面端或移动端</p>
+<div class="toggle-row">
+  <button class="tog active" onclick="showView('desktop',this)">🖥 桌面端</button>
+  <button class="tog"        onclick="showView('mobile', this)">📱 移动端</button>
+</div>
+
+<!-- ════════ DESKTOP ════════ -->
+<div id="desktopView">
+
+  <!-- stage: height 0 until open -->
+  <div class="stage-outer" id="stageOuter">
+    <div class="stage" id="stage">
+      <div class="info-panel" id="infoPanel">
+        <div class="state-tag" id="iState"></div>
+        <div id="iRecBadge" class="rec-badge" style="display:none">今日推荐</div>
+        <div class="song-name" id="iName"></div>
+        <div class="song-desc" id="iDesc"></div>
+        <button class="btn-enter">▶ 进入聆听</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- control block -->
+  <div class="ctrl-block">
+
+    <!-- 1. close strip (only when cards are open) -->
+    <div class="close-strip" id="closeStrip">
+      <span class="strip-label" id="stripLabel">—</span>
+      <div class="strip-btns">
+        <button class="close-btn" onclick="clearFilter()">↺ 全部</button>
+        <button class="close-btn" onclick="resetAll()">收起 ↑</button>
+      </div>
+    </div>
+
+    <!-- 2. board chips -->
+    <div class="chips-section">
+      <div class="chips-row">
+        <div class="state-chip" data-mood="relax"     onclick="chipPick(this)"><div class="chip-icon">🌙</div><div class="chip-lbl">慢下来</div><div class="chip-state">Relax</div></div>
+        <div class="state-chip" data-mood="focus"     onclick="chipPick(this)"><div class="chip-icon">🔮</div><div class="chip-lbl">沉进去</div><div class="chip-state">Focus</div></div>
+        <div class="state-chip" data-mood="cinematic" onclick="chipPick(this)"><div class="chip-icon">✨</div><div class="chip-lbl">想象</div><div class="chip-state">Cinematic</div></div>
+        <div class="state-chip" data-mood="motion"    onclick="chipPick(this)"><div class="chip-icon">⚡</div><div class="chip-lbl">动起来</div><div class="chip-state">Motion</div></div>
+      </div>
+      <div class="chips-note">点击你感兴趣的板块，圆弧中即刻高亮该板块曲目；再次点击取消筛选</div>
+    </div>
+
+    <!-- 3. main row -->
+    <div class="main-row">
+      <div class="draw-ring ready" id="drawRing" onclick="deskDraw()">
+        <div class="draw-ring-inner">
+          <span class="ring-moon">☽</span>
+          <span class="ring-label">今日推荐</span>
+        </div>
+      </div>
+
+      <div class="sec-btns">
+        <button class="sec-btn" onclick="browseAll()">
+          浏览全部曲目
+          <span>展开所有曲目，无筛选，自由探索</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="status-msg" id="statusMsg">点击「今日推荐」，根据听歌频率推出今日最适合的 8 首</div>
+  </div>
+</div>
+
+<!-- ════════ MOBILE ════════ -->
+<div id="mobileView">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div id="screenMood">
+      <div class="m-brand">Sound States</div>
+      <div class="m-date" id="todayDate"></div>
+      <div class="moon-wrap"><span class="moon">☽</span><span class="moon-sub">今日推荐</span></div>
+      <div class="how-note">
+        <b>今日推荐</b> 每天根据你的听歌频率推出 3 首最适合现在的曲目。<br>
+        选择状态可让推荐更精准；不选也可以直接获取综合推荐。
+      </div>
+      <div class="m-question">（可选）此刻的状态是？</div>
+      <div class="mood-grid">
+        <div class="mood-btn" data-mood="relax"     onclick="pickMood(this)"><div class="mood-icon">🌙</div><div class="mood-lbl">慢下来</div><div class="mood-state">Relax</div></div>
+        <div class="mood-btn" data-mood="focus"     onclick="pickMood(this)"><div class="mood-icon">🔮</div><div class="mood-lbl">沉进去</div><div class="mood-state">Focus</div></div>
+        <div class="mood-btn" data-mood="cinematic" onclick="pickMood(this)"><div class="mood-icon">✨</div><div class="mood-lbl">想象某些东西</div><div class="mood-state">Cinematic</div></div>
+        <div class="mood-btn" data-mood="motion"    onclick="pickMood(this)"><div class="mood-icon">⚡</div><div class="mood-lbl">动起来</div><div class="mood-state">Motion</div></div>
+      </div>
+      <div class="m-draw-zone">
+        <div class="m-draw-ring" onclick="mobileDraw()">
+          <div class="m-draw-ring-inner"><span class="m-moon">☽</span><span class="m-label">今日推荐</span></div>
+        </div>
+        <div class="m-draw-desc">
+          <div class="m-draw-title">点击获取今日推荐</div>
+          <div class="m-draw-sub">不选状态 = 综合推荐<br>选了状态 = 该板块今日推荐</div>
+        </div>
+      </div>
+    </div>
+    <div id="screenReveal">
+      <div class="rev-brand">Sound States</div>
+      <div class="rev-heading">今日推荐</div>
+      <div class="rev-mood-tag" id="revMoodTag"></div>
+      <div class="reveal-fan" id="revFan"></div>
+      <div class="fortune-box">
+        <div class="fortune-label">今日频率</div>
+        <div class="fortune-text" id="fortuneText"></div>
+      </div>
+      <button class="rev-enter" id="revEnter">▶ 开始聆听</button>
+      <button class="rev-back" onclick="backToMood()">← 返回重新选择</button>
+    </div>
+  </div>
+  <p style="font-size:.65rem;color:#263040;letter-spacing:.08em;margin-top:14px">移动端 · 今日推荐 3 首 · 板块推荐在各板块内</p>
+</div>
+
+<script>
+const SONGS = [
+  { name:'Dawn Scene',         desc:'缓缓升起的情绪，带着柔和的希望与开阔感。',   state:'Cinematic', mood:'cinematic', grad:['#2a3d5c','#b98a5a'] },
+  { name:'Lonely City',        desc:'城市夜晚的氛围，带着情绪上的疏离感。',        state:'Cinematic', mood:'cinematic', grad:['#1c2333','#4a5a7a'] },
+  { name:'Slow Memory',        desc:'怀旧的电影质感，带着悬停般的感觉。',          state:'Cinematic', mood:'cinematic', grad:['#3a2c44','#7a6a8a'] },
+  { name:'Imagined Landscape', desc:'更开阔、更有层次的声音世界，供情绪投射。',    state:'Cinematic', mood:'cinematic', grad:['#22323a','#8aa0a0'] },
+  { name:'Phonk Drive',        desc:'沉重的脉冲、失真的纹理与向前的冲劲。',        state:'Motion',    mood:'motion',    grad:['#1a0c12','#7a2030'] },
+  { name:'Trap Energy',        desc:'更锐利的节拍结构，强劲的低频。',             state:'Motion',    mood:'motion',    grad:['#0e0c1a','#5a2a7a'] },
+  { name:'Ritual Pulse',       desc:'催眠般的打击循环，带着环形的张力。',          state:'Motion',    mood:'motion',    grad:['#160a1a','#7a3a6a'] },
+  { name:'Dark Cardio',        desc:'更暗的重复节奏，适合高强度运动。',           state:'Motion',    mood:'motion',    grad:['#140c0c','#6a2a2a'] },
+  { name:'Soft Rain',          desc:'柔和的多层雨声，让你慢下来。',               state:'Relax',     mood:'relax',     grad:['#1a2a3a','#4a7080'] },
+  { name:'Evening Still',      desc:'安静的房间底噪，带着一丝暖意。',             state:'Relax',     mood:'relax',     grad:['#2a2030','#6a5a70'] },
+  { name:'Deep Focus',         desc:'稳定的低鸣，最小的声音运动。',               state:'Focus',     mood:'focus',     grad:['#102020','#2a5a5a'] },
+  { name:'White Noise Field',  desc:'带纹理的白噪声，认知缓冲层。',               state:'Focus',     mood:'focus',     grad:['#1a2428','#3a6060'] },
+  { name:'Glass Grid',         desc:'透明结构中的低频呼吸，悬浮感。',             state:'Cinematic', mood:'cinematic', grad:['#1e3040','#6090b0'] },
+  { name:'Drift Signal',       desc:'一个渐渐浮出水面的远方信号。',               state:'Cinematic', mood:'cinematic', grad:['#2c2240','#805a80'] },
+];
+
+/* ── arc constants ── */
+const N = SONGS.length;          // 14
+const W = 86, H = 130;
+const CX = (880 - 200) / 2;     // 340 — centre of usable area (leaving 200px right for panel)
+const CY = 680;                  // circle centre far below stage
+const R  = 490;
+const A1 = 150 * Math.PI / 180; // left  extreme  (150°)
+const A2 =  30 * Math.PI / 180; // right extreme  (30°)
+const MID_THETA = (A1 + A2) / 2;         // 90° = straight up
+const FULL_STEP = (A1 - A2) / (N - 1);  // angle between adjacent slots in full arc
+
+/* Compute arc position for slot `rank` among `count` visible cards.
+   Cards are always centred around MID_THETA with the same inter-card
+   angle as the full arc — so fewer cards = narrower, centred cluster. */
+function computePos(count, rank) {
+  const halfSpan = (count - 1) / 2 * FULL_STEP;
+  const theta    = MID_THETA + halfSpan - rank * FULL_STEP;
+  const x        = CX + R * Math.cos(theta) - W / 2;
+  const y        = CY - R * Math.sin(theta) - H;
+  const rotDeg   = 90 - theta * (180 / Math.PI);
+  const liftX    = Math.cos(theta) * 36;
+  const liftY    = -Math.sin(theta) * 36;
+  return { theta, x, y, rotDeg, liftX, liftY };
+}
+
+/* arcTf: original full-arc positions; curTf: current (board-mode may differ) */
+const arcTf = SONGS.map((_, i) => computePos(N, i));
+const curTf = arcTf.map(tf => ({ ...tf }));
+
+const stage   = document.getElementById('stage');
+const panel   = document.getElementById('infoPanel');
+const stOuter = document.getElementById('stageOuter');
+const cardEls = [];
+let isOpen = false, panelTimer = null, selMood = null;
+
+/* ── Build cards (positioned entirely via transform so board-mode can reposition) ── */
+SONGS.forEach((s, i) => {
+  const tf   = arcTf[i];
+  const card = document.createElement('div');
+  card.className = 'card';
+  /* left:0;top:0 — all positioning through translate() in transform */
+  card.style.cssText =
+    `width:${W}px;height:${H}px;left:0;top:0;z-index:${i + 1};` +
+    `transform:translate(${tf.x}px,${tf.y}px) rotate(${tf.rotDeg}deg) scale(0.5);` +
+    `opacity:0;pointer-events:none`;
+  card.innerHTML =
+    `<div class="cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">` +
+    `<div class="badge">${s.state}</div><div class="title">${s.name}</div></div>`;
+
+  let rt = null;
+  card.addEventListener('mouseenter', () => {
+    if (!isOpen || card.classList.contains('hidden-board')) return;
+    clearTimeout(rt);
+    const t = curTf[i];
+    card.style.transform =
+      `translate(${t.x + t.liftX}px,${t.y + t.liftY}px) rotate(${t.rotDeg * 0.06}deg)`;
+    card.style.boxShadow = '0 18px 44px rgba(0,0,0,.82), 0 0 24px rgba(70,130,220,.15)';
+    card.style.zIndex    = 30;
+    clearTimeout(panelTimer);
+    document.getElementById('iState').textContent = s.state;
+    document.getElementById('iName').textContent  = s.name;
+    document.getElementById('iDesc').textContent  = s.desc;
+    document.getElementById('iRecBadge').style.display =
+      card.classList.contains('recommended') ? 'inline-block' : 'none';
+    panel.classList.add('visible');
+  });
+  card.addEventListener('mouseleave', () => {
+    if (!isOpen) return;
+    rt = setTimeout(() => {
+      const t = curTf[i];
+      card.style.transform = `translate(${t.x}px,${t.y}px) rotate(${t.rotDeg}deg)`;
+      card.style.boxShadow = '';
+      card.style.zIndex    = i + 1;
+    }, 80);
+    panelTimer = setTimeout(() => panel.classList.remove('visible'), 600);
+  });
+
+  stage.appendChild(card);
+  cardEls.push(card);
+});
+
+/* Keep panel alive while the user's cursor is on it */
+panel.addEventListener('mouseenter', () => clearTimeout(panelTimer));
+panel.addEventListener('mouseleave', () => {
+  panelTimer = setTimeout(() => panel.classList.remove('visible'), 200);
+});
+
+/* ── showCards: reposition visible set as a centred arc, then reveal ──
+   highlight: true  → picked cards get blue-glow "recommended" class
+   highlight: false → picked cards just stay at full opacity (board-filter mode)
+*/
+function showCards({ picks = null, highlight = true, boardFilter = null, label = '' }) {
+  isOpen = true;
+  stOuter.classList.add('open');
+
+  /* ordered list of card indices that will be visible */
+  const visIdx = boardFilter
+    ? SONGS.map((_, i) => i).filter(i => SONGS[i].mood === boardFilter)
+    : SONGS.map((_, i) => i);
+  const count = visIdx.length;
+
+  /* Compute centred arc positions for visible cards and update curTf */
+  visIdx.forEach((cardIdx, rank) => {
+    curTf[cardIdx] = computePos(count, rank);
+  });
+
+  cardEls.forEach((card, i) => {
+    const rank    = visIdx.indexOf(i);
+    const visible = rank !== -1;
+    card.style.transitionDelay = (visible ? rank * 36 : 0) + 'ms';
+
+    if (visible) {
+      const t = curTf[i];
+      card.style.transform    = `translate(${t.x}px,${t.y}px) rotate(${t.rotDeg}deg) scale(1)`;
+      card.style.opacity      = '1';
+      card.style.pointerEvents = 'auto';
+      card.classList.remove('hidden-board');
+      if (picks) {
+        /* highlight mode: glow on picked, dim on non-picked */
+        if (highlight) card.classList.toggle('recommended', picks.includes(i));
+        else card.classList.remove('recommended');
+        /* always dim non-picked when boardFilter is null (all-song view) */
+        card.classList.toggle('dimmed', !picks.includes(i) && boardFilter === null);
+      } else {
+        card.classList.remove('recommended', 'dimmed');
+      }
+    } else {
+      const t = curTf[i];
+      card.style.transform    = `translate(${t.x}px,${t.y}px) rotate(${t.rotDeg}deg) scale(0.5)`;
+      card.style.opacity      = '0';
+      card.style.pointerEvents = 'none';
+      card.classList.add('hidden-board');
+      card.classList.remove('recommended', 'dimmed');
+    }
+  });
+
+  document.getElementById('closeStrip').classList.add('visible');
+  document.getElementById('stripLabel').textContent = label;
+}
+
+function resetAll() {
+  isOpen = false;
+  panel.classList.remove('visible');
+  cardEls.forEach((card, i) => {
+    curTf[i] = { ...arcTf[i] };   // restore to full-arc position
+    const t  = arcTf[i];
+    card.style.transitionDelay = ((N - 1 - i) * 26) + 'ms';
+    card.style.transform    = `translate(${t.x}px,${t.y}px) rotate(${t.rotDeg}deg) scale(0.5)`;
+    card.style.opacity      = '0';
+    card.style.pointerEvents = 'none';
+    card.classList.remove('recommended', 'dimmed', 'hidden-board');
+  });
+  setTimeout(() => stOuter.classList.remove('open'), 600);
+  document.getElementById('closeStrip').classList.remove('visible');
+  document.getElementById('statusMsg').textContent = '点击「今日推荐」，根据听歌频率推出今日最适合的 8 首';
+}
+
+function seededRand(seed) { let s = seed; return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+function todaySeed() { const d = new Date(); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+
+/* ─ 今日推荐 — 全局推荐，始终显示全部歌曲，高亮 8 首 ─ */
+function deskDraw() {
+  /* 今日推荐是全局概念，清除板块选择避免混淆 */
+  document.querySelectorAll('.state-chip').forEach(c => c.classList.remove('sel'));
+  selMood = null;
+  const rand   = seededRand(todaySeed());
+  const sorted = SONGS.map((_, i) => i).sort(() => rand() - 0.5);
+  const picks  = sorted.slice(0, 8);
+  showCards({ picks, highlight: true, boardFilter: null, label: '今日推荐 — 高亮 8 首' });
+  document.getElementById('statusMsg').textContent = '高亮 = 今日推荐 · 可点板块筛选 · 悬停查看详情';
+}
+
+/* ─ 浏览全部曲目，无排名，无筛选 ─ */
+function browseAll() {
+  showCards({ label: '全部曲目 — 无筛选，自由探索' });
+  document.getElementById('statusMsg').textContent = '全部曲目展开 · 无筛选 · 悬停查看简介';
+}
+
+/* ─ 清除板块筛选，恢复全部曲目 ─ */
+function clearFilter() {
+  document.querySelectorAll('.state-chip').forEach(c => c.classList.remove('sel'));
+  selMood = null;
+  browseAll();
+}
+
+/* ─ 板块推荐 — 只在该板块的全部歌曲中找今日推荐，居中显示 ─ */
+function browseBoard() {
+  if (!selMood) return;
+  const boardSongs = SONGS.map((_, i) => i).filter(i => SONGS[i].mood === selMood);
+  const rand       = seededRand(todaySeed() + selMood.charCodeAt(0) * 13);
+  const shuffled   = [...boardSongs].sort(() => rand() - 0.5);
+  const picks      = shuffled.slice(0, Math.ceil(boardSongs.length / 2));
+  const name       = { relax:'放松', focus:'专注', cinematic:'沉浸', motion:'运动' }[selMood];
+  showCards({ picks, boardFilter: selMood, label: `${name} 板块 — 今日推荐（仅本板块）` });
+  document.getElementById('statusMsg').textContent =
+    `仅显示 ${name} 板块曲目 · 高亮为今日板块推荐 · 悬停查看详情`;
+}
+
+function chipPick(el) {
+  const same = el.classList.contains('sel');
+  document.querySelectorAll('.state-chip').forEach(c => c.classList.remove('sel'));
+  selMood = same ? null : el.dataset.mood;
+  if (!same) el.classList.add('sel');
+
+  if (selMood) {
+    /* board selected: open arc, show all songs, grey non-board, highlight board */
+    const boardIdx = SONGS.map((_, i) => i).filter(i => SONGS[i].mood === selMood);
+    const name = { relax:'放松', focus:'专注', cinematic:'沉浸', motion:'运动' }[selMood];
+    showCards({
+      picks: boardIdx,
+      highlight: false,   /* no extra glow — contrast from dimming is enough */
+      boardFilter: null,  /* show all 14 songs */
+      label: `${name} 板块 — 高亮本板块曲目`
+    });
+    document.getElementById('statusMsg').textContent =
+      `${name} 板块已高亮 · 其余曲目淡出 · 悬停查看详情`;
+  } else {
+    /* deselected: if arc is open stay open showing all; otherwise do nothing */
+    if (isOpen) browseAll();
+    else document.getElementById('statusMsg').textContent =
+      '点击「今日推荐」，根据听歌频率推出今日最适合的 8 首';
+  }
+}
+
+/* ── MOBILE ── */
+document.getElementById('todayDate').textContent =
+  new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long' });
+let chosenMood = null;
+function pickMood(el) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('sel'));
+  el.classList.add('sel');
+  chosenMood = el.dataset.mood;
+}
+const FORTUNES = {
+  relax:    '今天不需要做很多。声音会在这里陪着你，不要求任何回应。慢下来就好。',
+  focus:    '今天适合只做一件事。把这个声音当作一堵墙，把其余的东西挡在外面。',
+  cinematic:'今天你的感受力很强。进去，让声音把你带到某个你自己也不确定的地方。',
+  motion:   '今天的能量正在上升。把这个节奏交给身体，让它决定接下来怎么走。',
+  all:      '今天的推荐跨越所有状态，选一首适合现在心情的，直接进去。',
+};
+const MOOD_NAMES = { relax:'放松 Relax', focus:'专注 Focus', cinematic:'沉浸 Cinematic', motion:'运动 Motion', all:'综合推荐' };
+function mobileDraw() {
+  const mood = chosenMood;
+  const pool = mood ? SONGS.filter(s => s.mood === mood) : SONGS;
+  const rand = seededRand(todaySeed() + (mood ? mood.charCodeAt(0) * 7 : 0));
+  const picks = [], seen = new Set();
+  while (picks.length < 3 && picks.length < pool.length) {
+    const i = Math.floor(rand() * pool.length);
+    if (!seen.has(i)) { seen.add(i); picks.push(pool[i]); }
+  }
+  const fan = document.getElementById('revFan');
+  fan.innerHTML = '';
+  picks.forEach(s => {
+    const c = document.createElement('div');
+    c.className = 'r-card';
+    c.innerHTML =
+      `<div class="r-cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">` +
+      `<div class="r-badge">${s.state}</div><div class="r-name">${s.name}</div></div>`;
+    fan.appendChild(c);
+  });
+  const key = mood || 'all';
+  document.getElementById('revMoodTag').textContent  = MOOD_NAMES[key] || '综合推荐';
+  document.getElementById('fortuneText').textContent = FORTUNES[key]   || FORTUNES.all;
+  document.getElementById('revEnter').textContent    = `▶ 从「${picks[0].name}」开始`;
+  document.getElementById('screenMood').style.display   = 'none';
+  document.getElementById('screenReveal').style.display = 'flex';
+}
+
+function backToMood() {
+  document.getElementById('screenReveal').style.display = 'none';
+  document.getElementById('screenMood').style.display   = 'flex';
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('sel'));
+  chosenMood = null;
+}
+
+function showView(v, btn) {
+  document.querySelectorAll('.tog').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('desktopView').style.display = v === 'desktop' ? 'flex' : 'none';
+  document.getElementById('mobileView').style.display  = v === 'mobile'  ? 'flex' : 'none';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8"/>
+<title>Card Combined v2</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0c0e14;
+    color: #d0d8e8;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  h1 { font-size: 1.1rem; color: #6080a0; letter-spacing: 0.14em; font-weight: 400; margin-bottom: 6px; }
+  .sub { font-size: 0.78rem; color: #3a4a60; margin-bottom: 60px; }
+
+  .stage {
+    position: relative;
+    width: 860px;
+    height: 360px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  /* ── info panel ── */
+  .info-panel {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 200px;
+    background: rgba(14, 20, 36, 0.97);
+    border: 1px solid #24364e;
+    border-radius: 14px;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+  }
+  .info-panel.visible { opacity: 1; }
+  .state-tag {
+    font-size: 0.63rem; letter-spacing: 0.14em;
+    color: #4a7090; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 10px;
+  }
+  .state-tag::before {
+    content: ''; width: 5px; height: 5px;
+    border-radius: 50%; background: #4a7090; flex-shrink: 0;
+  }
+  .song-name  { font-size: 0.98rem; color: #c8daf0; font-weight: 500; margin-bottom: 8px; }
+  .song-desc  { font-size: 0.74rem; color: #506070; line-height: 1.65; margin-bottom: 18px; }
+  .btn-enter  {
+    display: block; width: 100%;
+    background: #1e3460; border: none; color: #70aae8;
+    border-radius: 8px; padding: 9px; font-size: 0.76rem;
+    cursor: pointer; margin-bottom: 8px;
+    transition: background 0.18s;
+  }
+  .btn-enter:hover { background: #2a4270; }
+  .btn-next {
+    display: block; width: 100%;
+    background: transparent; border: 1px solid #1e2e40;
+    color: #3e5870; border-radius: 8px; padding: 8px;
+    font-size: 0.74rem; cursor: pointer;
+    transition: border-color 0.18s, color 0.18s;
+  }
+  .btn-next:hover { border-color: #2e4460; color: #5070a0; }
+
+  /* ── card wrap ── */
+  .cards-wrap {
+    position: relative;
+    width: 580px;
+    height: 330px;
+    margin-right: 60px;
+  }
+
+  .card {
+    position: absolute;
+    width: 116px;
+    height: 176px;
+    border-radius: 12px;
+    cursor: pointer;
+    /* bottom-center as rotation origin gives the arc feel */
+    transform-origin: 50% 105%;
+    /* smooth spring on enter + restore */
+    transition: transform 0.36s cubic-bezier(.22,.68,0,1.28), box-shadow 0.28s ease;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.55);
+    will-change: transform;
+  }
+
+  .cover {
+    width: 100%; height: 100%;
+    border-radius: 12px;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    justify-content: flex-end; padding: 11px;
+  }
+  .cover::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.74) 0%, transparent 58%);
+    border-radius: 12px;
+  }
+  .badge {
+    position: relative; z-index: 1;
+    font-size: 0.57rem; color: #6090b8;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .title {
+    position: relative; z-index: 1;
+    font-size: 0.68rem; color: #ccdaf5; letter-spacing: 0.05em; line-height: 1.3;
+  }
+
+  .hint {
+    margin-top: 44px;
+    font-size: 0.7rem; color: #263040; letter-spacing: 0.09em;
+  }
+</style>
+</head>
+<body>
+
+<h1>Sound States</h1>
+<p class="sub">鼠标悬停封面，右侧出现简介</p>
+
+<div class="stage">
+  <div class="cards-wrap" id="cardsWrap"></div>
+  <div class="info-panel" id="infoPanel">
+    <div class="state-tag"  id="iState"></div>
+    <div class="song-name"  id="iName"></div>
+    <div class="song-desc"  id="iDesc"></div>
+    <button class="btn-enter">▶ 进入聆听</button>
+    <button class="btn-next">下一张 →</button>
+  </div>
+</div>
+
+<p class="hint">悬停 · 右侧简介 · 点击进入或继续浏览</p>
+
+<script>
+const SONGS = [
+  { name: 'Dawn Scene',         desc: 'Gradual emotional rise with soft hope and open space.',    state: 'Cinematic', grad: ['#2a3d5c','#b98a5a'] },
+  { name: 'Lonely City',        desc: 'Urban night atmosphere, distance and quiet isolation.',     state: 'Cinematic', grad: ['#1c2333','#4a5a7a'] },
+  { name: 'Slow Memory',        desc: 'Nostalgic cinematic texture with a suspended feeling.',     state: 'Cinematic', grad: ['#3a2c44','#7a6a8a'] },
+  { name: 'Imagined Landscape', desc: 'Wider layered world for emotional projection.',             state: 'Cinematic', grad: ['#22323a','#8aa0a0'] },
+  { name: 'Phonk Drive',        desc: 'Heavy pulse, distorted texture and forward momentum.',      state: 'Motion',    grad: ['#1a0c12','#7a2030'] },
+  { name: 'Trap Energy',        desc: 'Sharper beat structure with strong low-end presence.',      state: 'Motion',    grad: ['#0e0c1a','#5a2a7a'] },
+  { name: 'Ritual Pulse',       desc: 'Hypnotic percussive loop with circular tension.',           state: 'Motion',    grad: ['#160a1a','#7a3a6a'] },
+];
+
+const N = SONGS.length;
+const SPREAD = 56;    // total arc degrees
+// small extra organic tilt per card (alternating)
+const EXTRA  = [-5, 3, -2, 4, -3, 2, -4];
+
+const wrap  = document.getElementById('cardsWrap');
+const panel = document.getElementById('infoPanel');
+let   panelTimer = null;
+
+SONGS.forEach((s, i) => {
+  /* resting rotation: evenly spread across arc + organic tilt */
+  const frac   = N === 1 ? 0 : i / (N - 1);
+  const baseRot = (frac - 0.5) * SPREAD + EXTRA[i % EXTRA.length];
+
+  /* horizontal spread: 14px left margin, 448px total */
+  const leftPx   = frac * 448 + 14;
+  const bottomPx = 8;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.style.cssText = `left:${leftPx}px;bottom:${bottomPx}px;z-index:${i+1};transform:rotate(${baseRot}deg)`;
+  card.innerHTML = `
+    <div class="cover" style="background:linear-gradient(150deg,${s.grad[0]},${s.grad[1]})">
+      <div class="badge">${s.state}</div>
+      <div class="title">${s.name}</div>
+    </div>`;
+
+  /* ── each card owns its own timer so they never interfere ── */
+  let restoreTimer = null;
+
+  card.addEventListener('mouseenter', () => {
+    /* cancel any pending restore for THIS card */
+    clearTimeout(restoreTimer);
+    /* lift up, nearly straighten the tilt */
+    card.style.transform = `rotate(${baseRot * 0.12}deg) translateY(-50px)`;
+    card.style.boxShadow = '0 20px 48px rgba(0,0,0,0.75), 0 0 28px rgba(80,140,230,0.16)';
+    card.style.zIndex    = 20;
+
+    /* update info panel */
+    clearTimeout(panelTimer);
+    document.getElementById('iState').textContent = s.state;
+    document.getElementById('iName').textContent  = s.name;
+    document.getElementById('iDesc').textContent  = s.desc;
+    panel.classList.add('visible');
+  });
+
+  card.addEventListener('mouseleave', () => {
+    /* restore THIS card after a short grace period
+       (prevents snap on micro-jitter but doesn't block other cards) */
+    restoreTimer = setTimeout(() => {
+      card.style.transform = `rotate(${baseRot}deg)`;
+      card.style.boxShadow = '';
+      card.style.zIndex    = i + 1;
+    }, 80);
+
+    panelTimer = setTimeout(() => panel.classList.remove('visible'), 100);
+  });
+
+  wrap.appendChild(card);
+});
+</script>
+</body>
+</html>
