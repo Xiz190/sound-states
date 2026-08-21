@@ -2,7 +2,7 @@
   "name": "Sound States",
   "short_name": "Sound States",
   "description": "AI-generated sound environments for rest, focus, sleep, imagination and motion",
-  "start_url": "/",
+  "start_url": "/sound-states/",
   "display": "standalone",
   "background_color": "#0c0e14",
   "theme_color": "#0c0e14",
