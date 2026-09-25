@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sound States · Concept wearable — exploded (vision)</title>
+<style>
+  :root{
+    --bg:#0b0d12; --ink:#e7e3da; --muted:#8b8a96; --faint:#7a7984;
+    --line:rgba(255,255,255,.09); --hair:rgba(255,255,255,.055);
+    --accent:#b9a16b; --glow:185,161,107; --warm:#d2965f; --teal:#5a8c96;
+    --mono:ui-monospace,"SF Mono",Menlo,"Roboto Mono",monospace;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background:
+      radial-gradient(1200px 800px at 55% 46%, rgba(var(--glow),.08), transparent 60%),
+      radial-gradient(700px 600px at 92% 108%, rgba(210,150,95,.03), transparent 60%),
+      var(--bg);
+    color:var(--ink); font-family:-apple-system,"Helvetica Neue","PingFang SC",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; overflow:hidden;
+  }
+  #scene{ position:fixed; inset:0; z-index:0; }
+  #leaders{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+
+  .lbl{ position:fixed; z-index:2; transform:translate(-50%,-50%); pointer-events:none;
+    width:max-content; max-width:210px; }
+  .lbl .n{ font-size:12.5px; font-weight:600; letter-spacing:.01em; }
+  .lbl .n .num{ color:var(--accent); font-family:var(--mono); font-size:.85em; margin-right:5px; }
+  .lbl .d{ font-size:10.5px; color:var(--muted); line-height:1.5; margin-top:3px; }
+  .lbl.warm .n{ color:#e6b982; } .lbl.teal .n{ color:#7db3a0; } .lbl.blue .n{ color:var(--accent); }
+  .lbl .role{ display:inline-block; font-family:var(--mono); font-size:8px; letter-spacing:.16em; padding:1px 5px; border-radius:3px; margin-right:6px; vertical-align:1px; border:1px solid currentColor; opacity:.92; }
+  .lbl.hot .n{ text-shadow:0 0 14px currentColor; } .lbl.hot .d{ color:var(--ink); }
+
+  /* follows the cursor over a clickable part — tells people it's interactive */
+  #cursorTag{ position:fixed; z-index:6; pointer-events:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em;
+    padding:3px 9px; border-radius:20px; background:rgba(255,255,255,.12); color:var(--ink); border:1px solid var(--hair);
+    opacity:0; transition:opacity .15s; transform:translate(14px,14px); white-space:nowrap; }
+
+  /* the sensing loop strip — makes the diagram deliver on its title */
+  #loop{ position:fixed; bottom:46px; left:50%; transform:translateX(-50%); z-index:4;
+    display:flex; align-items:center; font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--muted); pointer-events:none; white-space:nowrap; }
+  #loop .step{ padding:4px 11px; border:1px solid var(--hair); border-radius:20px; transition:background .3s; }
+  #loop .step b{ font-weight:600; }
+  #loop .step.on{ background:rgba(255,255,255,.07); }
+  #loop .step .sub2{ color:var(--faint); }
+  #loop .arr{ color:var(--faint); padding:0 9px; }
+  #loop .ret{ color:var(--accent); padding-left:11px; }
+
+  /* per-part detail card (slides in on focus) */
+  #detail{ position:fixed; top:50%; right:56px; transform:translateY(-50%) translateX(28px); z-index:5;
+    width:300px; padding:22px 24px; border:1px solid var(--line); border-radius:14px;
+    background:linear-gradient(180deg, rgba(20,23,31,.92), rgba(12,14,20,.94)); backdrop-filter:blur(10px);
+    opacity:0; pointer-events:none; transition:opacity .35s, transform .35s; }
+  #detail.on{ opacity:1; transform:translateY(-50%) translateX(0); }
+  #detail .dnum{ font-family:var(--mono); font-size:11px; color:var(--accent); letter-spacing:.08em; }
+  #detail .dname{ font-size:19px; font-weight:600; margin-top:6px; }
+  #detail .drole{ display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:.16em; padding:2px 7px; border-radius:4px; border:1px solid currentColor; margin-top:11px; }
+  #detail .dbody{ font-size:12.5px; color:var(--muted); line-height:1.7; margin-top:14px; }
+  #detail .dbody b{ color:var(--ink); font-weight:500; }
+  #detail .dmine{ margin-top:14px; padding-top:12px; border-top:1px solid var(--hair); font-size:11px; color:var(--faint); line-height:1.6; }
+
+  .overlay{ position:fixed; inset:0; z-index:3; padding:48px 56px; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; }
+  .top .eyebrow{ font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); }
+  .top h1{ font-size:30px; font-weight:300; letter-spacing:.01em; margin-top:11px; }
+  .top h1 b{ font-weight:600; }
+  .top .sub{ margin-top:11px; font-size:14px; color:var(--muted); font-weight:300; max-width:40ch; line-height:1.6; }
+  .top .sub b{ color:var(--ink); font-weight:500; }
+
+  .bottom{ display:flex; align-items:flex-end; justify-content:space-between; gap:28px; flex-wrap:wrap; }
+  .vs{ font-size:12.5px; color:var(--muted); line-height:1.7; max-width:44ch; margin-bottom:34px; }   /* 窄一点 + 抬高,避开底部闭环条 */
+  .vs b{ color:var(--ink); font-weight:500; }
+  .vs .em{ color:var(--accent); }
+  .concept{ text-align:right; }
+  .concept .tag{ font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:rgba(var(--glow),.95); }
+  .concept .grade{ font-size:11px; color:var(--faint); margin-top:8px; line-height:1.8; font-family:var(--mono); }
+  .hint{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); z-index:4; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); }
+  body.zh .en-only{ display:none; }
+  /* ---------- 手机竖屏:上=标题+对比文字,中=模型,下=闭环条;零件说明改底部卡片 ---------- */
+  @media (max-width:700px){
+    .overlay{ padding:22px 18px 0; }
+    .top .eyebrow{ font-size:9px; letter-spacing:.16em; }
+    .top h1{ font-size:24px; margin-top:8px; }
+    .top .sub{ display:none; }
+    .bottom{ position:fixed; top:112px; left:18px; right:18px; display:block; }
+    .vs{ font-size:12px; line-height:1.6; max-width:none; margin:0; }
+    .concept{ position:fixed; left:18px; right:18px; bottom:96px; text-align:left; display:flex; gap:12px; align-items:baseline; flex-wrap:wrap; }
+    .concept .tag{ font-size:9.5px; letter-spacing:.12em; }
+    .concept .grade{ margin-top:0; font-size:10px; line-height:1.5; }
+    .concept .grade br, .concept .grade span[style]{ display:none; }
+    .lbl, #leaders{ display:none; }
+    #loop{ bottom:34px; left:16px; right:16px; transform:none; flex-wrap:wrap; justify-content:center; row-gap:6px; font-size:9.5px; white-space:normal; }
+    #loop .arr{ padding:0 4px; }
+    #loop .ret{ padding-left:6px; }
+    .hint{ bottom:12px; font-size:9px; letter-spacing:.08em; width:calc(100% - 32px); text-align:center; }
+    #detail{ top:auto; bottom:14px; right:14px; left:14px; width:auto; transform:translateY(24px); padding:16px 18px; z-index:8; }
+    #detail.on{ transform:none; }
+    #detail .dbody{ font-size:12px; line-height:1.6; margin-top:8px; }
+    #detail .dname{ font-size:17px; }
+    #cursorTag{ display:none; }
+  }
+  .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; vertical-align:0; }
+  .dot.g{ background:#6fae7c; } .dot.y{ background:#d9b451; } .dot.r{ background:#c9605f; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
+<style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<svg id="leaders"></svg>
+<div class="overlay">
+  <div class="top">
+    <div class="eyebrow" id="eyebrow"></div>
+    <h1 id="title"></h1>
+    <div class="sub" id="sub"></div>
+  </div>
+  <div class="bottom">
+    <div class="vs" id="vs"></div>
+    <div class="concept">
+      <div class="tag" id="conceptTag"></div>
+      <div class="grade" id="grade"></div>
+    </div>
+  </div>
+</div>
+<div id="detail"></div>
+<div id="cursorTag"></div>
+<div id="loop"></div>
+<div class="hint" id="hint"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+const ZH=/[?&]zh\b/.test(location.search);
+if(ZH) document.body.classList.add('zh');
+const STILL=/[?&]still\b/.test(location.search);
+const t=(en,zh)=>ZH?zh:en;
+const $=id=>document.getElementById(id);
+
+// ---- copy ----
+$('eyebrow').textContent=t('Vision · envisioned hardware — what\'s inside','愿景 · 设想硬件 — 内部构造');
+$('title').innerHTML=t('Not a black box — a <b>sensing loop</b>','不是黑盒 — 一个<b>感知闭环</b>');
+$('sub').innerHTML=t('Same earbud form, opened up: where it reads you, and where state becomes sound.','同样的耳机形态，拆开看：它在哪儿读你、状态在哪儿变成声音。');
+$('vs').innerHTML=t(
+  '<b>Earbuds already read your pulse</b> — AirPods Pro 3 and Powerbeats Pro 2 log it for workouts, but the reading never changes what you hear. <b>Some apps do close the loop</b>: RockMyRun speeds the tempo up or down with your heart rate. Here the loop changes <b class="em">the structure</b> instead — which layers play, how open the sound is, how near it sits — and it reaches <b class="em">the calm states</b>, not just the workout.',
+  '<b>耳机早就能读心率了</b>——AirPods Pro 3、Powerbeats Pro 2 把它记进运动记录，但读数从不改变你听到的东西。<b>也有 App 把回路闭合了</b>：RockMyRun 会随心率调快或调慢节奏。这里回路改变的是<b class="em">音乐的结构</b>——哪些声部在响、声音多通透、离你多近——而且覆盖<b class="em">让人平静的状态</b>，不只是运动。');
+$('conceptTag').textContent=t('concept · envisioned — not built','概念 · 设想 — 未制造');
+$('grade').innerHTML=t('sensing <i class="dot g"></i>&nbsp; guidance <i class="dot y"></i>&nbsp; therapy <i class="dot r"></i><br><span style="opacity:.7">parts schematic · not to scale</span>','感知 <i class="dot g"></i>&nbsp; 引导 <i class="dot y"></i>&nbsp; 疗效 <i class="dot r"></i><br><span style="opacity:.7">零件为示意 · 非实际尺寸构造</span>');
+$('hint').textContent=t('drag to rotate the exploded view','拖动旋转分解图');
+
+// ---- three.js ----
+const canvas=$('scene');
+const renderer=new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+const scene=new THREE.Scene();
+// environment map = the single biggest lever for believable reflections (studio look, not "school project")
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+const camera=new THREE.PerspectiveCamera(36, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0.2, 1.6, 6.4);
+
+const controls=new OrbitControls(camera,canvas);
+controls.enableDamping=true; controls.dampingFactor=0.08; controls.enablePan=false;
+controls.minDistance=4.5; controls.maxDistance=innerWidth/innerHeight<0.8?19:9;   // 竖屏需要拉得更远
+controls.maxPolarAngle=Math.PI*0.54;   // stay above the contact shadow
+controls.autoRotate=!STILL; controls.autoRotateSpeed=0.7;
+controls.target.set(0,0,0);
+
+// focus state: -1 = overview, else index of the focused part
+let focus=-1;
+let hover=-1;
+const camTarget=new THREE.Vector3(0,0,0);
+let camRadiusTarget=6.6;
+
+// env map now carries most of the fill — direct lights are just shaping accents
+scene.add(new THREE.AmbientLight(0x3a4258,0.35));
+const key=new THREE.PointLight(0x9fb4ff,26,40); key.position.set(-4,4,5); scene.add(key);
+const warm=new THREE.PointLight(0xe0b184,15,34); warm.position.set(4,-2,4); scene.add(warm);
+scene.add(new THREE.HemisphereLight(0x8fa0d0,0x0b0d12,0.35));
+
+// soft contact shadow grounds the object so it doesn't float in the void
+const _sc=document.createElement('canvas'); _sc.width=_sc.height=256;
+{ const g=_sc.getContext('2d'); const gr=g.createRadialGradient(128,128,8,128,128,128);
+  gr.addColorStop(0,'rgba(0,0,0,.5)'); gr.addColorStop(1,'rgba(0,0,0,0)'); g.fillStyle=gr; g.fillRect(0,0,256,256); }
+const shadow=new THREE.Mesh(new THREE.PlaneGeometry(7,3.4),
+  new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(_sc),transparent:true,depthWrite:false,opacity:0.85}));
+shadow.rotation.x=-Math.PI/2; shadow.position.y=-1.35; scene.add(shadow);
+
+function glowSprite(hex,size){
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const g=c.getContext('2d'); const grd=g.createRadialGradient(64,64,0,64,64,64);
+  grd.addColorStop(0,hex+'cc'); grd.addColorStop(.35,hex+'55'); grd.addColorStop(1,hex+'00');
+  g.fillStyle=grd; g.fillRect(0,0,128,128);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));
+  sp.scale.set(size,size,1); return sp;
+}
+
+const rig=new THREE.Group(); scene.add(rig);
+rig.rotation.set(0.12,-0.5,0);
+
+// unified material language: matte where it should read soft, clean metal where it should read precise
+const mShell=new THREE.MeshStandardMaterial({color:0x23283a,metalness:0.55,roughness:0.28,transparent:true,opacity:0.22,depthWrite:false,envMapIntensity:1.1});
+const mTip=new THREE.MeshStandardMaterial({color:0x2b303c,metalness:0.0,roughness:0.92,envMapIntensity:0.4});
+const mPPG=new THREE.MeshStandardMaterial({color:0xd2965f,emissive:0xd2965f,emissiveIntensity:2.2,metalness:0.2,roughness:0.35});
+const mDriver=new THREE.MeshStandardMaterial({color:0xaab3c0,metalness:0.95,roughness:0.22,envMapIntensity:1.3});
+const mBoard=new THREE.MeshStandardMaterial({color:0x1f5e50,emissive:0x0e2f28,emissiveIntensity:0.35,metalness:0.15,roughness:0.55,envMapIntensity:0.8});
+const mChip=new THREE.MeshStandardMaterial({color:0x11161c,metalness:0.65,roughness:0.38,envMapIntensity:1.0});
+const mBatt=new THREE.MeshStandardMaterial({color:0xc2a86e,metalness:0.95,roughness:0.25,envMapIntensity:1.3});
+const mSeam=new THREE.MeshStandardMaterial({color:0x5a6eaa,emissive:0x5a6eaa,emissiveIntensity:1.4,metalness:0.3,roughness:0.5});
+const mSeamRing=mSeam.clone(); mSeamRing.transparent=true;   // 外壳缝线单独一份:分解时淡出,不影响电路板元件
+
+// parts along X. exX = exploded position, asmX = assembled (nested) position.
+const parts=[];
+function addPart(exX, asmX, buildFn, anchorY, cls, num, name, desc){
+  const g=new THREE.Group(); rig.add(g); buildFn(g);
+  parts.push({g, exX, asmX, anchorY, cls, num, name, desc});
+}
+
+// 1) ear tip (silicone dome) — front
+addPart(2.05, 1.3, g=>{
+  const tip=new THREE.Mesh(new THREE.SphereGeometry(0.5,40,40,0,Math.PI*2,0,Math.PI*0.62), mTip);
+  tip.rotation.z=-Math.PI/2; g.add(tip);
+}, 0.6, 'blue','1', t('Ear tip','入耳硅胶'), t('silicone · seals the canal','贴合耳道·隔音'));
+
+// 2) PPG + HRV optical module — the hero (glowing)
+addPart(0.95, 0.66, g=>{
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.16,40), mChip); base.rotation.z=Math.PI/2; g.add(base);
+  const lens=new THREE.Mesh(new THREE.CircleGeometry(0.26,40), mPPG); lens.position.x=0.09; lens.rotation.y=Math.PI/2; g.add(lens);
+  const halo=glowSprite('#e0a86a',1.5); halo.position.x=0.2; g.add(halo);
+  // two tiny LED dots
+  [[0,0.16],[0,-0.16]].forEach(([y,z])=>{const d=new THREE.Mesh(new THREE.SphereGeometry(0.04,12,12),mPPG);d.position.set(0.11,y,z);g.add(d);});
+}, -0.75, 'warm','2', t('PPG sensor','PPG 光学传感器'), t('reads your pulse from the ear · HRV is the next step','从耳道读脉搏 · HRV 是下一步'));
+
+// 3) acoustic driver (speaker)
+addPart(-0.05, 0.12, g=>{
+  const cone=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.44,0.34,40), mDriver); cone.rotation.z=Math.PI/2; g.add(cone);
+  const cap=new THREE.Mesh(new THREE.SphereGeometry(0.16,20,20), mDriver); cap.position.x=0.14; g.add(cap);
+}, 0.6, 'blue','3', t('Driver','扬声单元'), t('plays the guiding trajectory','放出引导轨迹'));
+
+// 4) SoC / board — state → sound, on device
+addPart(-1.05, -0.15, g=>{
+  const board=new THREE.Mesh(new RoundedBoxGeometry(0.1,0.7,0.5,3,0.04), mBoard); g.add(board);
+  const soc=new THREE.Mesh(new RoundedBoxGeometry(0.14,0.26,0.26,3,0.035), mChip); soc.position.x=0.08; g.add(soc);
+  // tiny SMD components
+  [[0.2,0.15],[-0.22,0.1],[0.18,-0.18],[-0.15,-0.2]].forEach(([y,z])=>{const c=new THREE.Mesh(new THREE.BoxGeometry(0.08,0.07,0.07),mSeam);c.position.set(0.07,y,z);g.add(c);});
+}, -0.8, 'teal','4', t('SoC — sensor fusion + link','SoC — 传感融合 + 通信'), t('runs the state→sound mapping (on-device, or the paired phone)','跑状态→声音映射（设备端，或配对手机）'));
+
+// 5) battery
+addPart(-2.05, -0.5, g=>{
+  const b=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,0.5,40), mBatt); b.rotation.z=Math.PI/2; g.add(b);
+}, 0.6, 'blue','5', t('Battery','电池'), t('powers continuous sensing','为持续感知供电'));
+
+// housing = pod body + stem + nozzle → reads as an earbud when closed; ghosts open
+addPart(-0.45, 0.0, g=>{
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(0.95,48,48), mShell); shell.scale.set(1.2,0.98,0.92); g.add(shell);   // 1.55→1.2:机身缩短,不再扁长
+  const seam=new THREE.Mesh(new THREE.TorusGeometry(0.9,0.02,16,80), mSeamRing); seam.rotation.y=Math.PI/2; seam.scale.set(0.95,1,1.2); g.add(seam);
+  // nozzle (front, inline +X) — the part that enters the ear
+  const nozzle=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.46,0.42,40), mShell);
+  nozzle.rotation.z=Math.PI/2; nozzle.position.set(1.12,0,0); g.add(nozzle);   // 出音嘴缩短、变细
+  // stem (hangs down) — the iconic earbud tell
+  const stem=new THREE.Mesh(new THREE.CapsuleGeometry(0.26,0.95,10,24), mShell);
+  stem.position.set(-0.3,-1.0,0.15); stem.rotation.z=0.16; g.add(stem);
+  const stemSeam=new THREE.Mesh(new THREE.CapsuleGeometry(0.02,0.75,6,12), mSeamRing);
+  stemSeam.position.set(-0.12,-0.98,0.28); stemSeam.rotation.z=0.16; g.add(stemSeam);
+}, -0.95, 'blue','6', t('Housing','外壳'), t('one-piece shell + stem','一体外壳 + 耳柄'));
+
+// ---- leader lines + tracked HTML labels ----
+const svg=$('leaders');
+const NSVG='http://www.w3.org/2000/svg';
+// role badges tie the three loop-critical parts to the closed loop below
+const ROLE={ '2':{en:'PERCEIVE',zh:'感知',c:'#e6b982'}, '4':{en:'DECIDE',zh:'决策',c:'#7db3a0'}, '3':{en:'ACT',zh:'行动',c:'#8ea1cf'} };
+// richer per-part detail shown in the side card on focus (honest scope baked in)
+const DET={
+ '1':{body:t('Seals the ear canal. Passive — but a good seal also helps hold the optical sensor steady against the skin, and movement is the main enemy of optical heart-rate readings.','贴合并密封耳道。看似被动——但好的密封也帮光学传感器稳稳贴住皮肤,而晃动正是光学心率读数最大的敌人。')},
+ '2':{body:t('An optical sensor (LED + photodiode) reads your pulse from inside the ear. <b>The sensing itself is not new</b> — AirPods Pro 3 and Powerbeats Pro 2 already carry one, for workout tracking. What this project adds is <b>where the reading goes</b>: into a mapping that reshapes the structure of the music, instead of a log. Heart-rate variability (HRV) can be derived from the same signal — that is the next step, not built yet.','光学传感器(LED + 光电二极管)从耳内读你的脉搏。<b>感知本身并不新</b>——AirPods Pro 3、Powerbeats Pro 2 已经内置,用于运动记录。这个项目补上的是<b>读数去了哪里</b>:进入一套重塑音乐结构的映射,而不是记进日志。心率变异(HRV)可以从同一个信号算出——那是下一步,还没做。'),
+   mine:t('Same PPG principle as the MAX30102 you already have running.','和你已经跑通的 MAX30102 同一套 PPG 原理。')},
+ '3':{body:t('The speaker — ordinary, off-the-shelf hardware. What is different is not the driver; it is <b>what it is told to play</b>: not a fixed track but the trajectory the engine chose — stems stepping in and out, openness, character.','扬声单元——普通的、买来的现成硬件。不同的不是单元本身,而是<b>它被要求放什么</b>:不是一首固定的歌,而是引擎选出的那条轨迹——声部进退、通透度、音色性格。'),
+   mine:t('Audio fidelity is a hardware axis — you ride on good drivers, you do not claim to invent them.','音质保真是硬件轴——你站在好单元上,不声称发明它。')},
+ '4':{body:t('The brain. It turns the sensor signal into an arousal estimate and runs the <b>state→sound mapping</b> that decides how the music should change. This is the layer that is genuinely mine — the decision that closes the loop.','大脑。它把传感器信号变成唤醒度估计,再跑那套<b>状态→声音映射</b>,决定音乐该怎么变。这一层才是真正属于我的——把闭环合上的那个决策。'),
+   mine:t('Today it runs on the paired phone. Fully on-bud, no phone, is the far-future version.','现阶段跑在配对手机上;全塞进耳机、不要手机,是很远的未来版本。')},
+ '5':{body:t('Always-on sensing costs power. The honest trade of continuous biofeedback versus a normal earbud battery life.','持续感知要耗电。这是「一直在做生物反馈」相对普通耳机续航的诚实代价。')},
+ '6':{body:t('One-piece shell + stem. Closed, it is just an earbud — deliberately unremarkable. The point was never the shell; it is the loop inside it.','一体外壳 + 耳柄。合上就是一只普通耳机——故意不起眼。重点从来不是外壳,是它里面那个闭环。')},
+};
+parts.forEach((p,i)=>{
+  p.line=document.createElementNS(NSVG,'path'); p.line.setAttribute('fill','none');
+  p.line.setAttribute('stroke','rgba(170,180,200,.35)'); p.line.setAttribute('stroke-width','1');
+  svg.appendChild(p.line);
+  p.dot=document.createElementNS(NSVG,'circle'); p.dot.setAttribute('r','2.5'); p.dot.setAttribute('fill','rgba(200,210,230,.8)');
+  svg.appendChild(p.dot);
+  p.el=document.createElement('div'); p.el.className='lbl '+p.cls;
+  const rr=ROLE[p.num];
+  const roleChip=rr?`<span class="role" style="color:${rr.c}">${t(rr.en,rr.zh)}</span>`:'';
+  p.el.innerHTML=`<div class="n"><span class="num">${p.num}</span>${p.name}</div><div class="d">${roleChip}${p.desc}</div>`;
+  document.body.appendChild(p.el);
+});
+
+// ---- the sensing loop strip (delivers the "闭环" the title promises) ----
+$('loop').innerHTML=[
+  `<span class="step">${t('your body','你的身体')}<span class="sub2"> · ${t('state','状态')}</span></span>`,
+  `<span class="arr">→</span>`,
+  `<span class="step" id="sp-perceive" style="color:#e6b982">${t('PERCEIVE','感知')} <b>PPG</b></span>`,
+  `<span class="arr">→</span>`,
+  `<span class="step" id="sp-decide" style="color:#7db3a0">${t('DECIDE','决策')} <b>SoC</b></span>`,
+  `<span class="arr">→</span>`,
+  `<span class="step" id="sp-act" style="color:#8ea1cf">${t('ACT','行动')} <b>${t('driver','扬声')}</b></span>`,
+  `<span class="ret">↺ ${t('back to the body','回到身体')}</span>`,
+].join('');
+$('cursorTag').textContent=t('＋ click to inspect','＋ 点击查看');
+canvas.style.cursor='pointer';
+// fixed screen offset per part (px) so labels fan out, don't overlap
+const OFF=[ [60,-120],[150,90],[150,-40],[-170,30],[-170,-40],[90,120] ];   // 4/5 号收紧,小屏(1280×800)不压左下文字和副标题
+
+// ---- assemble ↔ explode state ----
+let explodeAmt = STILL ? 1 : 0;         // 0 = closed earbud, 1 = exploded
+let target     = STILL ? 1 : 0;
+const smooth=x=>x*x*(3-2*x);
+function setHint(){ $('hint').textContent =
+  focus>=0 ? t('click empty space to go back','点击空白处返回')
+  : target>0.5 ? t('drag to rotate · click a part to inspect · click empty to close','拖动旋转 · 点零件查看 · 点空白合上')
+  : t('click the earbud to open it','点击耳机展开它'); }
+setHint();
+
+function applyExplode(){
+  const e=smooth(Math.max(0,Math.min(1,explodeAmt)));
+  parts.forEach((p,idx)=>{
+    p.g.position.x = p.asmX + (p.exX - p.asmX)*e;
+    p.hoverAmt = (p.hoverAmt||0) + ((idx===hover?1:0)-(p.hoverAmt||0))*0.2;   // hover lift
+    p.g.scale.setScalar(1 + 0.09*p.hoverAmt);
+  });
+  rig.scale.setScalar(0.82 + 0.18*e);
+  mShell.opacity = 0.92 - 0.70*e;
+  mSeamRing.opacity = 1 - 0.85*e;
+  mShell.depthWrite = e < 0.4;            // closed = occlude inner parts (solid); open = see through
+}
+
+function layoutLabels(){
+  const W=innerWidth,H=innerHeight; svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const vis0=smooth(Math.max(0,Math.min(1,(explodeAmt-0.35)/0.55)));   // labels fade in only once opening
+  const vis = focus>=0 ? 0 : vis0;                                     // hide small labels while a part is focused (card takes over)
+  parts.forEach((p,i)=>{
+    const v=new THREE.Vector3(0,p.anchorY,0); p.g.localToWorld(v); v.project(camera);
+    const sx=(v.x*0.5+0.5)*W, sy=(-v.y*0.5+0.5)*H;
+    const lx=sx+OFF[i][0], ly=sy+OFF[i][1];
+    p.el.style.left=lx+'px'; p.el.style.top=ly+'px'; p.el.style.opacity=vis;
+    p.el.classList.toggle('hot', i===hover && focus<0);
+    p.dot.setAttribute('cx',sx); p.dot.setAttribute('cy',sy); p.dot.setAttribute('opacity',vis);
+    const hw = (p.el.offsetWidth||120)/2;                                // 标签以中心定位 → 引线停在标签边缘,不穿过文字
+    const midx = OFF[i][0]>0 ? lx-hw-6 : lx+hw+6;
+    p.line.setAttribute('d',`M ${sx} ${sy} L ${(sx+midx)/2} ${ly} L ${midx} ${ly}`); p.line.setAttribute('opacity',vis);
+  });
+}
+
+// ---- raycast pick + focus interaction ----
+const ray=new THREE.Raycaster(); const ndc=new THREE.Vector2();
+function pickPart(x,y){
+  ndc.x=(x/innerWidth)*2-1; ndc.y=-(y/innerHeight)*2+1;
+  ray.setFromCamera(ndc,camera);
+  let best=-1,bestD=Infinity,shellIdx=-1;
+  parts.forEach((p,i)=>{
+    if(p.num==='6'){ shellIdx=i; return; }        // 外壳罩在最外面,先不参与,免得挡住里面的零件
+    const hits=ray.intersectObject(p.g,true);
+    if(hits.length && hits[0].distance<bestD){ bestD=hits[0].distance; best=i; }
+  });
+  if(best<0 && shellIdx>=0 && ray.intersectObject(parts[shellIdx].g,true).length) best=shellIdx;   // 没点中零件时才算点外壳 → 6 号也能打开
+  return best;
+}
+function showDetail(i){
+  const p=parts[i], rr=ROLE[p.num], d=DET[p.num]||{};
+  $('detail').innerHTML=`<div class="dnum">${p.num} / 6</div><div class="dname">${p.name}</div>`
+    +(rr?`<div class="drole" style="color:${rr.c}">${t(rr.en,rr.zh)}</div>`:'')
+    +`<div class="dbody">${d.body||p.desc}</div>`
+    +(d.mine?`<div class="dmine">${d.mine}</div>`:'');
+  $('detail').classList.add('on');
+}
+function updateFocusUI(){
+  if(focus>=0){ showDetail(focus); controls.autoRotate=false; }
+  else{ $('detail').classList.remove('on'); controls.autoRotate=!STILL; }
+  ['sp-perceive','sp-decide','sp-act'].forEach(id=>{const e=$(id); if(e) e.classList.remove('on');});
+  if(focus>=0){ const m={'2':'sp-perceive','4':'sp-decide','3':'sp-act'}[parts[focus].num]; const e=m&&$(m); if(e) e.classList.add('on'); }
+}
+let dnX=0,dnY=0,moved=false;
+canvas.addEventListener('pointerdown',e=>{dnX=e.clientX;dnY=e.clientY;moved=false;});
+canvas.addEventListener('pointermove',e=>{
+  if(Math.abs(e.clientX-dnX)+Math.abs(e.clientY-dnY)>6) moved=true;
+  const tag=$('cursorTag');
+  if(e.buttons===0 && focus<0 && explodeAmt>0.5){          // exploded overview: hover a part
+    hover=pickPart(e.clientX,e.clientY);
+    canvas.style.cursor = hover>=0 ? 'pointer' : 'grab';
+    if(hover>=0){ tag.style.left=e.clientX+'px'; tag.style.top=e.clientY+'px'; tag.style.opacity='1'; }
+    else tag.style.opacity='0';
+  } else {
+    hover=-1; tag.style.opacity='0';
+    if(e.buttons===0) canvas.style.cursor = explodeAmt<0.5 ? 'pointer' : 'grab';   // closed bud is clickable
+  }
+});
+canvas.addEventListener('pointerup',e=>{
+  if(moved) return;
+  if(explodeAmt<0.5){ target=1; focus=-1; }        // closed → open exploded
+  else{
+    const i=pickPart(e.clientX,e.clientY);
+    if(i>=0) focus=(focus===i)?-1:i;               // toggle focus on a part
+    else if(focus>=0) focus=-1;                     // background → leave focus
+    else target=0;                                  // background at overview → close
+  }
+  updateFocusUI(); setHint();
+});
+
+const clock=new THREE.Clock();
+function tick(){
+  const el=clock.getElapsedTime();
+  mPPG.emissiveIntensity=2.0+Math.sin(el*7)*0.5;
+  explodeAmt += (target-explodeAmt)*0.09;
+  applyExplode();
+  // focus camera: dolly toward the focused part, or ease back to overview
+  if(focus>=0) parts[focus].g.getWorldPosition(camTarget); else camTarget.set(0,0,0);
+  const narrow = innerWidth / innerHeight < 0.8;
+  camRadiusTarget = focus>=0 ? (narrow ? 7.2 : 4.7) : (narrow ? 17 : 6.6);   // 手机竖屏:拉远,展开后零件都在屏内
+  controls.target.lerp(camTarget,0.08);
+  const _off=camera.position.clone().sub(controls.target);
+  _off.setLength(_off.length()+(camRadiusTarget-_off.length())*0.08);
+  camera.position.copy(controls.target).add(_off);
+  controls.update();
+  renderer.render(scene,camera);
+  layoutLabels();
+  requestAnimationFrame(tick);
+}
+applyExplode(); tick();
+function fitView(){ camera.aspect=innerWidth/innerHeight;
+  // 竖屏:把模型放到文字与底部闭环条之间(画面整体下移约 8% 高度)
+  if(innerWidth/innerHeight<0.8) camera.setViewOffset(innerWidth,innerHeight,0,-innerHeight*0.08,innerWidth,innerHeight); else camera.clearViewOffset();
+  camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
+fitView(); addEventListener('resize',fitView);
+</script>
+</body>
+</html>

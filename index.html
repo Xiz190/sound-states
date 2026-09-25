@@ -10,11 +10,15 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Sound States" />
   <link rel="apple-touch-icon" href="cover-cinematic.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- 动态背景层:声音驱动的颗粒/脉冲 / dynamic background, audio-driven -->
   <canvas id="bgCanvas"></canvas>
+  <div id="genBg"></div><!-- 生成板块:当前场景色的呼吸色场背景 -->
   <!-- 背景发光层:由声音驱动 / glow layer driven by audio -->
   <div id="glow"></div>
 
@@ -28,53 +32,74 @@
   </div>
 
   <!-- 导航 / navigation -->
-  <button id="menuBtn" aria-label="menu">☰</button>
+  <button id="menuBtn" aria-label="Menu"><svg width="18" height="14" viewBox="0 0 18 14" aria-hidden="true"><path d="M1 2h16M1 7h16M1 12h16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
   <nav id="menu">
     <button data-go="landing"    data-i18n="navHome"></button>
     <button data-go="selection"  data-i18n="navWorlds"></button>
     <button data-go="browse"     data-i18n="navBrowse"></button>
-    <button data-go="navigator"  data-i18n="navNavigator"></button>
+    <button id="menuNavigator" data-i18n="navNavigator"></button>
     <button data-go="about"      data-i18n="navAbout"></button>
   </nav>
 
   <!-- ============ 01 Landing 首屏 ============ -->
   <section id="landing" class="screen active">
     <div class="landing-inner">
+      <div class="land-halo" id="landHalo" aria-hidden="true"></div><!-- 五个板块的颜色轮流缓缓流动;点「开始」时放大散开成圆盘 -->
       <h1 class="title">Sound States</h1>
       <p class="subtitle" data-i18n="subtitle"></p>
       <p class="guide" data-i18n="guide"></p>
       <div class="sel-gate-btns landing-gate-btns">
         <button id="landingYesBtn" class="sel-gate-btn sel-gate-btn--yes" data-i18n="gateYes"></button>
-        <button id="landingNoBtn"  class="sel-gate-btn sel-gate-btn--no"  data-i18n="gateNo"></button>
       </div>
       <p class="hint" data-i18n="hint"></p>
     </div>
   </section>
 
   <!-- ============ 02 State Selection 状态选择 ============ -->
-  <section id="selection" class="screen">
+  <section id="selection" class="screen sel2">
     <header class="top-bar">
       <button class="back-btn" data-go="landing" data-i18n="backBtn"></button>
     </header>
 
-    <!-- 板块区 / boards -->
-    <div class="sel-boards" id="selBoards">
-      <div class="cards" id="stateCards"><!-- 卡片由 JS 生成 / cards rendered by JS --></div>
-
-      <!-- 今日推荐 / daily recommendation ring -->
-      <div class="daily-section">
-        <div class="section-divider"><span data-i18n="dailySection"></span></div>
-        <button class="daily-ring" id="dailyBtn" aria-label="Today's picks">
-          <div class="daily-ring-inner">
-            <span class="ring-moon">☽</span>
-            <span class="ring-txt" data-i18n="dailyBtn"></span>
+    <!-- 选择页:左圆盘(按 Russell 角度分区,封面色缓缓流动)+ 右舞台(开场 → 悬停预览 → 点击后画出数据图 → 飞进播放页) -->
+    <div class="sel2-grid">
+      <svg id="selDisc" viewBox="-300 -300 600 600" role="group" aria-label="States"></svg>
+      <div class="sel2-stage" aria-live="polite">
+        <div class="sel2-layer show" id="selIntro">
+          <h1 class="sel2-h" data-i18n="selQ"></h1>
+          <p class="sel2-lede" id="selLede"></p>
+          <p class="sel2-hint" id="selHint"><i></i><span></span></p>
+          <div class="sel2-links">
+            <button id="selUnsureBtn" data-i18n="selUnsure"></button>
+            <button id="browseAllBtn" data-i18n="selAll"></button>
           </div>
-        </button>
-        <p class="daily-hint" data-i18n="dailyHint"></p>
+        </div>
+        <div class="sel2-layer sel2-pv" id="selPreview">
+          <span class="sel2-grp"><i id="selPvDot"></i><span id="selPvGrp"></span></span>
+          <h2 class="sel2-name" id="selPvName"></h2>
+          <p class="sel2-desc" id="selPvDesc"></p>
+          <div class="sel2-more"><div><div class="sel2-fig" id="selPvFig"></div><p class="sel2-chg" id="selPvChg"></p></div></div>
+          <div><button class="sel2-enter" id="selPvEnter"><span id="selPvEnterTxt"></span>
+            <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true"><path d="M1 5h12M9 1l4 4-4 4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+        </div>
+        <div class="sel2-layer sel2-gd" id="selGuide">
+          <span class="sel2-grp" data-i18n="selGuideKicker"></span>
+          <h2 class="sel2-name" data-i18n="selGuideName"></h2>
+          <p class="sel2-desc" data-i18n="selGuideLead"></p>
+          <div class="sel2-opts">
+            <button data-go-board="motion"><span data-i18n="navGuideDischarge"></span><small data-i18n="navMotion"></small></button>
+            <button data-go-board="cinematic"><span data-i18n="navGuideDiversion"></span><small data-i18n="navImagine"></small></button>
+            <button data-go-board="relax"><span data-i18n="navGuideSolace"></span><small data-i18n="navRelax"></small></button>
+            <button data-go-board="sleep"><span data-i18n="selGuideRevival"></span><small data-i18n="selSleep"></small></button>
+          </div>
+          <p class="sel2-src" data-i18n="selGuideSrc"></p>
+          <a class="sel2-vis" href="vision-page.html" target="_blank" rel="noopener" data-i18n="navGuideVision"></a>
+        </div>
       </div>
-
-      <button class="browse-all-link" id="browseAllBtn" data-i18n="browseAll"></button>
     </div>
+
+    <!-- 旧卡片/今日推荐:保留节点给旧代码引用,不显示 / legacy nodes kept hidden so old code keeps working -->
+    <div hidden><div class="cards" id="stateCards"></div><button id="dailyBtn"><span class="ring-txt"></span></button></div>
   </section>
 
   <!-- ============ 03 Scene 场景页(含弧形封面) ============ -->
@@ -88,10 +113,12 @@
 
     <!-- 弧形封面瀑布流 / arc coverflow (sketch B) -->
     <div class="coverflow" id="coverflow"></div>
+    <!-- 生成板块:场景选择标签(替代封面流) -->
+    <div id="genSceneList"></div>
 
     <div class="cover-nav">
-      <button class="round-btn" id="prevCover">‹</button>
-      <button class="round-btn" id="nextCover">›</button>
+      <button class="round-btn" id="prevCover" aria-label="Previous track"><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M7.5 1.5 2 7l5.5 5.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="round-btn" id="nextCover" aria-label="Next track"><svg width="9" height="14" viewBox="0 0 9 14" aria-hidden="true"><path d="M1.5 1.5 7 7l-5.5 5.5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
 
     <!-- 主播放器 / main player -->
@@ -105,25 +132,134 @@
         <span class="time-label" id="timeCur">0:00</span>
         <input type="range" id="seekBar" class="seek-bar" min="0" max="100" value="0" step="0.1" />
         <span class="time-label" id="timeDur">0:00</span>
+        <button class="loop-btn" id="loopBtn" title="播放模式 / Play mode"></button>
+      </div>
+      <!-- 此刻的声音:播放页主角 —— 声部/通透度随能量实时进退(给用户看的反馈,讲解细节在讲解页)-->
+      <div class="now-panel" id="nowPanel">
+        <div class="now-head"><span class="now-title"></span><span class="now-char" id="nowChar"></span></div>
+        <div class="now-rows" id="nowRows"></div>
+        <p class="now-cap" id="nowCap"></p>
       </div>
 
+      <!-- 生成板块控制(工作/睡眠) · 仅 .player.gen-mode 显示 -->
+      <style>
+        #genControls { display:none; margin-top:4px; }
+        .player.gen-mode #genControls { display:block; }
+        .player.gen-mode .seek-row,
+        .player.gen-mode .atmosphere,
+        .player.gen-mode #atmosDesc,
+        .player.gen-mode .eq-strip,
+        .player.gen-mode #valenceDesc,
+        .player.gen-mode #ctrlLogic,
+        .player.gen-mode .mini-russell-wrap { display:none !important; }
+        /* 心率模式栏(实时/模拟/自由)+ 说明:工作/睡眠也保留 —— 心率贯穿所有板块 */
+        #genControls .gen-phase, #genControls .gen-presets { display:flex; gap:8px; justify-content:center; margin:10px 0; }
+        #genControls .gen-row { display:flex; align-items:center; gap:12px; margin:12px 6px; }
+        #genControls .gen-lab { flex:0 0 92px; font-size:12px; opacity:.7; text-align:right; white-space:nowrap; }
+        #genControls .gen-row input[type=range] { flex:1; }
+        /* gen 滑块统一到全站外观(与 .atmos-slider 一致,替换浏览器默认蓝色) */
+        #genControls input[type=range] {
+          -webkit-appearance:none; appearance:none;
+          height:3px; border-radius:3px; background:rgba(255,255,255,.18);
+          outline:none; cursor:pointer;
+        }
+        #genControls input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance:none; appearance:none;
+          width:15px; height:15px; border-radius:50%;
+          background:var(--accent); cursor:pointer;
+          box-shadow:0 0 9px rgba(var(--glow-color),.55);
+        }
+        #genControls input[type=range]::-moz-range-thumb {
+          width:15px; height:15px; border:none; border-radius:50%;
+          background:var(--accent); cursor:pointer;
+        }
+        #genAdvanced { display:none; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.12); }
+        #genAdvanced .gen-layer { display:grid; grid-template-columns:18px 1fr 66px 36px; align-items:center; gap:8px; padding:5px 4px; }
+        #genAdvanced .gl-nm { font-size:12px; opacity:.8; }
+        #genAdvanced .gl-val { font-size:11px; opacity:.6; text-align:right; font-variant-numeric:tabular-nums; }
+        #genAdvanced .gen-layer input[type=range] { width:100%; }
+        /* 生成板块:去封面卡片,内容上移,背景=场景色呼吸色场 */
+        #genBg { display:none; position:fixed; inset:0; z-index:-1;
+          background:radial-gradient(125% 125% at 50% 32%, var(--gen-c1,#26304e), var(--gen-c2,#0c1020) 72%);
+          animation:genBreathe 11s ease-in-out infinite; transition:background 1.2s ease; }
+        @keyframes genBreathe { 0%,100%{ transform:scale(1.02); filter:brightness(.93) saturate(1); }
+                                50%   { transform:scale(1.06); filter:brightness(1.07) saturate(1.06); } }
+        body.gen-scene #genBg { display:block; }
+        body.gen-scene #bgCanvas { display:none; }
+        body.gen-scene #coverflow { display:none; }
+        body.gen-scene .cover-nav { display:none; }
+        #genSceneList { display:none; }
+        body.gen-scene #genSceneList { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; padding:26px 16px 6px; }
+        #genSceneList .gen-chip { padding:9px 20px; border-radius:999px; border:1px solid rgba(255,255,255,.22);
+          background:rgba(255,255,255,.05); color:#e9eef2; font-size:14px; letter-spacing:.02em; cursor:pointer;
+          transition:background .2s, color .2s, border-color .2s; }
+        #genSceneList .gen-chip:hover { background:rgba(255,255,255,.12); }
+        #genSceneList .gen-chip.active { background:rgba(255,255,255,.92); color:#14181c; border-color:transparent; font-weight:600; }
+      </style>
+      <div id="genControls">
+        <div class="gen-phase" id="genPhase">
+          <button class="hm-btn" id="genDay" data-i18n="genDay"></button>
+          <button class="hm-btn" id="genNight" data-i18n="genNight"></button>
+        </div>
+        <!-- 此刻的声音(生成板块):下面三条滑条本来就随引擎实时移动,这里只说明"是心率在推它们"+ 入睡弧进度 -->
+      <div class="gen-now" id="genNow">
+        <div class="now-head"><span class="now-title" data-i18n="nowTitle"></span><span class="now-char" id="genArcTxt"></span></div>
+        <div class="gen-fig" id="genFig"></div>
+        <canvas class="gen-portrait" id="genPortrait" aria-label="Live sound portrait"></canvas>
+        <div class="gen-arc" id="genArc" style="display:none"><span class="gen-arc-fill" id="genArcFill"></span></div>
+        <p class="now-cap" id="genNowCap"></p>
+      </div>
+      <div class="gen-row"><span class="gen-lab" data-i18n="genWarm"></span><input type="range" id="mWarm"  min="0" max="100" value="45"></div>
+        <div class="gen-row"><span class="gen-lab" data-i18n="genSpace"></span><input type="range" id="mSpace" min="0" max="100" value="30"></div>
+        <div class="gen-row"><span class="gen-lab" data-i18n="genLive"></span><input type="range" id="mLive"  min="0" max="100" value="55"></div>
+        <div class="gen-presets">
+          <button class="hm-btn" id="genSleep" data-i18n="genSleep"></button>
+          <button class="hm-btn" id="genWork"  data-i18n="genWork"></button>
+        </div>
+        <button class="hm-btn" id="genAdvToggle" data-i18n="genAdvanced" style="width:100%;margin-top:6px;"></button>
+        <div id="genAdvanced">
+          <div class="gen-presets" id="genBreatheWrap" style="margin-bottom:6px;">
+            <button class="hm-btn" id="genBreatheAuto"   data-i18n="genBreatheAuto"></button>
+            <button class="hm-btn" id="genBreatheManual" data-i18n="genBreatheManual"></button>
+          </div>
+          <div id="genLayers"></div>
+          <div class="gen-row"><span class="gen-lab" data-i18n="genGlue"></span><input type="range" id="mGlue" min="0" max="1" step="0.01" value="0.9"></div>
+          <div class="gen-row"><span class="gen-lab" data-i18n="genVol"></span><input type="range" id="mVol" min="0" max="1" step="0.01" value="0.85"></div>
+        </div>
+      </div>
+
+      <!-- 输入 · 你的心率:模式分段按钮 + 当前模式的控件;静息基线收成一行,点「修改」展开 -->
+      <section class="hr-panel" id="hrPanel">
+        <div class="hr-head">
+          <span class="hr-title" data-i18n="hrPanelTitle"></span>
+          <div class="heart-mode-bar" id="heartModeBar" role="tablist">
+            <button class="hm-btn active" data-mode="auto" data-i18n="hmAuto" data-desckey="hmDescAuto"></button>
+            <button class="hm-btn" data-mode="sim" data-i18n="hmSim" data-desckey="hmDescSim"></button>
+            <button class="hm-btn" data-mode="free" data-i18n="hmFree" data-desckey="hmDescFree"></button>
+          </div>
+        </div>
+        <p class="hm-desc" id="hmDesc"></p>
+        <div class="heart-rate-bar hr-live" id="heartBar">
+          <span class="hr-big"><span id="heartBPMDisplay" class="heart-bpm">--</span><small>BPM</small></span>
+          <button id="heartConnect" class="heart-btn"></button>
+        </div>
+        <div class="heart-rate-bar hr-sim" id="heartSimBar" style="display:none">
+          <span class="hr-big"><span id="heartSimBPM" class="heart-bpm">70</span><small>BPM</small><em id="hrSimRel"></em></span>
+          <div class="hr-track">
+            <input type="range" id="heartSimSlider" class="atmos-slider" min="45" max="160" value="70" aria-label="Simulated heart rate (BPM)" />
+            <span class="hr-base" id="hrBaseMark" aria-hidden="true"></span>
+            <span class="hr-ends"><span>45</span><span>160</span></span>
+          </div>
+        </div>
+        <div class="hr-manual">
       <div class="atmosphere">
         <span class="var-label" data-i18n="atmosLabel"></span>
         <span class="slider-end" data-i18n="veiled"></span>
         <input type="range" id="atmosSlider" class="atmos-slider" min="0" max="100" value="100" />
         <span class="slider-end" data-i18n="natural"></span>
-        <button class="reset-btn" id="atmosReset" title="Reset">↺</button>
+        <button class="reset-btn" id="atmosReset" title="Reset" aria-label="Reset"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7a4.5 4.5 0 1 0 1.4-3.3M2.5 1.8v2.4h2.4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
       <p class="eq-desc" id="atmosDesc"></p>
-      <div class="heart-mode-bar" id="heartModeBar">
-        <button class="hm-btn active" data-mode="auto" data-desc="心率传感器实时驱动音色与氛围深度">♥ 实时心率</button>
-        <button class="hm-btn" data-mode="free" data-desc="手动调整，专注于音乐本身">♪ 自由聆听</button>
-      </div>
-      <p class="hm-desc" id="hmDesc">心率传感器实时驱动音色与氛围深度</p>
-      <div class="heart-rate-bar" id="heartBar">
-        <button id="heartConnect" class="heart-btn">♡ 心率</button>
-        <span id="heartBPMDisplay" class="heart-bpm">--</span>
-      </div>
       <div class="eq-strip">
         <span class="var-label" data-i18n="eqLabel"></span>
         <div class="eq-btns">
@@ -131,11 +267,28 @@
           <button class="eq-btn" data-eq="grand"></button>
           <button class="eq-btn" data-eq="power"></button>
           <button class="eq-btn" data-eq="clear"></button>
-          <button class="eq-btn" data-eq="warm"></button>
-          <button class="eq-btn" data-eq="dark"></button>
         </div>
         <p class="eq-desc" id="eqDesc"></p>
       </div>
+      <div class="valence atmosphere" id="valenceRow">
+        <span class="var-label" data-i18n="valenceLabel"></span>
+        <span class="slider-end" data-i18n="valCoolEnd"></span>
+        <input type="range" id="valenceSlider" class="atmos-slider" min="-100" max="100" value="0" />
+        <span class="slider-end" data-i18n="valWarmEnd"></span>
+        <button class="reset-btn" id="valenceReset" title="Reset" aria-label="Reset"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7a4.5 4.5 0 1 0 1.4-3.3M2.5 1.8v2.4h2.4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <p class="eq-desc" id="valenceDesc"></p>
+        </div>
+        <div class="heart-rate-bar hr-rest" id="heartRestingBar" style="display:none">
+          <span class="hr-rest-line"><span data-i18n="restingLabel"></span> <b id="hrRestVal">70</b> BPM <button type="button" class="hr-rest-edit" id="hrRestEdit" data-i18n="restEdit"></button></span>
+          <span class="hr-rest-editor">
+            <input type="number" id="restingBPMInput" class="resting-input" min="40" max="120" step="1" value="70" aria-label="Resting heart rate" />
+            <span>BPM</span>
+            <p class="resting-hint" id="restingHintTxt" data-i18n="restingHint"></p>
+          </span>
+        </div>
+      </section>
+      <p class="ctrl-logic" id="ctrlLogic" data-i18n="ctrlLogic"></p>
       <!-- 情绪坐标迷你指示器 / mini Russell indicator -->
       <div class="mini-russell-wrap">
         <canvas id="miniRussell"></canvas>
@@ -149,7 +302,7 @@
       <div class="algo-insight-wrap">
         <button class="algo-insight-toggle" id="algoInsightToggle">◎ <span data-i18n="algoInsightLabel"></span></button>
         <div class="algo-insight-panel" id="algoInsightPanel">
-          <div class="ai-row">
+          <div class="ai-row" id="aiBPMRow">
             <span class="ai-label" data-i18n="algoInsightBPM"></span>
             <span class="ai-bpm" id="aiBPM">--</span>
           </div>
@@ -179,7 +332,7 @@
             <span class="ai-out-label" data-i18n="algoAtmos"></span>
             <span class="ai-out-val" id="aiAtmosPanel">--</span>
           </div>
-          <p class="ai-src">Russell (1980) · BRECVEMA (Juslin, 2008) · Karageorghis (2012)</p>
+          <p class="ai-src">Russell (1980) · BRECVEMA (Juslin, 2013) · Karageorghis &amp; Priest (2012)</p>
         </div>
       </div>
 
@@ -224,6 +377,31 @@
         <p data-i18n="proc6"></p>
         <p data-i18n="proc7"></p>
       </div>
+
+      <!-- 深入了解 / Go deeper — 分两组:往里看(机制) / 往前看(愿景) -->
+      <div class="go-deeper">
+        <h4 class="gd-group-title" data-i18n="gdHowTitle"></h4>
+        <ul class="gd-list">
+          <li><a href="model-diagram.html" target="_blank" rel="noopener">
+            <span class="gd-name" data-i18n="gdModel"></span>
+            <span class="gd-desc" data-i18n="gdModelD"></span></a></li>
+          <li><a href="stem-test.html" target="_blank" rel="noopener">
+            <span class="gd-name" data-i18n="gdStems"></span>
+            <span class="gd-desc" data-i18n="gdStemsD"></span></a></li>
+          <li><a href="scene.html" target="_blank" rel="noopener">
+            <span class="gd-name" data-i18n="gdScene"></span>
+            <span class="gd-desc" data-i18n="gdSceneD"></span></a></li>
+          <li><a href="sound-library.html" target="_blank" rel="noopener">
+            <span class="gd-name" data-i18n="gdSynth"></span>
+            <span class="gd-desc" data-i18n="gdSynthD"></span></a></li>
+        </ul>
+        <h4 class="gd-group-title" data-i18n="gdVisionTitle"></h4>
+        <ul class="gd-list">
+          <li><a href="vision-page.html" target="_blank" rel="noopener" class="gd-vision">
+            <span class="gd-name" data-i18n="gdVision"></span>
+            <span class="gd-desc" data-i18n="gdVisionD"></span></a></li>
+        </ul>
+      </div>
     </div>
 
     <!-- 面板 3：反思 / Panel 3: Reflection -->
@@ -239,11 +417,11 @@
     </div>
 
     <!-- 其他作品外链（始终可见，标签下方固定）/ other work links: always visible -->
-    <div class="about-links-section">
+    <!-- 其他作品链接仍是占位地址(your-*-link.com),点开是死链 → 先隐藏,填好真实链接后去掉 hidden -->
+    <div class="about-links-section" hidden>
       <h3 class="about-links-title" data-i18n="moreWorkTitle"></h3>
       <ul class="about-links-list">
         <li><a class="about-ext-link" href="https://your-music-link.com" target="_blank" rel="noopener" data-i18n="linkOriginalMusic"></a></li>
-        <li><a class="about-ext-link" href="https://your-world-music-link.com" target="_blank" rel="noopener" data-i18n="linkWorldMusic"></a></li>
         <li><a class="about-ext-link" href="https://your-intelligence-link.com" target="_blank" rel="noopener" data-i18n="linkIntelligence"></a></li>
         <li><a class="about-ext-link" href="https://bilibili.com" target="_blank" rel="noopener" data-i18n="linkBilibili"></a></li>
       </ul>
@@ -320,6 +498,17 @@
           </div>
         </div>
 
+        <!-- 引导区:点落在紧张/苦恼/低落时出现,由你选策略 / guide zone -->
+        <div class="nav-guide" id="navGuide" style="display:none">
+          <p class="nav-guide-lead" data-i18n="navGuideLead"></p>
+          <div class="nav-guide-btns">
+            <button class="nav-guide-btn" data-board="motion"><span data-i18n="navGuideDischarge"></span><small data-i18n="navMotion"></small></button>
+            <button class="nav-guide-btn" data-board="cinematic"><span data-i18n="navGuideDiversion"></span><small data-i18n="navImagine"></small></button>
+            <button class="nav-guide-btn" data-board="relax"><span data-i18n="navGuideSolace"></span><small data-i18n="navRelax"></small></button>
+          </div>
+          <a class="nav-guide-vision" href="vision-page.html" target="_blank" rel="noopener" data-i18n="navGuideVision"></a>
+        </div>
+
         <!-- ③ 进入 / Step 3: enter -->
         <p class="nav-step-label" data-i18n="navStep3"></p>
         <button class="algo-enter-btn" id="algoEnterBtn" data-i18n="algoEnter"></button>
@@ -344,12 +533,27 @@
   </section>
 
   <!-- 真实音轨 ×2:双声道交叉淡化 / two decks for crossfade -->
-  <audio id="realAudio" src="glass-grid.wav" loop preload="none"></audio>
+  <audio id="realAudio" src="glass-grid.m4a" loop preload="none"></audio>
   <audio id="realAudio2" loop preload="none"></audio>
 
   <script>
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   </script>
+  <script>
+    // 声景引擎栈(sound-engines + scene-config + scene-engine)隔离加载到独立作用域→暴露 window.SceneStack。
+    // 它们的 `let ctx` 只在此函数作用域内,不进全局,不与主站 script.js 的 ctx 冲突;引擎跑自己的 AudioContext。
+    window.__sceneStackReady = (async function () {
+      try {
+        const files = ['sound-engines.js', 'scene-config.js', 'scene-engine.js'];
+        const src = await Promise.all(files.map(f => fetch(f).then(r => r.text())));
+        const factory = new Function(src.join('\n;\n') + '\n; return { createSceneEngine, SoundscapeConfig };');
+        window.SceneStack = factory();
+        return window.SceneStack;
+      } catch (e) { console.error('[SceneStack] load failed:', e); return null; }
+    })();
+  </script>
   <script src="script.js"></script>
+  <script src="selection.js"></script>
+  <script src="trace-logger.js"></script><!-- 只在 ?log 时出现 / only with ?log -->
 </body>
 </html>

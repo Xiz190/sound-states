@@ -1,4 +1,4 @@
-const CACHE = 'sound-states-v3';
+const CACHE = 'sound-states-v7';   // 9-24 大改版:换版本号,让旧缓存(图片)失效
 
 // 核心文件:network-first(总是拿最新版) / core files: always fetch fresh
 const NETWORK_FIRST = ['.html', '.css', '.js'];

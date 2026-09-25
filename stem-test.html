@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sound States — 分轨 / Vertical Remixing</title>
+<style>
+/* ============================================================
+   Sound States — 分轨讲解台 (portfolio artifact)
+   承袭 model-diagram 的夜色系统:#0c0e14 蓝黑底、暖白墨、单一
+   睡眠蓝 accent、细发丝面板、等宽度量数字;放松板块色为语义场。
+   音频引擎(stemGains 曲线 / A·B 母线 / EQ·低通)沿用原 stem-test。
+   ============================================================ */
+:root{
+  --bg:#0c0e14; --bg2:#0a0c12;
+  --ink:#e7e3da; --muted:#8b8a96; --faint:#7a7984;
+  --accent:#b9a16b; --glow:185,161,107;
+  --hair:rgba(255,255,255,.09); --hair2:rgba(255,255,255,.055);
+  --fill:rgba(255,255,255,.028); --fill2:rgba(255,255,255,.045);
+  --relax:150,165,190; --warm:210,150,95; --cool:110,150,210;
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,"Roboto Mono",monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{min-height:100%}
+body{
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(var(--glow),.10), transparent 60%),
+    radial-gradient(900px 600px at 92% 112%, rgba(var(--relax),.06), transparent 60%),
+    var(--bg);
+  color:var(--ink); font-family:var(--font);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+::selection{background:rgba(var(--glow),.32);color:#fff}
+:focus-visible{outline:1.5px solid rgba(var(--glow),.9);outline-offset:2px;border-radius:3px}
+
+.lab{font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+.stage{max-width:1040px; margin:0 auto; padding:clamp(20px,3vw,46px) clamp(16px,3vw,40px) 60px;
+  display:flex; flex-direction:column; gap:clamp(14px,1.8vw,22px)}
+
+/* header */
+header.top{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap; margin-bottom:4px}
+.brandline{display:flex; align-items:baseline; gap:13px; flex-wrap:wrap}
+h1.brand{font-weight:300; font-size:clamp(1.4rem,2.3vw,2rem); letter-spacing:.13em}
+h1.brand b{font-weight:600}
+.sub{color:var(--muted); font-size:clamp(.72rem,1vw,.85rem); font-weight:300}
+.sub .zh{color:var(--faint)}
+.topcite{color:var(--faint); font-size:.64rem; line-height:1.6; text-align:right; max-width:34ch}
+.topcite b{color:var(--muted); font-weight:400}
+
+/* panels */
+.panel{
+  background:linear-gradient(180deg,var(--fill2),var(--fill));
+  border:1px solid var(--hair); border-radius:14px;
+  padding:clamp(14px,1.5vw,22px); backdrop-filter:blur(3px);
+}
+.ptag{display:flex; align-items:center; gap:9px; margin-bottom:15px}
+.ptag .step{width:19px;height:19px;border-radius:50%;flex:none;display:grid;place-items:center;
+  border:1px solid var(--hair); font-family:var(--mono); font-size:.62rem; color:var(--muted)}
+
+/* transport */
+.transport{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.pbtn{border:1px solid var(--hair); background:rgba(var(--glow),.10); color:var(--ink); cursor:pointer;
+  border-radius:999px; padding:.55rem 1.1rem; font:inherit; font-size:.8rem; letter-spacing:.02em;
+  transition:background .25s, border-color .25s}
+.pbtn:hover{background:rgba(var(--glow),.2); border-color:rgba(var(--glow),.5)}
+.pbtn.primary{background:rgba(var(--glow),.22)}
+.pbtn:disabled{opacity:.35; cursor:default}
+.status{font-size:.7rem; color:var(--faint); flex:1; text-align:right; min-height:1em; font-family:var(--mono)}
+
+/* A/B toggle */
+.abtoggle{display:flex; border:1px solid var(--hair); border-radius:12px; overflow:hidden; margin-top:14px}
+.abtoggle button{flex:1; border:0; background:transparent; color:var(--muted); font:inherit; font-size:.82rem;
+  font-weight:400; letter-spacing:.02em; padding:13px; cursor:pointer; transition:.2s}
+.abtoggle button + button{border-left:1px solid var(--hair)}
+.abtoggle button:hover{color:var(--ink)}
+.abtoggle button.on{background:rgba(var(--glow),.16); color:var(--ink)}
+.abtoggle button.on.stems{background:rgba(var(--relax),.20)}
+.modeNote{margin-top:12px; font-size:.72rem; line-height:1.6; color:var(--muted);
+  padding:10px 13px; border-radius:10px; border:1px solid var(--hair); background:var(--fill)}
+.modeNote b{color:var(--ink); font-weight:500}
+.modeNote b.cool{color:rgba(var(--cool),.95)} .modeNote b.hot{color:rgba(var(--relax),1)}
+
+/* grid: inputs | layers */
+.grid{display:grid; gap:clamp(14px,1.6vw,20px); grid-template-columns:minmax(260px,.9fr) minmax(320px,1.1fr); align-items:stretch}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+
+/* sliders */
+.field{margin:0 0 20px}
+.field:last-child{margin-bottom:0}
+.axnote{margin-top:16px;padding-top:14px;border-top:1px solid var(--hair2);font-size:.68rem;line-height:1.62;color:var(--muted)}
+.axnote b{color:var(--ink);font-weight:500}
+.field .flab{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:11px; gap:10px}
+.field .flab .fname{font-size:.82rem; font-weight:400; letter-spacing:.02em; color:var(--ink)}
+.field .flab .fval{font-family:var(--mono); font-size:1.05rem; font-variant-numeric:tabular-nums; color:var(--ink)}
+.field .fhint{font-size:.6rem; color:var(--faint); margin-top:9px; line-height:1.5}
+.srange{-webkit-appearance:none; appearance:none; width:100%; height:3px; border-radius:3px; outline:none; cursor:grab}
+.srange:active{cursor:grabbing}
+.srange.hr{background:linear-gradient(90deg,rgba(150,165,190,.18),rgba(150,165,190,.85))}   /* 原引用了未定义的 --relax,轨道透明 */
+.srange.val{background:linear-gradient(90deg,rgba(var(--cool),.75),rgba(255,255,255,.14) 50%,rgba(var(--warm),.75))}
+.srange::-webkit-slider-thumb{-webkit-appearance:none; width:17px;height:17px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#fff,rgba(var(--glow),.95) 70%);
+  border:1.5px solid rgba(255,255,255,.85); box-shadow:0 0 12px 2px rgba(var(--glow),.45),0 2px 6px rgba(0,0,0,.5); cursor:grab}
+.srange::-moz-range-thumb{width:17px;height:17px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);
+  background:rgba(var(--glow),.95); box-shadow:0 0 12px 2px rgba(var(--glow),.45)}
+.hbeat{display:inline-block; margin-left:8px; color:rgba(var(--relax),1)}
+@keyframes beat{0%,100%{transform:scale(1);opacity:.85}14%{transform:scale(1.25);opacity:1}30%{transform:scale(1)}}
+.playing .hbeat{animation:beat 1s cubic-bezier(.3,.1,.3,1) infinite; display:inline-block; transform-origin:center}
+
+/* vertical layer meters */
+.layers{display:flex; gap:clamp(12px,2vw,26px); align-items:flex-end; justify-content:center; height:210px; padding:6px 4px 0}
+.vm{display:flex; flex-direction:column; align-items:center; gap:9px; flex:1; max-width:96px; height:100%}
+.vm .track{position:relative; width:100%; flex:1; border-radius:9px; overflow:hidden;
+  border:1px solid var(--hair); background:rgba(0,0,0,.28)}
+.vm .track i{position:absolute; left:0; right:0; bottom:0; height:100%;
+  transform:scaleY(0); transform-origin:bottom; transition:transform .18s linear;
+  background:linear-gradient(0deg,rgba(var(--relax),.22),rgba(var(--relax),.72))}
+.vm .track .mid{position:absolute; left:0; right:0; top:50%; height:1px; background:var(--hair2)}
+.vm .cap{text-align:center; line-height:1.4}
+.vm .cap .nm{font-size:.78rem; color:var(--ink)}
+.vm .cap .pct{font-family:var(--mono); font-size:.72rem; color:var(--muted); font-variant-numeric:tabular-nums}
+.vm .cap .cv{display:block; font-size:.54rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-top:2px}
+.layers.dim .vm .track i{opacity:.28}
+
+/* honest demo strip */
+.demostrip{display:flex; gap:14px; border:1px solid rgba(var(--glow),.30); border-radius:12px;
+  background:rgba(var(--glow),.055); padding:13px 16px; font-size:.72rem; line-height:1.62; color:var(--muted)}
+.demostrip .ds-tag{flex:none; align-self:flex-start; font-size:.56rem; letter-spacing:.2em; text-transform:uppercase;
+  color:rgba(var(--relax),1); font-weight:500; padding-top:2px}
+.demostrip .ds-body{flex:1}
+.demostrip b{color:var(--ink); font-weight:500}
+.demostrip b.hot{color:rgba(var(--relax),1)} .demostrip b.cool{color:rgba(var(--cool),.95)}
+
+footer.foot{display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-top:4px}
+footer .cite{color:var(--faint); font-size:.62rem; letter-spacing:.01em; line-height:1.7}
+footer .cite b{color:var(--muted); font-weight:400}
+footer .cite .num{color:var(--muted)}
+.backlink{color:var(--faint); font-size:.66rem; text-decoration:none; border:1px solid var(--hair); border-radius:999px; padding:5px 12px; transition:.2s}
+.back-to-site{display:inline-block; margin-bottom:14px; font-size:12px; letter-spacing:.04em; color:var(--muted); text-decoration:none; transition:color .2s}
+.back-to-site:hover{color:var(--accent)}
+.backlink:hover{color:var(--ink); border-color:rgba(var(--glow),.5)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
+<style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+</head>
+<body>
+<div class="stage">
+
+  <a class="back-to-site" href="index.html">← Sound States</a>
+
+  <header class="top">
+    <div class="brandline">
+      <h1 class="brand">Sound States <b>· 分轨</b></h1>
+      <span class="sub">放松板块 · 心率驱动的垂直重混 <span class="zh">/ Heart-rate-driven vertical remixing</span></span>
+    </div>
+    <div class="topcite">
+      模拟心率 → 唤醒度 → 分轨层进退<br>
+      <b>层曲线经作者 A/B 试听调校</b> · 素材=放松板块实际曲目
+    </div>
+  </header>
+
+  <!-- transport + A/B -->
+  <div class="panel">
+    <div class="transport">
+      <button id="playBtn" class="pbtn primary">▶ 播放</button>
+      <button id="sweepBtn" class="pbtn" disabled>模拟心率自动扫过 ⟳</button>
+      <span class="status" id="status">未加载 · 戴耳机</span>
+    </div>
+    <div class="abtoggle" id="ab">
+      <button data-mode="full" class="on">整首 A</button>
+      <button data-mode="stems" class="stems">分轨 B</button>
+    </div>
+    <div class="modeNote" id="modeNote">当前：<b class="cool">整首</b> —— 只有 EQ + 低通在作用，编排不变（固定歌的天花板）。</div>
+  </div>
+
+  <!-- inputs | layers -->
+  <div class="grid">
+
+    <div class="panel">
+      <div class="ptag"><span class="step">1</span><span class="lab">输入</span></div>
+
+      <div class="field">
+        <div class="flab">
+          <span class="fname">模拟心率（相对你的基线）</span>
+          <span class="fval" id="arVal">—</span>
+        </div>
+        <input type="range" id="arousal" class="srange hr" min="0" max="100" value="40">
+        <p class="fhint">低于基线 → 变轻、收拢（趋向只剩钢琴）　·　高于基线 → 满 / 亮（层回来）　·　在基线约半满</p>
+      </div>
+
+      <div class="field">
+        <div class="flab">
+          <span class="fname">心情 · 效价</span>
+          <span class="fval" id="vaVal">0</span>
+        </div>
+        <input type="range" id="valence" class="srange val" min="-100" max="100" value="0">
+        <p class="fhint">负 → 清冷（低压高抬）　·　正 → 温暖（低抬高压）· 只碰 EQ，不碰编排</p>
+      </div>
+      <p class="axnote"><b>心率测的是唤醒（多兴奋），不是意图。</b> 放松 / 工作 / 睡眠的<b>目标由你选</b>——心率只在选定目标里调节这些层的进退。</p>
+    </div>
+
+    <div class="panel">
+      <div class="ptag"><span class="step">2</span><span class="lab">分轨层 · 随心率进退</span></div>
+      <div class="layers" id="layers">
+        <div class="vm">
+          <div class="track"><i id="mMelody"></i><span class="mid"></span></div>
+          <div class="cap"><div class="nm">钢琴</div><div class="pct" id="pMelody">—</div><span class="cv">地板 · 恒定</span></div>
+        </div>
+        <div class="vm">
+          <div class="track"><i id="mBass"></i><span class="mid"></span></div>
+          <div class="cap"><div class="nm">贝司</div><div class="pct" id="pBass">—</div><span class="cv">随心率上来</span></div>
+        </div>
+        <div class="vm">
+          <div class="track"><i id="mDrums"></i><span class="mid"></span></div>
+          <div class="cap"><div class="nm">弦乐</div><div class="pct" id="pDrums">—</div><span class="cv">绑最紧 · 平静≈空</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- honest demo framing -->
+  <div class="demostrip">
+    <span class="ds-tag">怎么听</span>
+    <div class="ds-body">
+      先放 <b class="cool">整首 A</b>，把心率从高拖到低——声音变闷、变暗，但四件乐器<b>一直都在</b>。<br>
+      再切 <b class="hot">分轨 B</b>，同样从高拖到低——弦乐、贝司会<b>真的退场</b>，只剩钢琴独奏垫底。那个"空"是整首版做不出来的。<br>
+      <b>改的不是音量，是构成（哪些层在响）。</b>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <div class="cite">
+      层增益曲线（通透度 <span class="num">a</span> ∈ 0–1，= 0.55 + 0.45 × 唤醒）：钢琴 <span class="num">.85+.15a</span> · 贝司 <span class="num">.20+.80·smooth(a)</span> · 弦乐 <span class="num">a<sup>1.6</sup></span>　<b>· 作者 A/B 试听调校</b><br>
+      下游共享：心情 → EQ 冷暖 · 心率 → 低通（<span class="num">350Hz–18kHz</span> log）。合成/引擎参考 Farnell《Designing Sound》<br>
+      <b>演示用绝对心率扫过</b>；真实版以你自己的静息心率为基线（相对偏移），避免"人人被钉在同一档"。
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ===== 音频引擎:沿用原 stem-test(逻辑未改),仅显示层改 BPM/竖表 =====
+// 全部指向放松板块实际在用的那份(m4a)
+const FILES = { full:'audio/relax/song1/full.m4a',
+                melody:'audio/relax/song1/piano.m4a',
+                bass:'audio/relax/song1/bass.m4a',
+                drums:'audio/relax/song1/strings.m4a' };
+let ctx, buffers={}, nodes={}, playing=false, mode='full', started=false;
+let eqLow, eqHigh, lowpass, stemBus, stemModeGain, fullModeGain, stemMakeup;
+const $ = id => document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const smooth=t=>t*t*(3-2*t);
+
+// 滑块 = 通透度 a(0–100),与主站氛围值同一尺度。换算回「相对你基线的心率」:a = 55 + 45·clamp(Δ/25) → Δ = (a−55)/45·25
+// 主站通透度最低 10(=基线 −25);低于 10 的部分只在这里可听,主站达不到,如实标出
+const arToBPM = a => { if (a < 10) return '< 基线 −25<small style="font-size:.55em;opacity:.6;margin-left:.5em">主站达不到</small>';
+  const d = Math.round((a - 55) / 45 * 25); return '基线 ' + (d === 0 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d)) + '<small style="font-size:.55em;opacity:.6;margin-left:.5em">通透 ' + a + '</small>'; };
+
+// 唤醒→低通 (复用主站映射 350Hz→18kHz log)
+const sliderToFreq = v => 350 * Math.pow(18000/350, clamp(v,0,100)/100);
+
+// 分轨增益曲线:a=唤醒0..1
+function stemGains(a){
+  return {
+    melody: 0.85 + 0.15*a,              // 地板,几乎恒定
+    bass:   0.20 + 0.80*smooth(a),      // 随心率上来
+    drums:  Math.pow(a,1.6)             // 平静≈0(空),激动≈1(满)
+  };
+}
+
+async function load(){
+  ctx = new (window.AudioContext||window.webkitAudioContext)();
+  $('status').textContent = '加载音频中…';
+  await Promise.all(Object.entries(FILES).map(async ([k,url])=>{
+    buffers[k] = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
+  }));
+  buildGraph();
+  $('status').textContent = '就绪 · 时长 ' + buffers.full.duration.toFixed(0) + 's';
+}
+
+function buildGraph(){
+  eqLow  = ctx.createBiquadFilter(); eqLow.type='lowshelf';  eqLow.frequency.value=200;
+  eqHigh = ctx.createBiquadFilter(); eqHigh.type='highshelf'; eqHigh.frequency.value=3500;
+  lowpass= ctx.createBiquadFilter(); lowpass.type='lowpass';  lowpass.frequency.value=sliderToFreq(40);
+  eqLow.connect(eqHigh); eqHigh.connect(lowpass); lowpass.connect(ctx.destination);
+  fullModeGain = ctx.createGain(); fullModeGain.gain.value = (mode==='full')?1:0;
+  stemModeGain = ctx.createGain(); stemModeGain.gain.value = (mode==='stems')?1:0;
+  fullModeGain.connect(eqLow); stemModeGain.connect(eqLow);
+  stemMakeup = ctx.createGain(); stemMakeup.gain.value = 1.33;  // 分轨响度补偿,不削顶
+  stemMakeup.connect(stemModeGain);
+}
+
+function startSources(){
+  const t = ctx.currentTime + 0.12;
+  const loopEnd = Math.min(buffers.full.duration, buffers.melody.duration, buffers.bass.duration, buffers.drums.duration) - 0.05;
+  const mk = (key, dest, gain=1)=>{
+    const src = ctx.createBufferSource(); src.buffer = buffers[key];
+    src.loop = true; src.loopStart = 0; src.loopEnd = loopEnd;
+    const g = ctx.createGain(); g.gain.value = gain;
+    src.connect(g); g.connect(dest); src.start(t);
+    return { src, g };
+  };
+  nodes.full = mk('full', fullModeGain, 1);
+  stemBus = ctx.createGain(); stemBus.gain.value = 1; stemBus.connect(stemMakeup);
+  const gs = stemGains(+$('arousal').value/100);
+  nodes.melody = mk('melody', stemBus, gs.melody);
+  nodes.bass   = mk('bass',   stemBus, gs.bass);
+  nodes.drums  = mk('drums',  stemBus, gs.drums);
+  started = true;
+}
+
+function applyAxes(){
+  const a = +$('arousal').value, v = +$('valence').value;
+  $('arVal').innerHTML = arToBPM(a);
+  $('vaVal').textContent = (v>0?'+':'')+v;
+  // 竖表:视觉层不依赖音频,先更新(未播放/?still 定格也能显示进退)
+  const gs = stemGains(a/100);
+  const on = mode==='stems';                          // 分轨模式才亮(整首模式压暗=层没在被编排)
+  $('layers').classList.toggle('dim', !on);
+  const setBar=(bar,pct,val)=>{ $(bar).style.transform='scaleY('+val+')'; $(pct).textContent = Math.round(val*100)+'%'; };
+  setBar('mMelody','pMelody',gs.melody); setBar('mBass','pBass',gs.bass); setBar('mDrums','pDrums',gs.drums);
+  if(!ctx) return;
+  const now = ctx.currentTime;
+  lowpass.frequency.cancelScheduledValues(now);
+  lowpass.frequency.linearRampToValueAtTime(sliderToFreq(a), now+0.15);
+  const t = v/100;
+  eqLow.gain.cancelScheduledValues(now);  eqHigh.gain.cancelScheduledValues(now);
+  eqLow.gain.linearRampToValueAtTime( t*6, now+0.15);
+  eqHigh.gain.linearRampToValueAtTime(-t*9, now+0.15);
+  if(started){
+    for(const k of ['melody','bass','drums']){
+      nodes[k].g.gain.cancelScheduledValues(now);
+      nodes[k].g.gain.linearRampToValueAtTime(gs[k], now+0.2);
+    }
+  }
+}
+
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('#ab button').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
+  $('modeNote').innerHTML = m==='full'
+    ? '当前：<b class="cool">整首</b> —— 只有 EQ + 低通在作用，编排不变（固定歌的天花板）。'
+    : '当前：<b class="hot">分轨</b> —— 心率同时控制三层的进退，声音会真的变满 / 变空。';
+  if(ctx && started){
+    const now=ctx.currentTime;
+    fullModeGain.gain.cancelScheduledValues(now); stemModeGain.gain.cancelScheduledValues(now);
+    fullModeGain.gain.linearRampToValueAtTime(m==='full'?1:0, now+0.25);
+    stemModeGain.gain.linearRampToValueAtTime(m==='stems'?1:0, now+0.25);
+  }
+  applyAxes();
+}
+
+let sweep=null;
+function toggleSweep(){
+  if(sweep){ clearInterval(sweep); sweep=null; $('sweepBtn').textContent='模拟心率自动扫过 ⟳'; return; }
+  $('sweepBtn').textContent='停止扫过 ■';
+  let dir=-1;
+  sweep=setInterval(()=>{
+    const el=$('arousal'); let x=+el.value + dir*0.7;
+    if(x<=0){x=0;dir=1;} if(x>=100){x=100;dir=-1;}
+    el.value=x; applyAxes();
+  },40);
+}
+
+$('playBtn').onclick = async ()=>{
+  if(!ctx){ await load(); }
+  if(ctx.state==='suspended') await ctx.resume();
+  if(!started){ startSources(); applyAxes(); }
+  playing=!playing;
+  document.body.classList.toggle('playing', playing);
+  if(playing){ await ctx.resume(); $('playBtn').textContent='❚❚ 暂停'; $('sweepBtn').disabled=false; }
+  else{ await ctx.suspend(); $('playBtn').textContent='▶ 播放'; }
+};
+$('sweepBtn').onclick = toggleSweep;
+document.querySelectorAll('#ab button').forEach(b=> b.onclick=()=>setMode(b.dataset.mode));
+$('arousal').oninput = applyAxes;
+$('valence').oninput = applyAxes;
+// PDF 定格:分轨模式 + 中低唤醒,三层高度差最清楚(钢琴满/贝司中/弦乐空)
+if(/[?&]still\b/.test(location.search)){ $('arousal').value=35; setMode('stems'); }
+applyAxes();
+</script>
+<script src="ui-icons.js"></script>
+</body>
+</html>

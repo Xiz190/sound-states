@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sound States — System Model / 状态—声音映射模型</title>
+<style>
+/* ============================================================
+   Sound States — living model diagram (portfolio artifact)
+   Inherits the Sound States nocturnal world. Reuses the real
+   mapping from script.js (algoBoard / algoEQPreset / algoAtmosVal
+   / BOARD_BPM) and the five board zone colors.
+   ============================================================ */
+:root{
+  --bg:#0c0e14; --bg2:#0a0c12;
+  --ink:#e7e3da; --muted:#8b8a96; --faint:#7a7984;
+  --accent:#b9a16b; --glow:185,161,107;
+  --hair:rgba(255,255,255,.09); --hair2:rgba(255,255,255,.055);
+  --fill:rgba(255,255,255,.028); --fill2:rgba(255,255,255,.045);
+  --motion:205,70,95; --cinematic:120,150,200; --relax:150,165,190;
+  --sleep:90,110,170; --focus:90,140,150;
+  --warm:210,150,95; --cool:110,150,210;
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,"Roboto Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(var(--glow),.10), transparent 60%),
+    radial-gradient(900px 600px at 90% 110%, rgba(var(--cinematic),.06), transparent 60%),
+    var(--bg);
+  color:var(--ink); font-family:var(--font);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+::selection{background:rgba(var(--glow),.32);color:#fff}
+:focus-visible{outline:1.5px solid rgba(var(--glow),.9);outline-offset:2px;border-radius:3px}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:6px;border:2px solid var(--bg)}
+::-webkit-scrollbar-track{background:transparent}
+
+.lab{tab-size:0;font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+/* ---------- shell ---------- */
+.stage{
+  min-height:100vh; width:100%;
+  padding:clamp(16px,2.6vw,40px) clamp(16px,3vw,52px) clamp(14px,2vw,28px);
+  display:flex; flex-direction:column; gap:clamp(12px,1.6vw,22px);
+}
+
+/* ---------- header ---------- */
+header.top{display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap}
+.back-to-site{display:inline-block; margin-bottom:10px; font-size:12px; letter-spacing:.04em; color:var(--muted); text-decoration:none; transition:color .2s}
+.back-to-site:hover{color:var(--accent)}
+.brandline{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap}
+h1.brand{font-weight:300; font-size:clamp(1.5rem,2.5vw,2.15rem); letter-spacing:.14em}
+h1.brand b{font-weight:600}
+.sub{color:var(--muted); font-size:clamp(.72rem,1vw,.86rem); font-weight:300; letter-spacing:.02em}
+.sub .zh{color:var(--faint)}
+.topmeta{display:flex; flex-direction:column; align-items:flex-end; gap:9px}
+.topmeta .cite{max-width:38ch; text-align:right; line-height:1.6}
+
+/* ---------- main grid: inputs | model | sound ---------- */
+.grid{
+  flex:1; position:relative; display:grid; gap:clamp(14px,1.6vw,26px);
+  grid-template-columns:minmax(220px,1fr) minmax(340px,1.35fr) minmax(240px,1.1fr);
+  align-items:stretch; min-height:0;
+}
+.col{display:flex; flex-direction:column; gap:14px; min-height:0}
+.coltag{display:flex; align-items:center; gap:9px}
+.coltag .step{
+  width:19px;height:19px;border-radius:50%;flex:none;display:grid;place-items:center;
+  border:1px solid var(--hair); font-family:var(--mono); font-size:.62rem; color:var(--muted);
+}
+.panel{
+  background:linear-gradient(180deg,var(--fill2),var(--fill));
+  border:1px solid var(--hair); border-radius:14px;
+  padding:clamp(13px,1.3vw,20px);
+  backdrop-filter:blur(3px);
+}
+
+/* ----- input node ----- */
+.node{position:relative}
+.node + .node{margin-top:14px}
+.node .nhead{display:flex; align-items:center; gap:11px; margin-bottom:13px}
+.node .ico{
+  width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
+  border:1px solid var(--hair); color:var(--ink);
+  background:rgba(var(--glow),.05);
+}
+.node .ntitle{font-size:.9rem; font-weight:400; letter-spacing:.02em}
+.node .ntitle .zh{color:var(--muted); font-weight:300; margin-left:5px; font-size:.82em}
+.node .nsrc{margin-top:3px; line-height:1.4}
+.node .nsrc .self{color:rgba(var(--cinematic),.9)}
+.node .nsrc .body{color:rgba(var(--motion),.85)}
+
+/* arousal vertical meter */
+.arows{display:flex; align-items:stretch; gap:16px}
+.ameter{
+  width:34px; flex:none; border-radius:8px; position:relative; overflow:hidden;
+  border:1px solid var(--hair); background:rgba(0,0,0,.28);
+  min-height:130px;
+}
+.ameter .fill{
+  position:absolute; left:0; right:0; bottom:0;
+  background:linear-gradient(0deg,rgba(var(--motion),.16),rgba(var(--motion),.62));
+}
+.ameter .mid{position:absolute; left:0; right:0; top:50%; height:1px; background:var(--hair2)}
+.ameter .cap{position:absolute; left:0; right:0; height:2px; background:rgba(255,255,255,.85);
+  box-shadow:0 0 10px 1px rgba(var(--motion),.7)}
+.aside{display:flex; flex-direction:column; justify-content:space-between; flex:1; padding:2px 0}
+.aval{font-family:var(--mono); font-size:1.55rem; font-weight:400; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.aval .u{font-size:.62rem; color:var(--muted); letter-spacing:.14em; margin-left:2px}
+.aendlab{display:flex; flex-direction:column; gap:2px}
+.aendlab span{font-size:.62rem; color:var(--faint)}
+
+.hbeat{display:inline-flex}
+.hbeat svg{display:block}
+@keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.18)}26%{transform:scale(1)}40%{transform:scale(1.1)}}
+.hbeat.on svg{animation:beat 1s cubic-bezier(.3,.1,.3,1) infinite; transform-origin:center}
+
+/* valence slider (self-reported, real control) */
+.vwrap{margin-top:6px}
+.vscale{display:flex; justify-content:space-between; margin-bottom:9px}
+.vscale span{font-size:.62rem; color:var(--faint)}
+.vslider{position:relative; height:40px; display:flex; align-items:center}
+.vslider input[type=range]{
+  -webkit-appearance:none; appearance:none; width:100%; height:3px; border-radius:3px;
+  background:linear-gradient(90deg,rgba(var(--cool),.75),rgba(255,255,255,.14) 50%,rgba(var(--warm),.75));
+  outline:none; cursor:grab;
+}
+.vslider input[type=range]:active{cursor:grabbing}
+.vslider input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:18px;height:18px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#fff,rgba(var(--cinematic),.95) 70%);
+  border:1.5px solid rgba(255,255,255,.85); box-shadow:0 0 12px 2px rgba(var(--cinematic),.5), 0 2px 6px rgba(0,0,0,.5); cursor:grab;
+}
+.vslider input[type=range]::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;border:1.5px solid rgba(255,255,255,.85);
+  background:rgba(var(--cinematic),.95); box-shadow:0 0 12px 2px rgba(var(--cinematic),.5); cursor:grab;
+}
+.vread{display:flex; align-items:baseline; justify-content:space-between; margin-top:8px}
+.vread .vval{font-family:var(--mono); font-size:1.1rem; font-variant-numeric:tabular-nums}
+.vread .vhint{font-size:.6rem; color:var(--faint); text-align:right; max-width:20ch; line-height:1.4}
+
+/* ---------- center: circumplex ---------- */
+.model{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  position:relative; min-height:0;
+}
+.canvas-wrap{position:relative; width:100%; max-width:min(52vh,540px); aspect-ratio:1/1; margin:0 auto}
+#circ{width:100%; height:100%; display:block}
+.circ-cap{margin-top:12px; text-align:center; line-height:1.5}
+.circ-cap .name{color:var(--muted)}
+
+/* ---------- right: sound ---------- */
+.sound{flex:1; display:flex; flex-direction:column; gap:0; min-height:0}
+.wave-wrap{position:relative; flex:1; min-height:150px; border-radius:12px; overflow:hidden;
+  border:1px solid var(--hair); background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(0,0,0,.12))}
+#wave{width:100%; height:100%; display:block}
+.veil{position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(180deg,rgba(12,14,20,0) 30%,rgba(12,14,20,.0));
+  transition:backdrop-filter .12s linear, background .2s linear}
+.wave-tags{position:absolute; top:11px; left:13px; right:13px; display:flex; justify-content:space-between; pointer-events:none}
+.wave-tags .t{font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:rgba(231,227,218,.55)}
+.morphrow{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px}
+.mcard{border:1px solid var(--hair); border-radius:11px; padding:11px 13px; background:var(--fill)}
+.mcard .mk{margin-bottom:6px}
+.mcard .mv{font-size:.98rem; font-weight:400}
+.mcard .mv.num{font-size:1.15rem}
+.mbar{height:4px; border-radius:3px; background:rgba(255,255,255,.08); margin-top:8px; overflow:hidden}
+.mbar i{display:block; height:100%; border-radius:3px; transition:background .2s linear}
+
+/* ---------- flow connectors ---------- */
+.flow{position:absolute; inset:0; pointer-events:none; z-index:2}
+.flow line{stroke:rgba(var(--glow),.28); stroke-width:1.2; stroke-dasharray:2 6; stroke-linecap:round}
+.flow .pulse{fill:rgba(var(--glow),.95)}
+
+/* ---------- output bar ---------- */
+.outbar{
+  display:flex; align-items:center; gap:0; flex-wrap:wrap;
+  border:1px solid var(--hair); border-radius:14px; overflow:hidden;
+  background:linear-gradient(180deg,var(--fill2),var(--fill));
+}
+.oseg{display:flex; flex-direction:column; gap:5px; padding:13px clamp(14px,1.6vw,26px); flex:1; min-width:120px; position:relative}
+.oseg + .oseg::before{content:""; position:absolute; left:0; top:22%; bottom:22%; width:1px; background:var(--hair)}
+.oseg .ov{font-size:1.02rem; font-weight:400; display:flex; align-items:center; gap:9px}
+.oseg .ov .dot{width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 9px 1px currentColor}
+.oseg.coord .ov{font-family:var(--mono); font-variant-numeric:tabular-nums; letter-spacing:0}
+
+/* honest demo-framing strip */
+.demostrip{
+  display:flex; gap:14px; align-items:stretch;
+  border:1px solid rgba(var(--glow),.30); border-radius:12px;
+  background:rgba(var(--glow),.055); padding:12px 16px;
+  font-size:.72rem; line-height:1.62; color:var(--muted);
+}
+.demostrip .ds-tag{flex:none; align-self:flex-start; font-size:.58rem; letter-spacing:.2em; text-transform:uppercase; color:rgba(var(--cinematic),.95); font-weight:500; padding-top:1px}
+.demostrip .i18n-en{flex:1}
+.demostrip .i18n-zh{flex:1; color:var(--faint); border-left:1px solid var(--hair); padding-left:16px}
+.demostrip b{color:var(--ink); font-weight:500}
+@media (max-width:760px){.demostrip{flex-direction:column}.demostrip .i18n-zh{border-left:0;padding-left:0;border-top:1px solid var(--hair);padding-top:10px}}
+
+/* ---------- language system ---------- */
+body.lang-en .i18n-zh{display:none}
+body.lang-zh .i18n-en{display:none}
+/* single-language demostrip: the shown block spans full width, drop the divider */
+body:not(.lang-both) .demostrip .i18n-zh{border-left:0;padding-left:0}
+.anote{margin-top:12px; line-height:1.6; color:var(--muted); font-size:.66rem; letter-spacing:.01em}
+.anote .i18n-en,.anote .i18n-zh{display:block}
+.anote b{font-weight:500}
+body.lang-both .anote .i18n-zh{margin-top:6px}
+.langtog{display:inline-flex; align-items:center; gap:0; border:1px solid var(--hair); border-radius:999px; overflow:hidden}
+.langtog button{background:none; border:0; color:var(--muted); font:inherit; font-size:.66rem; letter-spacing:.08em; padding:5px 11px; cursor:pointer; transition:background .2s,color .2s}
+.langtog button + button{border-left:1px solid var(--hair)}
+.langtog button.on{background:rgba(var(--glow),.18); color:var(--ink)}
+.langtog button:hover:not(.on){color:var(--ink)}
+
+/* ---------- flow mechanism chips ---------- */
+.flowlab{position:absolute; transform:translate(-50%,-50%); z-index:3; pointer-events:none;
+  background:rgba(10,12,18,.9); border:1px solid rgba(var(--glow),.32); border-radius:8px;
+  padding:6px 10px; text-align:center; backdrop-filter:blur(4px); box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.flowlab .mech{display:block; font-size:.6rem; color:var(--ink); letter-spacing:.01em; white-space:nowrap; line-height:1.5}
+.flowlab .mech .rt{color:rgba(var(--cinematic),.9)}
+.flowlab .cap{display:block; font-size:.52rem; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin-top:2px; white-space:nowrap}
+@media (max-width:1080px){.flowlab{display:none}}
+
+/* ---------- controls ---------- */
+.controls{display:flex; align-items:center; gap:16px}
+.pbtn{
+  width:44px;height:44px;border-radius:50%;flex:none; display:grid; place-items:center;
+  border:1px solid var(--hair); background:rgba(var(--glow),.10); color:var(--ink); cursor:pointer;
+  transition:background .25s, transform .15s, border-color .25s;
+}
+.pbtn:hover{background:rgba(var(--glow),.2); border-color:rgba(var(--glow),.5)}
+.pbtn:active{transform:scale(.94)}
+.scrub{flex:1; position:relative; height:24px; display:flex; align-items:center}
+.scrub input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:3px; border-radius:3px;
+  background:rgba(255,255,255,.12); cursor:pointer}
+.scrub input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:12px;height:12px;border-radius:50%;
+  background:var(--ink); box-shadow:0 0 8px 1px rgba(var(--glow),.6); cursor:pointer}
+.scrub input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--ink);border:none}
+.ctime{font-family:var(--mono); font-size:.72rem; color:var(--muted); font-variant-numeric:tabular-nums; min-width:78px; text-align:right}
+.toggle{display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; color:var(--muted); font-size:.68rem; letter-spacing:.04em}
+.toggle .box{width:32px;height:18px;border-radius:10px;border:1px solid var(--hair); background:rgba(0,0,0,.3); position:relative; transition:background .2s}
+.toggle .box i{position:absolute; top:2px; left:2px; width:12px;height:12px;border-radius:50%; background:var(--muted); transition:left .2s, background .2s}
+.toggle.on .box{background:rgba(var(--cinematic),.4)}
+.toggle.on .box i{left:15px; background:#fff}
+
+footer.foot{display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap}
+footer .cite{color:var(--faint); font-size:.64rem; letter-spacing:.02em; line-height:1.6}
+footer .cite b{color:var(--muted); font-weight:400}
+
+/* ---------- responsive ---------- */
+@media (max-width:1080px){
+  .grid{grid-template-columns:1fr; grid-auto-rows:min-content}
+  .canvas-wrap{max-width:min(70vw,440px)}
+  .flow{display:none}
+  .wave-wrap{min-height:180px}
+}
+@media (max-width:560px){
+  .topmeta{display:none}
+  .morphrow{grid-template-columns:1fr}
+  .outbar{flex-direction:column}
+  .oseg + .oseg::before{display:none}
+  .oseg{border-top:1px solid var(--hair)}
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
+<style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+</head>
+<body>
+<!--
+ DIRECTION CONTRACT · seed: precisely-specified extension (no roll — inherits Sound States world)
+ THESIS: Make the project's core mapping figure (valence×arousal → sound) run on the artist's own
+   track, live. Refuses the static "here is our model" diagram; the model performs itself.
+ OWN-WORLD: Sound States nocturnal system — #0c0e14 blue-black, warm off-white ink, one sleep-blue
+   accent, thin wide-tracked type + mono measurements, hairline near-flat panels; the five board
+   colors (motion/cinematic/relax/sleep/focus) are the only saturated field. Drawn SVG icons.
+ STORY: reader sees inputs split honestly (arousal=labeled demo trace standing in for heart rate,
+   valence=self-reported), watches the point travel the Russell circumplex, and sees the waveform
+   reshaped (low-pass veil by arousal, warm/cool EQ tint by valence). Input and output are decoupled:
+   the audio is only the reshaped OUTPUT, never the input — the real system reads arousal from an
+   independent heart-rate sensor.
+ FIRST VIEWPORT: three signal-flow columns — inputs left, circumplex center (hero), sound right;
+   honest demo-framing strip, output readout bar + transport below; citations footer.
+ FORM: instrument panel / signal-flow schematic. Waveform from baked real analysis of glass2.wav.
+ FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+-->
+<div class="stage">
+
+  <header class="top">
+    <div>
+      <a class="back-to-site" href="index.html">← Sound States</a>
+      <div class="brandline">
+        <h1 class="brand">Sound<b>States</b></h1>
+        <span class="sub" data-t="sub"></span>
+      </div>
+    </div>
+    <div class="topmeta">
+      <div class="langtog" role="group" aria-label="Language">
+        <button data-lang="en">EN</button>
+        <button data-lang="zh">中</button>
+        <button data-lang="both">双</button>
+      </div>
+      <span class="cite lab" data-t="topcite"></span>
+    </div>
+  </header>
+
+  <div class="grid" id="grid">
+    <!-- ============ INPUTS ============ -->
+    <div class="col">
+      <div class="coltag"><span class="step">1</span><span class="lab" data-t="col1"></span></div>
+      <div class="panel" style="flex:1; display:flex; flex-direction:column; justify-content:center">
+
+        <!-- arousal (body / energy) -->
+        <div class="node">
+          <div class="nhead">
+            <span class="ico" id="heartIco">
+              <span class="hbeat on" id="hbeat"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="rgb(210,90,110)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.6-9.2-9C1.4 8.3 2.6 5 5.8 5c2 0 3.2 1.3 4.2 2.6C11 6.3 12.2 5 14.2 5 17.4 5 18.6 8.3 21.2 11 19 15.4 12 20 12 20Z"/></svg></span>
+            </span>
+            <div>
+              <div class="ntitle" data-t="arTitle"></div>
+              <div class="nsrc lab" style="letter-spacing:.12em" data-t="arSrc"></div>
+            </div>
+          </div>
+          <div class="arows">
+            <div class="ameter"><div class="fill" id="aFill"></div><div class="mid"></div><div class="cap" id="aCap"></div></div>
+            <div class="aside">
+              <div class="aendlab"><span data-t="arHi1"></span><span data-t="arHi2"></span></div>
+              <div class="aval"><span id="aValTxt">+0.00</span><span class="u">A</span></div>
+              <div class="aendlab"><span data-t="arLo1"></span><span data-t="arLo2"></span></div>
+            </div>
+          </div>
+          <p class="anote">
+            <span class="i18n-en">Live: a <b style="color:rgba(var(--motion),.95)">heart-rate sensor</b> drives this. Here a labeled <b style="color:rgba(var(--cinematic),.95)">demo trace</b> stands in, decoupled from the audio.</span>
+            <span class="i18n-zh">真实系统由<b style="color:rgba(var(--motion),.95)">心率传感器</b>驱动；这里用一条标注过的<b style="color:rgba(var(--cinematic),.95)">演示轨迹</b>替代——与声音解耦。</span>
+          </p>
+        </div>
+
+        <div style="height:1px; background:var(--hair); margin:18px 0"></div>
+
+        <!-- valence (self-reported) -->
+        <div class="node">
+          <div class="nhead">
+            <span class="ico">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(150,175,220)" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 12 15 8.6" stroke-width="1.8"/><circle cx="12" cy="12" r="1.4" fill="rgb(150,175,220)" stroke="none"/></svg>
+            </span>
+            <div>
+              <div class="ntitle" data-t="vaTitle"></div>
+              <div class="nsrc lab" style="letter-spacing:.12em" data-t="vaSrc"></div>
+            </div>
+          </div>
+          <div class="vwrap">
+            <div class="vscale"><span data-t="vaLo"></span><span data-t="vaHi"></span></div>
+            <div class="vslider"><input type="range" id="vSlider" min="-100" max="100" value="20" step="1" aria-label="Valence — self-reported mood"></div>
+            <div class="vread">
+              <div class="vval" id="vValTxt">+0.20</div>
+              <div class="vhint" data-t="vaHint"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ MODEL ============ -->
+    <div class="col">
+      <div class="coltag"><span class="step">2</span><span class="lab" data-t="col2"></span></div>
+      <div class="panel model">
+        <div class="canvas-wrap"><canvas id="circ"></canvas></div>
+        <div class="circ-cap lab" style="text-transform:none; letter-spacing:.04em; font-size:.66rem">
+          <span class="name" id="boardName">Imagine</span> &nbsp;—&nbsp; <span data-t="circCap"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SOUND ============ -->
+    <div class="col">
+      <div class="coltag"><span class="step">3</span><span class="lab" data-t="col3"></span></div>
+      <div class="panel sound" style="flex:1">
+        <div class="wave-wrap">
+          <canvas id="wave"></canvas>
+          <div class="veil" id="veil"></div>
+          <div class="wave-tags">
+            <span class="t" id="waveTagL">natural</span>
+            <span class="t" id="waveTagR">warm</span>
+          </div>
+        </div>
+        <div class="morphrow">
+          <div class="mcard">
+            <div class="mk lab" data-t="atmosK"></div>
+            <div class="mv num"><span id="atmosTxt">60</span><span style="color:var(--faint); font-size:.7em"> / 100</span></div>
+            <div class="mbar"><i id="atmosBar" style="background:rgba(var(--sleep),.8)"></i></div>
+            <div class="lab" style="text-transform:none; font-size:.56rem; color:var(--faint); margin-top:7px; letter-spacing:.04em" data-t="atmosSub"></div>
+          </div>
+          <div class="mcard">
+            <div class="mk lab" data-t="eqK"></div>
+            <div class="mv" id="eqTxt">Warm</div>
+            <div class="mbar"><i id="eqBar" style="width:70%"></i></div>
+            <div class="lab" style="text-transform:none; font-size:.56rem; color:var(--faint); margin-top:7px; letter-spacing:.04em" data-t="eqSub"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- flow connectors overlaid on the grid -->
+    <svg class="flow" id="flow" preserveAspectRatio="none"></svg>
+    <div class="flowlab" id="flowLab1"></div>
+    <div class="flowlab" id="flowLab2"></div>
+  </div>
+
+  <!-- ============ OUTPUT READOUT ============ -->
+  <div class="demostrip">
+    <span class="ds-tag" data-t="dsTag"></span>
+    <div class="i18n-en"><b>Input ≠ output.</b> Arousal here is driven by a labeled <b>representative trace</b>; valence stays self-reported. In the live system, arousal comes from a <b>heart-rate sensor</b>, independent of the sound. The audio below is only the <b>reshaped output</b>, never the input.</div>
+    <div class="i18n-zh"><b>输入 ≠ 输出。</b>这里的唤醒度由一条标注过的「代表性轨迹」驱动，效价仍由你自报。真实系统里，唤醒来自<b>心率传感器</b>——与声音本身无关。下方的声音只作为「<b>被重塑的输出</b>」，绝不反过来当输入。</div>
+  </div>
+
+  <div class="outbar">
+    <div class="oseg coord"><span class="lab" data-t="oCoordK"></span><span class="ov" id="oCoord">V +0.20 &nbsp; A +0.00</span></div>
+    <div class="oseg"><span class="lab" data-t="oBoardK"></span><span class="ov"><span class="dot" id="oDot" style="color:rgb(120,150,200)"></span><span id="oBoard">Imagine</span></span></div>
+    <div class="oseg"><span class="lab" data-t="oEQK"></span><span class="ov" id="oEQ">Warm</span></div>
+    <div class="oseg"><span class="lab" data-t="oAtmosK"></span><span class="ov"><span class="num" id="oAtmos">60</span> / 100</span></div>
+    <div class="oseg"><span class="lab" data-t="oBPMK"></span><span class="ov num" id="oBPM">60–96 BPM</span></div>
+  </div>
+
+  <!-- ============ TRANSPORT ============ -->
+  <div class="controls">
+    <button class="pbtn" id="playBtn" aria-label="Play / pause">
+      <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"/></svg>
+    </button>
+    <button class="pbtn" id="soundBtn" aria-label="Sound on / off" aria-pressed="false" title="Reshape & play the real track (needs http://)">
+      <svg id="soundIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><line x1="18" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="18" y2="15"/></svg>
+    </button>
+    <div class="scrub"><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Timeline"></div>
+    <span class="ctime"><span id="tCur">0:00</span> / <span id="tDur">3:22</span></span>
+    <label class="toggle on" id="sweepToggle" tabindex="0" role="switch" aria-checked="true">
+      <span class="box"><i></i></span><span data-t="sweepLab"></span>
+    </label>
+  </div>
+
+  <footer class="foot">
+    <div class="cite">
+      Axes: <b>Russell (1980)</b> circumplex &nbsp;·&nbsp; low-pass↔arousal via brain-stem reflex, <b>Juslin BRECVEMA (2013)</b> &nbsp;·&nbsp; tempo &lt;80 BPM for recuperation <b>Karageorghis &amp; Priest (2012)</b>
+    </div>
+    <div class="cite">Output waveform: real analysis of a track from the system · <b>glass2.wav</b> (AI-generated from my prompts, remixed by me) &nbsp;·&nbsp; arousal input = labeled demo trace</div>
+  </footer>
+
+  <!-- ============ GO DEEPER · 整合入口(分轨机制 + 愿景硬件) ============ -->
+  <style>
+    .further{margin-top:26px;padding-top:20px;border-top:1px solid var(--hair)}
+    .further-tag{font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+    .further-links{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+    @media(max-width:760px){.further-links{grid-template-columns:1fr}}
+    .fcard{display:flex;gap:12px;align-items:flex-start;text-decoration:none;color:inherit;
+      border:1px solid var(--hair);border-radius:12px;padding:15px 17px;
+      background:linear-gradient(180deg,var(--fill2),var(--fill));transition:border-color .2s,background .2s}
+    .fcard:hover{border-color:rgba(var(--glow),.5);background:rgba(var(--glow),.07)}
+    .fc-arrow{color:rgba(var(--glow),.9);font-size:1rem;line-height:1.35;flex:none}
+    .fc-title{display:block;font-size:.86rem;color:var(--ink);font-weight:500}
+    .fc-desc{display:block;font-size:.68rem;color:var(--muted);line-height:1.55;margin-top:5px}
+  </style>
+  <div class="further">
+    <span class="further-tag"><span class="i18n-en">Go deeper</span><span class="i18n-zh">延伸 · 深潜</span></span>
+    <div class="further-links">
+      <a class="fcard" href="stem-test.html">
+        <span class="fc-arrow">→</span>
+        <span class="fc-body">
+          <span class="fc-title"><span class="i18n-en">Vertical remixing — the mechanism</span><span class="i18n-zh">分轨 · 机制深潜</span></span>
+          <span class="fc-desc"><span class="i18n-en">Hear layers enter &amp; leave with heart rate — proof it reshapes structure, not just EQ.</span><span class="i18n-zh">听乐器层随心率进退——证明改的是结构，不是 EQ。</span></span>
+        </span>
+      </a>
+      <a class="fcard" href="vision-wearable.html">
+        <span class="fc-arrow">→</span>
+        <span class="fc-body">
+          <span class="fc-title"><span class="i18n-en">Where it goes — concept wearable</span><span class="i18n-zh">走向哪 · 愿景硬件</span></span>
+          <span class="fc-desc"><span class="i18n-en">The same sensing loop, envisioned inside an earbud (concept, not built).</span><span class="i18n-zh">同一套感知闭环，设想进一只耳机（概念，未制造）。</span></span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<audio id="track" src="glass2.m4a" loop preload="auto" crossorigin="anonymous"></audio>
+<script src="model-data.js"></script>
+<script>
+/* ============================================================
+   Real mapping — copied verbatim from script.js
+   ============================================================ */
+// 方案 B(2026-09-24,与 script.js 同一张表):Russell 角度分区 + 中心 —— 画的 = 算的
+const NAV_CENTER_R=0.3;
+const NAV_SECTORS=[{board:'cinematic',from:0,to:45},{board:'motion',from:45,to:100},{board:'guide',from:100,to:225},{board:'sleep',from:225,to:300},{board:'relax',from:300,to:360}];
+function algoBoard(v,a){
+  if(Math.hypot(v,a)<NAV_CENTER_R) return 'focus';
+  let th=Math.atan2(a,v)*180/Math.PI; if(th<0) th+=360;
+  const sec=NAV_SECTORS.find(x=>th>=x.from&&th<x.to); return sec?sec.board:'relax';
+}
+function algoEQPreset(v,a){          // arousal-only, verbatim from script.js (warm/dark removed)
+  if(a>0.4) return 'power';
+  if(a>0.1) return 'grand';
+  if(a<-0.25) return 'flat';
+  return 'clear';
+}
+function algoAtmosVal(a){ return Math.round(55 + a*45); } // -1→10, +1→100
+const BOARD_BPM={ sleep:'50–60 BPM', relax:'60–72 BPM', focus:'72–88 BPM', cinematic:'60–96 BPM', motion:'125–140 BPM', guide:'—' };
+
+const BOARDS={
+  motion:   {en:'Motion', zh:'运动', col:[205,70,95]},
+  cinematic:{en:'Imagine',zh:'想象', col:[120,150,200]},
+  relax:    {en:'Relax',  zh:'放松', col:[150,165,190]},
+  sleep:    {en:'Sleep',  zh:'睡眠', col:[90,110,170]},
+  focus:    {en:'Work',   zh:'工作', col:[90,140,150]},
+  guide:    {en:'Guide · vision', zh:'引导 · 愿景', col:[170,150,120]},
+};
+const EQ_NAMES={ power:{en:'Power',zh:'力量'}, grand:{en:'Grand',zh:'宏大'}, clear:{en:'Clear',zh:'透彻'}, flat:{en:'Original',zh:'原声'} };
+const EQ_WARMTH={ flat:.5, clear:.4, grand:.5, power:.6 }; // for bar fill (character, not warmth)
+// real EQ presets — copied verbatim from script.js EQ_PRESETS (2026-09-19 synced; warm/dark removed)
+const AUDIO_EQ={
+  flat: {low:{freq:100, gain:0},  mid:{freq:1000,gain:0, Q:1.0}, high:{freq:8000, gain:0}},
+  grand:{low:{freq:100, gain:5},  mid:{freq:800, gain:-8,Q:0.6}, high:{freq:10000,gain:5}},
+  power:{low:{freq:55,  gain:6},  mid:{freq:400, gain:-8,Q:0.7}, high:{freq:8000, gain:8}},
+  clear:{low:{freq:150, gain:-2}, mid:{freq:2800,gain:5, Q:1.0}, high:{freq:11000,gain:2}},
+};
+// atmosphere 0..100 → lowpass cutoff (script.js sliderToFreq)
+const sliderToFreq=v=>350*Math.pow(18000/350, clamp(v,0,100)/100);
+
+const ANCHORS=[
+  {a:0,   en:'Pleased',zh:'愉悦'},{a:45, en:'Excited',zh:'兴奋'},{a:90, en:'Tense',zh:'紧张'},{a:135,en:'Distressed',zh:'苦恼'},
+  {a:180, en:'Depressed',zh:'抑郁'},{a:225,en:'Tired',zh:'疲倦'},{a:270,en:'Sleepy',zh:'昏沉'},{a:315,en:'Relaxed',zh:'放松'},
+];
+/* ---------- i18n ---------- */
+let langMode = 'both';   // 'en' | 'zh' | 'both'
+const pick=(en,zh)=> langMode==='en'?en : langMode==='zh'?zh : `${en} · ${zh}`;
+const T={
+  sub:{en:'System Model',zh:'状态 → 声音 映射模型'},
+  topcite:{en:'Output waveform · glass2.wav · a track from the system',zh:'输出波形 · glass2.wav · 系统里的一首曲目'},
+  col1:{en:'Inputs',zh:'输入状态'}, col2:{en:'Russell Circumplex',zh:'情感环状模型'}, col3:{en:'Sound reshaped',zh:'声音被重塑'},
+  arTitle:{en:'Arousal',zh:'唤醒度'}, arSrc:{en:'Axis Y · heart rate · real system',zh:'纵轴 · 心率 · 真实系统'},
+  arHi1:{en:'+1 tense',zh:'+1 紧张'}, arHi2:{en:'excited',zh:'兴奋'}, arLo1:{en:'calm',zh:'平静'}, arLo2:{en:'−1 sleepy',zh:'−1 昏沉'},
+  vaTitle:{en:'Valence',zh:'效价'}, vaSrc:{en:'Axis X · self-reported',zh:'横轴 · 自我报告'},
+  vaLo:{en:'◀ negative',zh:'◀ 低落'}, vaHi:{en:'positive ▶',zh:'愉悦 ▶'},
+  vaHint:{en:'you set this; the sensor reads how aroused you are, not whether it’s joy or dread',zh:'由你设定：传感器读得出你多亢奋，读不出是喜是忧'},
+  circCap:{en:'the point is your state; the field it lands in suggests a sound world — you choose',zh:'点是你此刻的状态；它落在哪个区，就建议哪个声音世界——选择在你'},
+  atmosK:{en:'Atmosphere',zh:'氛围深度'}, atmosSub:{en:'low-pass ← arousal',zh:'低通 ← 唤醒'},
+  eqK:{en:'EQ preset',zh:'音色'}, eqSub:{en:'character ← arousal',zh:'音色性格 ← 唤醒'},
+  dsTag:{en:'Demo note',zh:'演示说明'},
+  oCoordK:{en:'Coordinate',zh:'坐标'}, oBoardK:{en:'Sound world',zh:'板块'}, oEQK:{en:'EQ',zh:'音色'}, oAtmosK:{en:'Atmosphere',zh:'氛围'}, oBPMK:{en:'Target tempo',zh:'目标节奏'},
+  sweepLab:{en:'auto journey',zh:'自动巡览'},
+};
+function applyLang(){
+  document.body.className='lang-'+langMode;
+  document.querySelectorAll('[data-t]').forEach(el=>{ const e=T[el.dataset.t]; if(e) el.textContent=pick(e.en,e.zh); });
+  document.querySelectorAll('.langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===langMode));
+  // flow chips (rebuilt with new language)
+  const rt=t=>`<span class="rt">${t}</span>`;
+  $('flowLab1').innerHTML=`<span class="mech">${pick('state','状态')} → ${pick('coordinate','坐标')}</span><span class="cap">Russell 1980</span>`;
+  $('flowLab2').innerHTML=`<span class="mech">${pick('arousal','唤醒')} → ${rt(pick('low-pass + character','低通 + 音色性格'))} · ${pick('brain-stem reflex','脑干反射')}</span><span class="mech">${pick('valence','效价')} → ${rt(pick('warm/cool tilt','冷暖倾斜'))} · ${pick('emotional contagion','情绪感染')}</span><span class="cap">BRECVEMA · Juslin 2013</span>`;
+}
+// x = valence (right +), y = arousal (up +)  →  drawn at (cx + x*R, cy - y*R)
+const ZONES=NAV_SECTORS.map(sec=>{const m=(sec.from+sec.to)/2*Math.PI/180; return {board:sec.board,x:.66*Math.cos(m),y:.66*Math.sin(m)};}).concat([{board:'focus',x:0,y:-.17}]);
+
+/* ============================================================
+   State
+   ============================================================ */
+const D = window.SS_MODEL_DATA;
+const ENV = D.arousalEnv, PEAKS = D.wavePeaks, BRIGHT = D.brightness;
+const FPS = D.fps, DUR = D.durationSec, NF = ENV.length;
+
+let frame=0;            // float frame index into ENV
+let playing=true;
+let sweep=true;
+let valence=0.20;       // -1..1 (self-reported / slider)
+let arousalOverride=null;// held arousal for preset stills (else null → live envelope)
+let arousal=0.0, arousalDisp=0.0, valenceDisp=0.20;
+let trail=[];           // recent circumplex points
+let lastT=performance.now();
+
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
+const mix=(c1,c2,t)=>c1.map((v,i)=>Math.round(lerp(v,c2[i],t)));
+const fmtTime=s=>{s=Math.max(0,s|0);return (s/60|0)+':' + String(s%60).padStart(2,'0');};
+/* representative arousal trace — a slow organic drift standing in for a heart-rate
+   signal. NOT biometric data, NOT fabricated BPM: it is a labeled stand-in, so the
+   input stays independent of the audio that gets reshaped. */
+const demoTrace=t=>{
+  const x=0.60*Math.sin(t*0.105) + 0.16*Math.sin(t*0.37+1.0);  // ~60s full high↔low sweep
+  return clamp(x,-0.85,0.85);
+};
+/* choreographed journey — a deliberate tour visiting each board in turn, so a short
+   recording tells a complete story (each board lights cleanly, then holds a beat). */
+const JOURNEY=[
+  {v:.05, a:-.72},  // Sleep   (bottom)
+  {v:-.55,a:-.08},  // Work    (lower-left)
+  {v:.55, a:-.05},  // Relax   (lower-right)
+  {v:.34, a:.32},   // Imagine (upper-centre)
+  {v:.16, a:.72},   // Motion  (top)
+];
+const smoothstep=x=>x*x*(3-2*x);
+function journey(t){
+  const LEG=11, n=JOURNEY.length, tt=(t%(LEG*n))/LEG, i=Math.floor(tt), f=tt-i;
+  const p0=JOURNEY[i%n], p1=JOURNEY[(i+1)%n];
+  const e = f<.62 ? smoothstep(f/.62) : 1;   // travel 62% of each leg, hold the rest
+  return {v:lerp(p0.v,p1.v,e), a:lerp(p0.a,p1.a,e)};
+}
+
+/* smoothed low-passed copy of the waveform peaks (for the veil morph) */
+const PEAKS_SMOOTH=(()=>{
+  const k=14, out=new Array(PEAKS.length);
+  for(let i=0;i<PEAKS.length;i++){let s=0,n=0;for(let j=-k;j<=k;j++){const idx=i+j;if(idx>=0&&idx<PEAKS.length){s+=PEAKS[idx];n++;}}out[i]=s/n;}
+  return out;
+})();
+
+/* ============================================================
+   DOM
+   ============================================================ */
+const $=id=>document.getElementById(id);
+const circ=$('circ'), cctx=circ.getContext('2d');
+const wave=$('wave'), wctx=wave.getContext('2d');
+const vSlider=$('vSlider'), scrub=$('scrub');
+
+function fitCanvas(cv,ctx){
+  const r=cv.getBoundingClientRect(), dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=Math.max(2,r.width*dpr); cv.height=Math.max(2,r.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {w:r.width,h:r.height};
+}
+
+/* ============================================================
+   Circumplex render
+   ============================================================ */
+function drawCirc(){
+  const {w,h}=fitCanvas(circ,cctx);
+  const cx=w/2, cy=h/2, R=Math.min(w,h)*0.40;
+  cctx.clearRect(0,0,w,h);
+
+  // radial vignette inside disc — a touch more presence so the field is not near-black
+  const bg=cctx.createRadialGradient(cx,cy,0,cx,cy,R+30);
+  bg.addColorStop(0,'rgba(26,29,40,.95)'); bg.addColorStop(.7,'rgba(16,19,27,.6)'); bg.addColorStop(1,'rgba(10,12,18,.15)');
+  cctx.fillStyle=bg; cctx.beginPath(); cctx.arc(cx,cy,R+30,0,7); cctx.fill();
+
+  // sector tints — same table as algoBoard, so what is drawn is what is computed
+  const r0=R*NAV_CENTER_R;
+  NAV_SECTORS.forEach(sec=>{
+    const rgb=BOARDS[sec.board].col, al=sec.board==='guide'?.12:.28;
+    const qg=cctx.createRadialGradient(cx,cy,r0,cx,cy,R);
+    qg.addColorStop(0,`rgba(${rgb.join(',')},0)`); qg.addColorStop(1,`rgba(${rgb.join(',')},${al})`);
+    cctx.beginPath(); cctx.arc(cx,cy,R,-sec.to*Math.PI/180,-sec.from*Math.PI/180); cctx.arc(cx,cy,r0,-sec.from*Math.PI/180,-sec.to*Math.PI/180,true); cctx.closePath();
+    cctx.fillStyle=qg; cctx.fill();
+    const rad=sec.from*Math.PI/180; cctx.strokeStyle='rgba(255,255,255,.06)'; cctx.lineWidth=1;
+    cctx.beginPath(); cctx.moveTo(cx+r0*Math.cos(rad),cy-r0*Math.sin(rad)); cctx.lineTo(cx+R*Math.cos(rad),cy-R*Math.sin(rad)); cctx.stroke();
+  });
+  { const fc=BOARDS.focus.col.join(','), cg=cctx.createRadialGradient(cx,cy,0,cx,cy,r0);
+    cg.addColorStop(0,`rgba(${fc},.24)`); cg.addColorStop(1,`rgba(${fc},.08)`);
+    cctx.fillStyle=cg; cctx.beginPath(); cctx.arc(cx,cy,r0,0,7); cctx.fill(); }
+
+  // rings
+  cctx.strokeStyle='rgba(255,255,255,.06)'; cctx.lineWidth=1;
+  [NAV_CENTER_R,1].forEach(f=>{cctx.beginPath();cctx.arc(cx,cy,R*f,0,7);cctx.stroke();});
+  cctx.strokeStyle='rgba(255,255,255,.14)'; cctx.lineWidth=1.4;
+  cctx.beginPath();cctx.arc(cx,cy,R,0,7);cctx.stroke();
+
+  // axes
+  cctx.strokeStyle='rgba(255,255,255,.07)'; cctx.lineWidth=1; cctx.setLineDash([3,6]);
+  cctx.beginPath();cctx.moveTo(cx-R,cy);cctx.lineTo(cx+R,cy);cctx.stroke();
+  cctx.beginPath();cctx.moveTo(cx,cy-R);cctx.lineTo(cx,cy+R);cctx.stroke();
+  cctx.setLineDash([]);
+
+  // axis labels (the frame)
+  const AX= langMode==='zh' ? {hi:'高唤醒',lo:'低唤醒',neg:'负面',pos:'正面'} : {hi:'HIGH AROUSAL',lo:'LOW AROUSAL',neg:'NEG',pos:'POS'};
+  cctx.fillStyle='rgba(139,138,150,.72)';
+  cctx.font=Math.round(R*.055)+'px -apple-system,"PingFang SC",Arial,sans-serif';
+  cctx.textAlign='center'; cctx.fillText(AX.hi,cx,cy-R-14);
+  cctx.fillText(AX.lo,cx,cy+R+26);
+  cctx.textAlign='right'; cctx.fillText(AX.neg,cx-R-12,cy+Math.round(R*.02));
+  cctx.textAlign='left';  cctx.fillText(AX.pos,cx+R+12,cy+Math.round(R*.02));
+
+  // emotion anchors — diagonals only (cardinals collide with the axis labels)
+  cctx.font=Math.round(R*.046)+'px -apple-system,"PingFang SC",Arial,sans-serif';
+  cctx.fillStyle='rgba(139,138,150,.4)';
+  ANCHORS.filter(an=>an.a%90!==0).forEach(an=>{
+    const rad=an.a*Math.PI/180, ar=R+18;
+    const lx=cx+ar*Math.cos(rad), ly=cy-ar*Math.sin(rad);
+    cctx.textAlign= lx<cx?'right':'left';
+    cctx.fillText(langMode==='zh'?an.zh:an.en, lx, ly+3);
+  });
+
+  const board=algoBoard(valenceDisp,arousalDisp);
+
+  // zone labels
+  ZONES.forEach(z=>{
+    const b=BOARDS[z.board], active=z.board===board;
+    const prim=langMode==='zh'?b.zh:b.en, sub=langMode==='zh'?b.en:b.zh;
+    cctx.fillStyle=`rgba(${b.col.join(',')},${active?.95:.34})`;
+    cctx.textAlign='center';
+    cctx.font=`${active?600:400} ${Math.round(R*(active?.062:.056))}px -apple-system,"PingFang SC",Arial,sans-serif`;
+    cctx.fillText(prim, cx+z.x*R, cy-z.y*R);
+    if(active){
+      cctx.font=`${Math.round(R*.044)}px -apple-system,"PingFang SC",Arial,sans-serif`;
+      cctx.fillStyle=`rgba(${b.col.join(',')},.7)`;
+      cctx.fillText(sub, cx+z.x*R, cy-z.y*R+Math.round(R*.07));
+    }
+  });
+
+  // trail — the path the state has travelled
+  if(trail.length>1){
+    cctx.lineCap='round'; cctx.lineJoin='round';
+    for(let i=1;i<trail.length;i++){
+      const p0=trail[i-1],p1=trail[i], t=i/trail.length;
+      cctx.strokeStyle=`rgba(${p1.col.join(',')},${(t*t)*0.8})`;
+      cctx.lineWidth=lerp(0.5,3.4,t);
+      cctx.beginPath();cctx.moveTo(p0.x,p0.y);cctx.lineTo(p1.x,p1.y);cctx.stroke();
+    }
+  }
+
+  // current point — the hero mark; reads clearly at print size
+  const dx=cx+valenceDisp*R, dy=cy-arousalDisp*R;
+  const col=BOARDS[board].col;
+  const g=cctx.createRadialGradient(dx,dy,0,dx,dy,46);
+  g.addColorStop(0,`rgba(${col.join(',')},.62)`); g.addColorStop(.45,`rgba(${col.join(',')},.22)`); g.addColorStop(1,`rgba(${col.join(',')},0)`);
+  cctx.fillStyle=g; cctx.beginPath();cctx.arc(dx,dy,46,0,7);cctx.fill();
+  // connecting line from origin
+  cctx.strokeStyle=`rgba(${col.join(',')},.45)`; cctx.lineWidth=1.4;
+  cctx.beginPath();cctx.moveTo(cx,cy);cctx.lineTo(dx,dy);cctx.stroke();
+  // core
+  cctx.save();
+  cctx.shadowColor=`rgba(${col.join(',')},.9)`; cctx.shadowBlur=14;
+  cctx.beginPath();cctx.arc(dx,dy,8.5,0,7);
+  cctx.fillStyle=`rgba(${col.join(',')},1)`; cctx.fill();
+  cctx.restore();
+  cctx.lineWidth=2; cctx.strokeStyle='rgba(255,255,255,.95)'; cctx.stroke();
+
+  trail.push({x:dx,y:dy,col});
+  if(trail.length>70) trail.shift();
+}
+
+/* ============================================================
+   Waveform render (morphed by atmosphere + valence tint)
+   ============================================================ */
+function drawWave(){
+  const {w,h}=fitCanvas(wave,wctx);
+  wctx.clearRect(0,0,w,h);
+  const mid=h*0.5, n=PEAKS.length;
+  const atmos=algoAtmosVal(arousalDisp);       // 10..100
+  const veil=clamp(1-atmos/100,0,1);            // low arousal → more veiled
+  const warmth=(valenceDisp+1)/2;               // 0 cool .. 1 warm
+  const tint=mix([110,150,210],[210,150,95],warmth);
+  const ampMax=h*0.44;
+  const amp=ampMax*lerp(0.62,1,atmos/100);      // fuller when high arousal
+  const playX=(frame/NF)*w;
+  const shape=i=>Math.pow(lerp(PEAKS[i],PEAKS_SMOOTH[i],veil),0.9); // reshaped signal
+  const raw=i=>Math.pow(PEAKS[i],0.9);
+
+  // center line
+  wctx.strokeStyle='rgba(255,255,255,.05)'; wctx.lineWidth=1;
+  wctx.beginPath();wctx.moveTo(0,mid);wctx.lineTo(w,mid);wctx.stroke();
+
+  // (1) ghost outline of the RAW signal — "before" reshaping, symmetric
+  wctx.beginPath();
+  for(let i=0;i<n;i++){const x=i/(n-1)*w,y=mid-raw(i)*ampMax;i?wctx.lineTo(x,y):wctx.moveTo(x,y);}
+  for(let i=n-1;i>=0;i--){const x=i/(n-1)*w,y=mid+raw(i)*ampMax;wctx.lineTo(x,y);}
+  wctx.closePath();
+  wctx.strokeStyle='rgba(231,227,218,.14)'; wctx.lineWidth=1; wctx.stroke();
+
+  // (2) reshaped filled body (mirror), tinted by valence, shrunk/veiled by arousal
+  const grad=wctx.createLinearGradient(0,mid-amp,0,mid+amp);
+  grad.addColorStop(0,`rgba(${tint.join(',')},.42)`);
+  grad.addColorStop(.5,`rgba(${tint.join(',')},.14)`);
+  grad.addColorStop(1,`rgba(${tint.join(',')},.42)`);
+  wctx.beginPath();
+  for(let i=0;i<n;i++){const x=i/(n-1)*w,y=mid-shape(i)*amp;i?wctx.lineTo(x,y):wctx.moveTo(x,y);}
+  for(let i=n-1;i>=0;i--){const x=i/(n-1)*w,y=mid+shape(i)*amp;wctx.lineTo(x,y);}
+  wctx.closePath();
+  wctx.fillStyle=grad; wctx.fill();
+
+  // reshaped crisp edge (top + bottom), brightness follows warmth
+  wctx.shadowColor=`rgba(${tint.join(',')},${lerp(.45,.08,veil)})`; wctx.shadowBlur=lerp(3,12,warmth);
+  wctx.strokeStyle=`rgba(${tint.join(',')},.92)`; wctx.lineWidth=1.5;
+  wctx.beginPath();
+  for(let i=0;i<n;i++){const x=i/(n-1)*w,y=mid-shape(i)*amp;i?wctx.lineTo(x,y):wctx.moveTo(x,y);}
+  wctx.stroke();
+  wctx.beginPath();
+  for(let i=0;i<n;i++){const x=i/(n-1)*w,y=mid+shape(i)*amp;i?wctx.lineTo(x,y):wctx.moveTo(x,y);}
+  wctx.strokeStyle=`rgba(${tint.join(',')},.5)`; wctx.stroke();
+  wctx.shadowBlur=0;
+
+  // (3) veil overlay — the "muffling" closes in from top & bottom as arousal drops
+  if(veil>0.02){
+    const vg=wctx.createLinearGradient(0,0,0,h);
+    vg.addColorStop(0,`rgba(12,14,20,${veil*.5})`);
+    vg.addColorStop(.5,'rgba(12,14,20,0)');
+    vg.addColorStop(1,`rgba(12,14,20,${veil*.5})`);
+    wctx.fillStyle=vg; wctx.fillRect(0,0,w,h);
+  }
+
+  // playhead
+  wctx.strokeStyle='rgba(255,255,255,.42)'; wctx.lineWidth=1;
+  wctx.beginPath();wctx.moveTo(playX,0);wctx.lineTo(playX,h);wctx.stroke();
+  wctx.fillStyle='#fff'; wctx.beginPath();wctx.arc(playX,mid,2.4,0,7);wctx.fill();
+}
+
+/* ============================================================
+   Readouts
+   ============================================================ */
+function updateReadouts(){
+  const v=valenceDisp, a=arousalDisp;
+  const board=algoBoard(v,a), eq=algoEQPreset(v,a), atmos=algoAtmosVal(a), bpm=BOARD_BPM[board];
+  const col=BOARDS[board].col, warmth=(v+1)/2;
+  const tint=mix([110,150,210],[210,150,95],warmth);
+
+  // arousal meter
+  $('aFill').style.height=((a+1)/2*100)+'%';
+  $('aCap').style.bottom=((a+1)/2*100)+'%';
+  $('aValTxt').textContent=(a>=0?'+':'')+a.toFixed(2);
+  // valence
+  $('vValTxt').textContent=(v>=0?'+':'')+v.toFixed(2);
+  // sound cards
+  $('atmosTxt').textContent=atmos;
+  $('atmosBar').style.width=atmos+'%';
+  $('atmosBar').style.background=`rgba(${BOARDS[board].col.join(',')},.85)`;
+  $('eqTxt').textContent=pick(EQ_NAMES[eq].en,EQ_NAMES[eq].zh);
+  $('eqBar').style.width=Math.round(EQ_WARMTH[eq]*100)+'%';
+  $('eqBar').style.background=`rgba(${tint.join(',')},.9)`;
+  $('waveTagL').textContent= atmos>60?pick('natural','满/亮') : atmos>30?pick('veiled','半掩') : pick('muffled','闷/包裹');
+  $('waveTagR').textContent= warmth>.55?pick('warm','暖') : warmth<.45?pick('cool','清冷') : pick('neutral','中性');
+  // center caption
+  $('boardName').textContent=pick(BOARDS[board].en,BOARDS[board].zh);
+  // output bar
+  $('oCoord').innerHTML=`V ${v>=0?'+':''}${v.toFixed(2)} &nbsp; A ${a>=0?'+':''}${a.toFixed(2)}`;
+  $('oBoard').textContent=pick(BOARDS[board].en,BOARDS[board].zh);
+  $('oDot').style.color=`rgb(${col.join(',')})`;
+  $('oEQ').textContent=pick(EQ_NAMES[eq].en,EQ_NAMES[eq].zh);
+  $('oAtmos').textContent=atmos;
+  $('oBPM').textContent=bpm;
+}
+
+/* ============================================================
+   Flow connectors between columns
+   ============================================================ */
+let flowPulse=0;
+function drawFlow(){
+  const svg=$('flow'), grid=$('grid');
+  const cols=grid.querySelectorAll('.col');
+  if(cols.length<3){svg.innerHTML='';return;}
+  const gb=grid.getBoundingClientRect();
+  const r=i=>{const b=cols[i].getBoundingClientRect();return {x:b.right-gb.left,y:b.top-gb.top+b.height/2,x2:cols[i+1]?cols[i+1].getBoundingClientRect().left-gb.left:0};};
+  svg.setAttribute('viewBox',`0 0 ${gb.width} ${gb.height}`);
+  const seg=[[0],[1]].map((_,i)=>{
+    const a=cols[i].getBoundingClientRect(), b=cols[i+1].getBoundingClientRect();
+    const x1=a.right-gb.left, x2=b.left-gb.left, y=(Math.max(a.top,b.top)+Math.min(a.bottom,b.bottom))/2-gb.top;
+    return {x1,x2,y};
+  });
+  let html='';
+  seg.forEach(s=>{
+    html+=`<line x1="${s.x1}" y1="${s.y}" x2="${s.x2}" y2="${s.y}"/>`;
+    const px=s.x1+(s.x2-s.x1)*flowPulse;
+    html+=`<circle class="pulse" cx="${px}" cy="${s.y}" r="2.6"/>`;
+    // arrowhead
+    html+=`<path d="M${s.x2-6} ${s.y-4} L${s.x2} ${s.y} L${s.x2-6} ${s.y+4}" fill="none" stroke="rgba(185,161,107,.5)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+  });
+  svg.innerHTML=html;
+  // position the mechanism chips on each connector
+  const lab1=$('flowLab1'), lab2=$('flowLab2');
+  if(lab1&&seg[0]){ lab1.style.left=((seg[0].x1+seg[0].x2)/2)+'px'; lab1.style.top=seg[0].y+'px'; }
+  if(lab2&&seg[1]){ lab2.style.left=((seg[1].x1+seg[1].x2)/2)+'px'; lab2.style.top=seg[1].y+'px'; }
+}
+
+/* ============================================================
+   Loop
+   ============================================================ */
+function tick(now){
+  const dt=Math.min(.05,(now-lastT)/1000); lastT=now;
+
+  if(audioOn && audioReady){
+    frame=track.currentTime*FPS;            // audio is the master clock
+  } else if(playing){
+    frame+=dt*FPS;
+    if(frame>=NF) frame=0, trail.length=0;
+  }
+  const fi=Math.floor(frame)%NF;
+
+  // state source (priority): held preset → choreographed journey → manual valence + auto arousal
+  if(arousalOverride!==null){
+    arousal=arousalOverride;                       // frozen preset (keys 1-5); valence already set
+  } else if(sweep && playing){
+    const j=journey(frame/FPS);                     // deliberate tour of the five boards
+    valence=j.v; arousal=j.a; vSlider.value=Math.round(j.v*100);
+  } else {
+    arousal=demoTrace(frame/FPS);                   // manual valence, arousal keeps roaming
+  }
+  // smooth for buttery motion
+  arousalDisp=lerp(arousalDisp,arousal,0.14);
+  valenceDisp=lerp(valenceDisp,valence,0.16);
+  if(audioOn && audioReady) applyDSP(arousalDisp,valenceDisp);
+
+  // heart beat rate hint from arousal
+  const hb=$('hbeat'); if(hb) hb.style.animationDuration=(1.15-((arousalDisp+1)/2)*0.6).toFixed(2)+'s';
+
+  flowPulse=(flowPulse+dt*0.55)%1;
+
+  drawCirc(); drawWave(); updateReadouts(); drawFlow();
+
+  scrub.value=Math.round(frame/NF*1000);
+  $('tCur').textContent=fmtTime(frame/FPS);
+
+  requestAnimationFrame(tick);
+}
+
+/* ============================================================
+   Controls
+   ============================================================ */
+$('playBtn').addEventListener('click',()=>{ if(!playing) arousalOverride=null; setPlay(!playing); });
+function setPlay(on){
+  playing=on;
+  $('playIcon').innerHTML= on ? '<path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/>' : '<path d="M8 5v14l11-7z"/>';
+  if(audioOn && audioReady){ on ? track.play() : track.pause(); }
+}
+vSlider.addEventListener('input',e=>{
+  valence=+e.target.value/100;
+  setSweep(false);
+});
+scrub.addEventListener('input',e=>{ frame=(+e.target.value/1000)*NF; arousalOverride=null; trail.length=0; if(audioOn && audioReady) track.currentTime=(frame/FPS)%DUR; });
+
+// preset states → one clean still per sound world (keys 1–5)
+const PRESETS={
+  '1':{v:0.30,a:0.62},  // Motion
+  '2':{v:0.42,a:0.20},  // Imagine (cinematic)
+  '3':{v:0.48,a:-0.34}, // Relax — 放松扇区中部,避开右侧注解框
+  '4':{v:0.10,a:-0.62}, // Sleep
+  '5':{v:0.06,a:0.06},  // Work (focus) — 中心:情绪平稳
+};
+addEventListener('keydown',e=>{
+  if(e.key===' '){e.preventDefault(); setPlay(!playing); return;}
+  const p=PRESETS[e.key];
+  if(p){ setPlay(false); setSweep(false); valence=p.v; arousalOverride=p.a; vSlider.value=Math.round(p.v*100); trail.length=0; }
+});
+function setSweep(on){ sweep=on; const t=$('sweepToggle'); t.classList.toggle('on',on); t.setAttribute('aria-checked',on); }
+$('sweepToggle').addEventListener('click',()=>setSweep(!sweep));
+$('sweepToggle').addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();setSweep(!sweep);}});
+
+$('tDur').textContent=fmtTime(DUR);
+addEventListener('resize',()=>{drawFlow();});
+
+/* ============================================================
+   Audio — the SAME chain as script.js, reshaping the real track:
+   track → lowpass(atmosphere←arousal) → lowshelf/peaking/highshelf(EQ←valence) → out
+   ============================================================ */
+const track=$('track');
+let actx, lp, eqL, eqM, eqH, srcNode;
+let audioOn=false, audioReady=false, curEQ=null;
+
+function buildAudio(){
+  if(actx) return true;
+  try{
+    actx=new (window.AudioContext||window.webkitAudioContext)();
+    srcNode=actx.createMediaElementSource(track);
+    lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=18000;
+    eqL=actx.createBiquadFilter(); eqL.type='lowshelf';
+    eqM=actx.createBiquadFilter(); eqM.type='peaking';
+    eqH=actx.createBiquadFilter(); eqH.type='highshelf';
+    srcNode.connect(lp); lp.connect(eqL); eqL.connect(eqM); eqM.connect(eqH); eqH.connect(actx.destination);
+    return true;
+  }catch(err){ console.warn('audio wiring failed',err); return false; }
+}
+function applyDSP(a,v){
+  if(!actx) return;
+  const now=actx.currentTime, tc=0.08;
+  // atmosphere lowpass ← arousal
+  lp.frequency.setTargetAtTime(sliderToFreq(algoAtmosVal(a)), now, tc);
+  // EQ ← valence/arousal preset
+  const key=algoEQPreset(v,a), p=AUDIO_EQ[key];
+  if(key!==curEQ){ curEQ=key;
+    eqL.frequency.setValueAtTime(p.low.freq,now);
+    eqM.frequency.setValueAtTime(p.mid.freq,now); eqM.Q.setValueAtTime(p.mid.Q||1,now);
+    eqH.frequency.setValueAtTime(p.high.freq,now);
+  }
+  eqL.gain.setTargetAtTime(p.low.gain,now,tc);
+  eqM.gain.setTargetAtTime(p.mid.gain,now,tc);
+  eqH.gain.setTargetAtTime(p.high.gain,now,tc);
+}
+function setSoundIcon(on){
+  $('soundIcon').innerHTML = on
+    ? '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a4 4 0 0 1 0 7" stroke-width="1.6"/><path d="M18.5 6a7 7 0 0 1 0 12" stroke-width="1.6"/>'
+    : '<path d="M4 9v6h4l5 4V5L8 9H4z"/><line x1="18" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="18" y2="15"/>';
+  $('soundIcon').setAttribute('stroke', on?'rgb(150,175,220)':'var(--muted)');
+  $('soundBtn').setAttribute('aria-pressed', on);
+}
+$('soundBtn').addEventListener('click',()=>{
+  if(!audioOn){
+    if(!buildAudio()) return;
+    audioOn=true; setSoundIcon(true);
+    if(actx.state==='suspended') actx.resume();
+    track.currentTime=(frame/FPS)%DUR;
+    curEQ=null; applyDSP(arousalDisp,valenceDisp);
+    track.play().then(()=>{audioReady=true; setPlay(true);})
+      .catch(err=>{ audioReady=false; console.warn('play blocked',err); });
+  }else{
+    audioOn=false; audioReady=false; setSoundIcon(false); track.pause();
+  }
+});
+
+// deep-link a preset still: model-diagram.html#s=1 … #s=5
+(function(){
+  const m=(location.hash.match(/s=([1-5])/)||[])[1];
+  if(m && PRESETS[m]){ const p=PRESETS[m]; setPlay(false); setSweep(false); valence=p.v; arousalDisp=p.a; valenceDisp=p.v; arousalOverride=p.a; frame=NF*0.5; vSlider.value=Math.round(p.v*100); }
+})();
+
+// language toggle
+document.querySelectorAll('.langtog button').forEach(b=>{
+  b.addEventListener('click',()=>{ langMode=b.dataset.lang; applyLang(); drawFlow(); });
+});
+const _ql=(location.search.match(/lang=(en|zh|both)/)||[])[1]; if(_ql) langMode=_ql;
+// ?still → PDF 定格帧:隐藏播放条、语言切换和延伸入口(配合 #s=1…5 选状态)
+if(/[?&]still\b/.test(location.search)){ const st=document.createElement('style'); st.textContent='.controls,.langtog,.further{display:none!important}'; document.head.appendChild(st); }
+applyLang();        // populate all labels for the default (both)
+
+setPlay(playing);   // sync the transport icon to the initial running state
+requestAnimationFrame(t=>{lastT=t;tick(t);});
+</script>
+<script src="ui-icons.js"></script>
+</body>
+</html>

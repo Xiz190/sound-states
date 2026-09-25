@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音源库 · 代码合成试听</title>
+<style>
+  /* 承袭 model-diagram 夜色系统;合成引擎喂工作/睡眠=睡眠蓝 accent。旧 var 名保留(JS/内联引用),值改 model-diagram */
+  :root{
+    color-scheme:dark;   /* 让原生控件(select 下拉/滚动条)渲染暗色,不再白底 */
+    --bg:#0c0e14; --panel:#101219; --line:rgba(255,255,255,.09); --ink:#e7e3da; --dim:#8b8a96; --accent:#b9a16b;
+    --glow:185,161,107; --faint:#7a7984; --hair2:rgba(255,255,255,.055);
+    --fill:rgba(255,255,255,.028); --fill2:rgba(255,255,255,.045);
+    --sleep:90,110,170; --focus:90,140,150; --warm:210,150,95; --cool:110,150,210; --em:210,150,95;
+    --mono:ui-monospace,"SF Mono",Menlo,"Roboto Mono",monospace;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; color:var(--ink); -webkit-font-smoothing:antialiased;
+        font:14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;
+        background:
+          radial-gradient(1200px 700px at 50% -10%, rgba(var(--glow),.10), transparent 60%),
+          radial-gradient(900px 600px at 92% 112%, rgba(var(--focus),.05), transparent 60%),
+          var(--bg); }
+  ::selection{ background:rgba(var(--glow),.32); color:#fff; }
+  .wrap{ max-width:920px; margin:0 auto; padding:clamp(22px,3vw,40px) clamp(16px,3vw,26px) 80px; }
+  h1{ font-size:clamp(1.3rem,2.2vw,1.7rem); font-weight:300; margin:0 0 5px; letter-spacing:.1em; }
+  .sub{ color:var(--dim); font-size:12.5px; font-weight:300; margin-bottom:22px; line-height:1.6; }
+  h2{ font-size:15px; font-weight:400; letter-spacing:.02em; margin:0 0 2px; }
+  .cat{ border:1px solid var(--line); border-radius:14px; padding:19px 21px; margin:0 0 22px; background:linear-gradient(180deg,var(--fill2),var(--fill)); backdrop-filter:blur(3px); }
+  .cat .tag{ display:inline-block; font-size:.56rem; color:rgba(var(--em),.92); border:1px solid rgba(var(--em),.28);
+        border-radius:5px; padding:2px 8px; margin-bottom:10px; letter-spacing:.16em; text-transform:uppercase; }
+  .catsub b{ color:var(--ink); font-weight:500; }
+  .cat.todo{ opacity:.5; }
+  .cat.todo .top, .cat.todo .presets{ display:none; }
+  .catsub{ color:var(--dim); font-size:12.5px; margin:0 0 14px; line-height:1.6; }
+  .top{ display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap; }
+  .panel{ flex:1; min-width:290px; }
+  .row{ display:grid; grid-template-columns:84px 1fr 56px; align-items:center; gap:12px; margin:11px 0; }
+  .row label{ color:var(--dim); font-size:12.5px; }
+  .row output{ color:var(--ink); font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right; font-size:12.5px; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:3px; background:rgba(255,255,255,.12); border-radius:3px; outline:none; cursor:pointer; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:15px; height:15px; border-radius:50%;
+        background:radial-gradient(circle at 38% 32%,#fff,rgba(var(--glow),.95) 70%); border:1.5px solid rgba(255,255,255,.85);
+        box-shadow:0 0 12px 2px rgba(var(--glow),.4),0 2px 6px rgba(0,0,0,.5); cursor:pointer; }
+  input[type=range]::-moz-range-thumb{ width:15px; height:15px; border-radius:50%; border:1.5px solid rgba(255,255,255,.85); background:rgba(var(--glow),.95); }
+  canvas{ background:linear-gradient(180deg,rgba(0,0,0,.34),rgba(0,0,0,.14)); border:1px solid var(--line); border-radius:12px; }
+  select{ background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 9px; font-size:12.5px; font-family:inherit; }
+  select:hover{ border-color:rgba(var(--glow),.5); }
+  .btns{ display:flex; gap:10px; margin:2px 0 14px; flex-wrap:wrap; }
+  button{ background:rgba(var(--glow),.14); color:var(--ink); border:1px solid var(--line); padding:8px 16px;
+        border-radius:999px; font:inherit; font-size:13px; letter-spacing:.02em; cursor:pointer; transition:background .25s,border-color .25s; }
+  button:hover{ background:rgba(var(--glow),.22); border-color:rgba(var(--glow),.5); }
+  button.ghost{ background:transparent; color:var(--dim); }
+  button.ghost:hover{ color:var(--ink); }
+  button.on{ background:rgba(var(--glow),.18); color:var(--ink); border-color:rgba(var(--glow),.45); }
+  .presets{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+  .presets .lbl{ color:var(--dim); font-size:12.5px; margin-bottom:8px; }
+  .hint{ color:var(--faint); font-size:12px; margin-top:14px; padding-top:12px; border-top:1px solid var(--line); line-height:1.7; }
+  .hint b{ color:rgba(var(--em),.88); font-weight:500; }
+  code{ background:rgba(0,0,0,.3); border:1px solid var(--line); border-radius:4px; padding:0 5px; font-size:10px; color:var(--dim); font-family:var(--mono); }
+  /* 顶栏 + 展品导览 */
+  .topbar{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .topbar a.back{ color:var(--faint); text-decoration:none; font-size:12.5px; border:1px solid var(--line); border-radius:999px; padding:4px 12px; transition:.2s; }
+  .topbar a.back:hover{ color:var(--ink); border-color:rgba(var(--glow),.5); }
+  .topbar .where{ color:var(--faint); font-size:.56rem; letter-spacing:.22em; text-transform:uppercase; margin-left:auto; }
+  .exhibit{ background:linear-gradient(180deg,var(--fill2),var(--fill)); border:1px solid var(--line); border-radius:14px; padding:15px 18px; margin-bottom:22px; backdrop-filter:blur(3px); }
+  .exhibit .lead{ font-size:15px; color:var(--ink); font-weight:400; margin:0; line-height:1.6; }
+  .exhibit p{ margin:8px 0 0; font-size:12.5px; color:var(--dim); line-height:1.7; }
+  .exhibit .go{ margin-top:11px; padding-top:11px; border-top:1px solid var(--line); font-size:12.5px; color:rgba(var(--glow),.95); }
+  .exhibit .note{ margin-top:8px; font-size:10.5px; color:var(--faint); }
+  .exhibit .en{ display:block; margin-top:6px; font-size:12.5px; color:var(--faint); }
+  /* 示波器的轴标注:浮在画布上的 HTML 层,待命/播放两种状态都在 */
+  .scope-wrap{ position:relative; display:inline-block; line-height:0; }
+  .scope-ax{
+    position:absolute; pointer-events:none; line-height:1;
+    font-size:9.5px; font-weight:500; letter-spacing:.07em;
+    color:rgba(233,229,220,.44);
+    font-family:-apple-system,"PingFang SC",system-ui,sans-serif;
+  }
+  .scope-ax-y{ right:12px; top:13px; text-align:right; }
+  .scope-ax-t{ right:12px; top:27px; text-align:right; font-size:8.5px; letter-spacing:.05em; color:rgba(233,229,220,.26); }
+  .scope-ax-x{ right:12px; bottom:18px; }
+
+  input[type=range]:focus-visible{ outline:2px solid var(--accent); outline-offset:6px; border-radius:4px; }
+  @media (max-width:640px){
+    .wrap{ padding:18px 14px 50px; }
+    .cat{ padding:14px 14px; }
+    .top{ gap:14px; }
+    .panel{ min-width:0; width:100%; }
+    canvas{ width:100%; height:auto; max-width:340px; }
+    .row{ grid-template-columns:72px 1fr 46px; gap:9px; }
+  }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
+<style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <a class="back" href="index.html">← Sound States</a>
+    <span class="where">Process · Engine</span>
+  </div>
+
+  <div id="__dbg" style="font:12px/1.8 ui-monospace,Menlo,monospace;color:#8f8d99;
+       background:#12171a;border:1px solid rgba(233,229,220,.10);border-radius:8px;
+       padding:8px 12px;margin:0 0 14px;">诊断：未播放</div>
+  <h1>音源库 · 代码合成试听</h1>
+  <div class="sub">戴耳机。每一大类 = 一个合成引擎 + 若干「配方」预设（对应 <code>场景库-素材生成清单</code> 里的前缀）。合成 = 真·随机无限不循环，改编自 Farnell《Designing Sound》PD 示例。</div>
+
+  <!-- 展品导览:导师第一次打开要能看懂这是什么 / exhibit header -->
+  <div class="exhibit">
+    <p class="lead">Sound States 声音的「零件车间」：主站工作 / 睡眠板块里的每一层声音，都是在这里先做出来的。
+      <span class="en">The parts workshop for Sound States: every layer of sound in the Work / Sleep boards is built here first.</span></p>
+    <p>七张卡片 = 七个合成引擎，全部由代码实时生成，没有一个是录音文件，也没有一个是循环采样。左边是这幅声音的<b>声谱图</b>（横轴时间、纵轴频率、颜色越亮越强），右边是参数，下面是一排「配方」预设。合成算法改编自 Farnell《Designing Sound》的 Pure Data 示例。
+      <span class="en">Seven cards, seven synthesis engines, all generated live in code, none a recording, none a looping sample. A spectrogram on the left (time across, frequency up, brighter = stronger), parameters on the right, recipes below. The algorithms are adapted from the Pure Data examples in Farnell's <i>Designing Sound</i>.</span></p>
+    <p class="go">建议路径：随便挑一张卡片 → 按「试听」听它在响什么 → 换一个「配方」，听同一套算法怎么变成完全不同的声音。
+      <span class="en">Suggested path: pick any card → press Play to hear what it is → switch to another recipe and hear the same algorithm become a completely different sound.</span></p>
+    <p class="note">引擎代码 <code>sound-engines.js</code> · 素材前缀对照 <code>场景库-素材生成清单.md</code></p>
+  </div>
+
+  <!-- ============ 风 WIND ============ -->
+  <section class="cat" id="cat-wind">
+    <span class="tag">Engine 01</span>
+    <h2>风 · WIND</h2>
+    <div class="catsub">噪声 → 两条共振带通，中心频率+音量都由「风速」信号驱动(0.1Hz 呼吸 + 随机阵风 gust + 阵风 squall)。= Farnell p18 wind 配方。通用底，所有场景可叠。</div>
+
+    <div class="btns">
+      <button class="w-play">▶ 试听</button>
+      <button class="w-stop ghost">停止</button>
+      <span class="w-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="w-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">带通噪声 · 亮带随阵风起伏</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>风力</label><input class="w-base" type="range" min="0.05" max="1" step="0.01" value="0.25"><output class="w-base_o"></output></div>
+        <div class="row"><label>阵风</label><input class="w-gust" type="range" min="0" max="1" step="0.01" value="0.45"><output class="w-gust_o"></output></div>
+        <div class="row"><label>呼啸(Q)</label><input class="w-q" type="range" min="0.7" max="30" step="0.1" value="3"><output class="w-q_o"></output></div>
+        <div class="row"><label>暖 ↔ 冷</label><input class="w-tone" type="range" min="300" max="3200" step="10" value="1000"><output class="w-tone_o"></output></div>
+        <div class="row"><label>空旷(混响)</label><input class="w-wet" type="range" min="0" max="1" step="0.01" value="0.25"><output class="w-wet_o"></output></div>
+        <div class="row"><label>音量</label><input class="w-vol" type="range" min="0" max="1" step="0.01" value="0.8"><output class="w-vol_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(点击载入 → 照此存 <code>wind-*-bed</code> 干声规格):</div>
+      <div class="btns w-presets"></div>
+    </div>
+
+    <div class="hint">
+      · <b>呼啸(Q)</b> 往左 = 宽频气流 whoosh;往右 = 门缝/林隙「呜——」的共振啸叫(工作戏剧,别进深睡)<br>
+      · <b>阵风</b> = 无规律随机起伏(泊松式,非固定周期 → 大脑抓不到规律 = 注意力透明, Huron)<br>
+      · <b>暖↔冷</b> = 共振中心频率,低=低沉空旷(海风),高=明亮(林梢)
+    </div>
+  </section>
+
+  <!-- ============ 火 FIRE ============ -->
+  <section class="cat" id="cat-fire">
+    <span class="tag">Engine 02</span>
+    <h2>火 · FIRE</h2>
+    <div class="catsub">一个共通噪声 → 三成分合成 = Farnell p11 fire_generator:<b>① 嘶(highpass 噪声,慢随机起伏)+ ② 胴鸣/舔舐(~60Hz 共振低频慢揺)+ ③ 噼啪(自身包络过阈触发的随机带通爆裂 = evt,同雨滴机制)</b>。</div>
+
+    <div class="btns">
+      <button class="f-play">▶ 试听</button>
+      <button class="f-stop ghost">停止</button>
+      <span class="f-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="f-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">噼啪瞬态(竖纹) + 嘶声底</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>火势</label><input class="f-body" type="range" min="0" max="1" step="0.01" value="0.55"><output class="f-body_o"></output></div>
+        <div class="row"><label>嘶声</label><input class="f-hiss" type="range" min="0" max="1" step="0.01" value="0.3"><output class="f-hiss_o"></output></div>
+        <div class="row"><label>噼啪(束/s)</label><input class="f-crack" type="range" min="0" max="30" step="1" value="7"><output class="f-crack_o"></output></div>
+        <div class="row"><label>噼啪亮度</label><input class="f-bright" type="range" min="1000" max="6000" step="50" value="3000"><output class="f-bright_o"></output></div>
+        <div class="row"><label>暖 ↔ 冷</label><input class="f-tone" type="range" min="1200" max="9000" step="50" value="4500"><output class="f-tone_o"></output></div>
+        <div class="row"><label>空旷(混响)</label><input class="f-wet" type="range" min="0" max="1" step="0.01" value="0.22"><output class="f-wet_o"></output></div>
+        <div class="row"><label>音量</label><input class="f-vol" type="range" min="0" max="1" step="0.01" value="0.8"><output class="f-vol_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(→ 照此存 <code>fire-*</code> 干声):</div>
+      <div class="btns f-presets"></div>
+    </div>
+
+    <div class="hint">
+      · <b>噼啪</b> = 泊松随机触发(非周期)+ 随机音高/衰减,每次都不一样 = 真·无限<br>
+      · <b>余烬·将熄</b> = 火势/噼啪都低 → 暖稀稳,适合睡眠下行弧收束<br>
+      · 胴鸣(~60Hz)给暖包裹感(Juslin 安全图式);<b>暖↔冷</b> 往左滚高频 → 更闷更暖
+    </div>
+  </section>
+  <!-- ============ 虫鸣 INSECTS ============ -->
+  <section class="cat" id="cat-bug">
+    <span class="tag">Engine 03</span>
+    <h2>虫鸣 · INSECTS</h2>
+    <div class="catsub">~4.5kHz 近纯音(两只微失谐叠成 chorus)→ 快速脉冲列(颤 trill)门控成短 chirp → 一群个体随机散布在左右。= Farnell cricket 配方(颤速调高+相加长 → 蝉的连续 buzz)。</div>
+
+    <div class="btns">
+      <button class="b-play">▶ 试听</button>
+      <button class="b-stop ghost">停止</button>
+      <span class="b-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="b-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">鸣叫脉冲 · ~4.5kHz 亮线</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>密度(只/s)</label><input class="b-density" type="range" min="0" max="20" step="0.5" value="6"><output class="b-density_o"></output></div>
+        <div class="row"><label>音高</label><input class="b-pitch" type="range" min="3000" max="6500" step="50" value="4600"><output class="b-pitch_o"></output></div>
+        <div class="row"><label>颤速</label><input class="b-trill" type="range" min="8" max="90" step="1" value="22"><output class="b-trill_o"></output></div>
+        <div class="row"><label>相长</label><input class="b-phrase" type="range" min="0.1" max="1.8" step="0.05" value="0.25"><output class="b-phrase_o"></output></div>
+        <div class="row"><label>空旷(混响)</label><input class="b-wet" type="range" min="0" max="1" step="0.01" value="0.25"><output class="b-wet_o"></output></div>
+        <div class="row"><label>音量</label><input class="b-vol" type="range" min="0" max="1" step="0.01" value="0.68"><output class="b-vol_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(→ 照此存 <code>cricket-bed</code> 等干声):</div>
+      <div class="btns b-presets"></div>
+    </div>
+
+    <div class="hint">
+      · <b>颤速</b> 低 = 一声声「唧…唧」(蟋蟀);拉高+<b>相长</b>拉长 → 融成连续「知了——」(蝉)<br>
+      · <b>密度</b> = 泊松随机的"只"数,每只音高/位置/时机都随机 = 一整片虫声场<br>
+      · <b>夜寺·稀疏</b> = 密度极低 → 近零事件,深睡不抢注意(族2c)
+    </div>
+  </section>
+  <!-- ============ 底噪 · 底胶 GLUE ============ -->
+  <section class="cat" id="cat-fan">
+    <span class="tag">Engine 04</span>
+    <h2>底噪 · 底胶 GLUE</h2>
+    <div class="catsub"><b>不是一个"要放出来的声音",而是垫在所有层下面、把整段音频融合起来的隐形底胶</b>(像 synth pad)。= 引擎算法生成的粉噪/棕噪(§三)。常时·极低电平·稳态·察觉不到 = 掩蔽住空隙 + 给所有素材一个共同频谱地面。</div>
+
+    <div class="btns">
+      <button class="n-play">▶ 试听</button>
+      <button class="n-stop ghost">停止</button>
+      <span class="n-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="n-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">粉/棕噪 · 平铺的宽底</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>噪色</label><select class="n-color">
+          <option value="pink">粉噪(均衡·通用)</option>
+          <option value="brown">棕噪(更深·更暖·助眠)</option>
+        </select><output></output></div>
+        <div class="row"><label>电平</label><input class="n-level" type="range" min="0" max="0.5" step="0.005" value="0.1"><output class="n-level_o"></output></div>
+        <div class="row"><label>暖 ↔ 亮</label><input class="n-tone" type="range" min="400" max="9000" step="50" value="3000"><output class="n-tone_o"></output></div>
+        <div class="row"><label>起伏</label><input class="n-drift" type="range" min="0" max="1" step="0.01" value="0.12"><output class="n-drift_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(底胶只需 1–2 版,不像场景音那么多):</div>
+      <div class="btns n-presets"></div>
+    </div>
+
+    <div class="hint">
+      · 它的活儿是<b>融合</b>不是<b>表现</b>:最终合集里它一直低低垫在最下面,把风/雨/火/虫黏成"一个空间"<br>
+      · <b>电平</b>默认很低——正确状态是"关掉才发现原来它一直在";觉得能明显听到就是太大了<br>
+      · <b>粉噪</b>=通用地面;<b>棕噪</b>=更暖更深,睡眠下行弧收束用;<b>起伏</b>=极慢呼吸,别调大(大了就显形)
+    </div>
+  </section>
+  <!-- ============ 溪流滴水 WATER ============ -->
+  <section class="cat" id="cat-water">
+    <span class="tag">Engine 05</span>
+    <h2>溪流滴水 · WATER</h2>
+    <div class="catsub"><b>水 = 无数气泡</b>(Farnell 水模型):每个泡 = 短时内音高上升的正弦(泡收缩→共振升)+ 快衰减。密撒 = 溪流,疏撒 = 滴水。再垫一层薄薄的湍流 hiss。</div>
+
+    <div class="btns">
+      <button class="w2-play">▶ 试听</button>
+      <button class="w2-stop ghost">停止</button>
+      <span class="w2-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="w2-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">气泡瞬点 + 湍流噪声底</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>密度(泡/s)</label><input class="w2-density" type="range" min="0" max="60" step="1" value="35"><output class="w2-density_o"></output></div>
+        <div class="row"><label>音高</label><input class="w2-pitch" type="range" min="300" max="2600" step="20" value="1100"><output class="w2-pitch_o"></output></div>
+        <div class="row"><label>湍流</label><input class="w2-turb" type="range" min="0" max="1" step="0.01" value="0.25"><output class="w2-turb_o"></output></div>
+        <div class="row"><label>明 ↔ 暗</label><input class="w2-tone" type="range" min="800" max="9000" step="50" value="5000"><output class="w2-tone_o"></output></div>
+        <div class="row"><label>空旷(混响)</label><input class="w2-wet" type="range" min="0" max="1" step="0.01" value="0.22"><output class="w2-wet_o"></output></div>
+        <div class="row"><label>音量</label><input class="w2-vol" type="range" min="0" max="1" step="0.01" value="0.7"><output class="w2-vol_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(→ 照此存 <code>stream-bed</code> / <code>drip-evt</code> 干声):</div>
+      <div class="btns w2-presets"></div>
+    </div>
+
+    <div class="hint">
+      · <b>密度</b> 高 = 连续溪流(族3);拉到很低 = 一滴一滴的滴水(族1 屋檐/叶尖)<br>
+      · <b>音高</b> 低 = 大水/深潭;高 = 细流/浅溪。每个泡音高/上升/时长都随机 = 真·无限<br>
+      · <b>滴水</b> 配方混响拉大 → 岩缝/屋檐的空间回响(放置门:远处滴水更耐听)
+    </div>
+  </section>
+  <!-- ============ 寺钟木鱼 BELL ============ -->
+  <section class="cat" id="cat-bell">
+    <span class="tag">Engine 06</span>
+    <h2>寺钟木鱼 · BELL</h2>
+    <div class="catsub">加法合成 = Farnell A0–A3 bell。一组<b>非谐部分音</b>(各自振幅+衰减,低频衰减长/高频快)+ 敲击瞬态。<b>寺钟</b>=低频·长衰减·多分音·大混响;<b>木鱼</b>=木质·短促"笃"·少分音·稳定节奏。音高可控。</div>
+
+    <div class="btns">
+      <button class="k-play">▶ 试听</button>
+      <button class="k-stop ghost">停止</button>
+      <button class="k-hit ghost">单击一下</button>
+      <span class="k-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="k-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">敲击瞬态 + 衰减的分音</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>类型</label><select class="k-type">
+          <option value="woodfish">木鱼(木质·短促)</option>
+          <option value="bell">寺钟(金属·长鸣)</option>
+        </select><output></output></div>
+        <div class="row"><label>音高</label><input class="k-pitch" type="range" min="150" max="1200" step="10" value="680"><output class="k-pitch_o"></output></div>
+        <div class="row"><label>敲击间隔</label><input class="k-interval" type="range" min="0.3" max="300" step="0.1" value="1.0"><output class="k-interval_o"></output></div>
+        <div class="row"><label>空旷(混响)</label><input class="k-wet" type="range" min="0" max="1" step="0.01" value="0.18"><output class="k-wet_o"></output></div>
+        <div class="row"><label>音量</label><input class="k-vol" type="range" min="0" max="1" step="0.01" value="0.7"><output class="k-vol_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(→ 照此存 <code>woodblock-evt</code> / <code>bell-evt_[音名]</code> 干声):</div>
+      <div class="btns k-presets"></div>
+    </div>
+
+    <div class="hint">
+      · <b>木鱼</b> = 每击有轻有重、音高±25Hz微动、节奏有快有慢(真人手感,非复制粘贴);<b>寺钟</b> = 稀疏敲击、大混响<br>
+      · <b>钟声频率可选</b>(每1/3/5分一次) → 钟声警醒,低频出现才不打扰;木鱼和寺钟可<b>同时开两栏一起听</b>(诵经+钟)<br>
+      · 加法合成音高完全可控 → 寺钟可按音名做几个同调版(清单 <code>bell-evt_[音名]</code>);<b>单击一下</b>=只敲一下听音色
+    </div>
+  </section>
+
+  <!-- ============ 颗粒纹理 GRANULAR ============ -->
+  <section class="cat" id="cat-grain">
+    <span class="tag">Engine 07</span>
+    <h2>颗粒纹理 · GRANULAR</h2>
+    <div class="catsub"><b>连续带限噪声 + 第二路噪声做摩擦振幅调制</b>(不是一颗颗的点)。<b>树叶窸窣 / 踩沙捏沙 / 笔尖沙沙</b> = 同引擎不同配方。树叶=持续+慢阵;踩沙/笔尖=每"下"一段连续摩擦(非一串点)。</div>
+
+    <div class="btns">
+      <button class="gr-play">▶ 试听</button>
+      <button class="gr-stop ghost">停止</button>
+      <span class="gr-state" style="color:var(--dim);align-self:center;font-size:12.5px;">未播放</span>
+    </div>
+
+    <div class="top">
+      <div>
+        <canvas class="gr-scope" width="300" height="120"></canvas>
+        <div class="sub" style="text-align:center;margin:7px 0 0;">颗粒事件 · 每颗一个点</div>
+      </div>
+      <div class="panel">
+        <div class="row"><label>密度</label><input class="gr-density" type="range" min="0" max="40" step="0.5" value="14"><output class="gr-density_o"></output></div>
+        <div class="row"><label>音量</label><input class="gr-vol" type="range" min="0" max="1" step="0.01" value="0.6"><output class="gr-vol_o"></output></div>
+      </div>
+    </div>
+
+    <div class="presets">
+      <div class="lbl">配方(→ 照此存 <code>leaves</code>/<code>sand</code>/<code>pen</code> 干声):</div>
+      <div class="btns gr-presets"></div>
+    </div>
+
+    <div class="hint">
+      · <b>树叶</b>=持续泊松(风吹一片);<b>踩沙/笔尖</b>=成阵(密度=每秒几"阵",每阵 2–9 颗)<br>
+      · 之后接入:树叶→夜森林 · 踩沙→海边(ASMR) · 笔尖→图书馆。同法可扩:杯碟碰(加法冲击)、远火车/街道(低频床)
+    </div>
+  </section>
+</div>
+
+<script src="sound-engines.js"></script>
+
+<script>
+/* ===== 声谱图 · 七个引擎共用 =====
+   横轴 = 时间（右列 = 此刻）· 纵轴 = 频率（对数，60Hz–8kHz）· 颜色亮度 = 强度
+   每帧把画面整体左移 1px,在右缘画新的一列 —— 标准瀑布图。
+   注意:这是「声谱图 Spectrogram」,不是「频谱 Spectrum」—— 横轴是时间不是频率。 */
+const SPEC = {};
+const SPEC_FMIN = 60, SPEC_FMAX = 8000;
+const SPEC_STOPS = [[0,10,13,15],[0.20,18,51,61],[0.50,47,127,150],[0.78,127,212,232],[1,234,246,248]];
+function specColor(v){
+  v = Math.max(0, Math.min(1, v));
+  for (let i=1;i<SPEC_STOPS.length;i++){
+    const a=SPEC_STOPS[i-1], b=SPEC_STOPS[i];
+    if (v<=b[0]){ const t=(v-a[0])/(b[0]-a[0]);
+      return 'rgb('+Math.round(a[1]+(b[1]-a[1])*t)+','+Math.round(a[2]+(b[2]-a[2])*t)+','+Math.round(a[3]+(b[3]-a[3])*t)+')'; }
+  }
+  const L=SPEC_STOPS[SPEC_STOPS.length-1];
+  return 'rgb('+L[1]+','+L[2]+','+L[3]+')';
+}
+function specAttach(node){
+  const a = ctx.createAnalyser();
+  a.fftSize = 2048; a.smoothingTimeConstant = 0.5;
+  node.connect(a);
+  return { an:a, buf:new Uint8Array(a.frequencyBinCount) };
+}
+const SPEC_CW = 300, SPEC_CH = 120;    // 逻辑尺寸(CSS 像素)
+function specColumn(cv, S){
+  if (!S || !S.an || !cv) return;
+  const g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  g.setTransform(1,0,0,1,0,0);          // 待命态设过 dpr 变换,这里必须重置
+
+  // 首帧:把待命态的刻度清掉,否则会被瀑布拖着走成一道糊影
+  if (!S.cleared){ g.clearRect(0,0,W,H); S.cleared = true; }
+
+  // ① 整块左移 1px(只有数据层在滚)
+  g.globalCompositeOperation = 'copy'; g.drawImage(cv, -1, 0);
+  g.globalCompositeOperation = 'source-over';
+
+  // ①·5 历史淡出:叠一层很淡的背景色,让旧列逐帧变暗 → 右缘最新=最亮,
+  //       往左逐渐衰减,形成"声音正在右边被写出来"的生成感(而非匀速左移的播放感)
+  g.globalAlpha = 0.012;
+  g.fillStyle = '#0a0d0f';
+  g.fillRect(0, 0, W, H);
+  g.globalAlpha = 1;
+
+  // ② 右缘画新的一列(最新、最亮、未衰减)
+  S.an.getByteFrequencyData(S.buf);
+  const nyq = ctx.sampleRate/2, n = S.buf.length, lr = Math.log(SPEC_FMAX/SPEC_FMIN);
+  for (let y=0;y<H;y++){
+    const f  = SPEC_FMIN*Math.exp(lr*(H-1-y)/(H-1));
+    const b0 = Math.max(0, Math.min(n-1, Math.floor(f/nyq*n)));
+    const b1 = Math.max(b0+1, Math.min(n, Math.floor(f*1.03/nyq*n)));
+    let m=0; for (let b=b0;b<b1;b++) if (S.buf[b]>m) m=S.buf[b];
+    g.fillStyle = specColor((m/255)*(m/255)*1.15);
+    g.fillRect(W-1, y, 1, 1);
+  }
+
+  // ③ 不再叠任何刻度层:画布只放数据本身
+}
+// 静态频率刻度:播放时每帧重画一次(所以看起来是不动的),待命态也用它
+function __specDiag(){
+  const pk=S=>{ if(!S||!S.buf) return '—'; let m=0; for(let i=0;i<S.buf.length;i++) if(S.buf[i]>m) m=S.buf[i]; return m; };
+  const el=document.getElementById('__dbg'); if(!el) return;
+  el.textContent='ctx='+((typeof ctx!=='undefined'&&ctx)?ctx.state:'null')
+    +'  分析器峰值/255  →  风'+pk(SPEC.wind)+' 火'+pk(SPEC.fire)+' 虫'+pk(SPEC.bug)
+    +' 底'+pk(SPEC.fan)+' 水'+pk(SPEC.water)+' 钟'+pk(SPEC.bell)+' 颗'+pk(SPEC.grain);
+}
+function specFreqY(f, H){ const lr=Math.log(SPEC_FMAX/SPEC_FMIN); return (H-1)*(1 - Math.log(f/SPEC_FMIN)/lr); }
+</script>
+<script>
+// ---------------- 风 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-wind');
+  const $=s=>root.querySelector(s);
+  const ids=['base','gust','q','tone','wet','vol'];
+  let wind=null, master, conv, wetG, running=false, raf=0;
+
+  const fmt={ base:v=>(+v).toFixed(2), gust:v=>(+v).toFixed(2), q:v=>(+v<1.2?'宽频气流':+v>12?'啸叫':(+v).toFixed(1)),
+              tone:v=>(+v<=600?'暖':+v>=2200?'冷':'中')+' '+v+'Hz', wet:v=>(+v).toFixed(2), vol:v=>(+v).toFixed(2) };
+  function showAll(){ ids.forEach(id=>$('.w-'+id+'_o').textContent=fmt[id]($('.w-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    conv=ctx.createConvolver(); conv.buffer=reverbIR();
+    wetG=ctx.createGain(); wetG.gain.value=+$('.w-wet').value;
+    const lim=ctx.createDynamicsCompressor();
+    lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    const hp=bq('highpass',28);
+    master.connect(hp); hp.connect(lim).connect(ctx.destination);            // dry
+    hp.connect(conv).connect(wetG).connect(lim);                             // wet
+    wind=buildWind({ base:+$('.w-base').value, gustAmt:+$('.w-gust').value, q:+$('.w-q').value,
+                     tone:+$('.w-tone').value, vol:+$('.w-vol').value });
+    wind.out.connect(master); SPEC.wind = specAttach(wind.out);
+    running=true; $('.w-state').textContent='● 播放中'; drawScope();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(wind){ wind.stop(); wind=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.w-state').textContent='已停止'; const g=$('.w-scope').getContext('2d'); g.clearRect(0,0,300,120); }
+
+  function live(id){
+    const v=+$('.w-'+id).value; $('.w-'+id+'_o').textContent=fmt[id](v);
+    if(!running) return;
+    if(id==='wet' && wetG) wetG.gain.setTargetAtTime(v,ctx.currentTime,0.1);
+    else if(wind){ const k=(id==='gust'?'gustAmt':id); if(k in wind) wind[k]=v; }
+  }
+  ids.forEach(id=>$('.w-'+id).addEventListener('input',()=>live(id)));
+
+  function drawScope(){
+    specColumn($('.w-scope'), SPEC.wind); __specDiag();
+    if(running) raf=requestAnimationFrame(drawScope);
+  }
+
+  // 配方按钮
+  const pc=$('.w-presets');
+  Object.keys(WIND_PRESETS).forEach(name=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.title=name.split('  ')[0];
+    b.onclick=()=>{ const P=WIND_PRESETS[name];
+      for(const k in P){ const el=$('.w-'+k); if(el){ el.value=P[k]; live(k); } }
+      pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on';
+    };
+    pc.appendChild(b);
+  });
+
+  $('.w-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.w-stop').onclick=stop;
+  showAll();
+})();
+
+// ---------------- 火 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-fire');
+  const $=s=>root.querySelector(s);
+  const ids=['body','hiss','crack','bright','tone','wet','vol'];
+  let fire=null, master, masterLP, conv, wetG, running=false, raf=0;
+
+  const fmt={ body:v=>(+v).toFixed(2), hiss:v=>(+v).toFixed(2), vol:v=>(+v).toFixed(2), wet:v=>(+v).toFixed(2),
+              crack:v=>(+v<=0?'无':v+'/s'), bright:v=>v+'Hz',
+              tone:v=>(+v<=2500?'暖':+v>=7000?'冷':'中')+' '+v+'Hz' };
+  function showAll(){ ids.forEach(id=>$('.f-'+id+'_o').textContent=fmt[id]($('.f-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    masterLP=bq('lowpass',+$('.f-tone').value,0.7);
+    conv=ctx.createConvolver(); conv.buffer=reverbIR();
+    wetG=ctx.createGain(); wetG.gain.value=+$('.f-wet').value;
+    const lim=ctx.createDynamicsCompressor();
+    lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    const hp=bq('highpass',25);
+    master.connect(masterLP); masterLP.connect(hp); hp.connect(lim).connect(ctx.destination);
+    masterLP.connect(conv).connect(wetG).connect(lim);
+    fire=buildFire({ body:+$('.f-body').value, hiss:+$('.f-hiss').value, crack:+$('.f-crack').value,
+                     bright:+$('.f-bright').value, vol:+$('.f-vol').value });
+    fire.out.connect(master); SPEC.fire = specAttach(fire.out);
+    running=true; $('.f-state').textContent='● 播放中'; drawScope();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(fire){ fire.stop(); fire=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.f-state').textContent='已停止'; const g=$('.f-scope').getContext('2d'); g.clearRect(0,0,300,120); }
+
+  function live(id){
+    const v=+$('.f-'+id).value; $('.f-'+id+'_o').textContent=fmt[id](v);
+    if(!running) return;
+    if(id==='tone' && masterLP) masterLP.frequency.setTargetAtTime(v,ctx.currentTime,0.12);
+    else if(id==='wet' && wetG) wetG.gain.setTargetAtTime(v,ctx.currentTime,0.1);
+    else if(fire && id in fire) fire[id]=v;
+  }
+  ids.forEach(id=>$('.f-'+id).addEventListener('input',()=>live(id)));
+
+  function drawScope(){
+    specColumn($('.f-scope'), SPEC.fire);
+    if(running) raf=requestAnimationFrame(drawScope);
+  }
+
+  const pc=$('.f-presets');
+  Object.keys(FIRE_PRESETS).forEach(name=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.title=name.split('  ')[0];
+    b.onclick=()=>{ const P=FIRE_PRESETS[name];
+      for(const k in P){ const el=$('.f-'+k); if(el){ el.value=P[k]; live(k); } }
+      pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on';
+    };
+    pc.appendChild(b);
+  });
+
+  $('.f-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.f-stop').onclick=stop;
+  showAll();
+})();
+
+// ---------------- 虫鸣 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-bug');
+  const $=s=>root.querySelector(s);
+  const ids=['density','pitch','trill','phrase','wet','vol'];
+  let bug=null, master, conv, wetG, running=false, raf=0;
+
+  const fmt={ density:v=>(+v<=0?'无':v+'/s'), pitch:v=>v+'Hz',
+              trill:v=>(+v>=55?'buzz ':'')+v+'Hz', phrase:v=>(+v).toFixed(2)+'s',
+              wet:v=>(+v).toFixed(2), vol:v=>(+v).toFixed(2) };
+  function showAll(){ ids.forEach(id=>$('.b-'+id+'_o').textContent=fmt[id]($('.b-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    conv=ctx.createConvolver(); conv.buffer=reverbIR();
+    wetG=ctx.createGain(); wetG.gain.value=+$('.b-wet').value;
+    const lim=ctx.createDynamicsCompressor();
+    lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    const hp=bq('highpass',200);
+    master.connect(hp); hp.connect(lim).connect(ctx.destination);
+    master.connect(conv).connect(wetG).connect(lim);
+    bug=buildInsects({ density:+$('.b-density').value, pitch:+$('.b-pitch').value, trill:+$('.b-trill').value,
+                       phrase:+$('.b-phrase').value, vol:+$('.b-vol').value });
+    bug.out.connect(master); SPEC.bug = specAttach(bug.out);
+    running=true; $('.b-state').textContent='● 播放中'; drawScope();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(bug){ bug.stop(); bug=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.b-state').textContent='已停止'; const g=$('.b-scope').getContext('2d'); g.clearRect(0,0,300,120); }
+
+  function live(id){
+    const v=+$('.b-'+id).value; $('.b-'+id+'_o').textContent=fmt[id](v);
+    if(!running) return;
+    if(id==='wet' && wetG) wetG.gain.setTargetAtTime(v,ctx.currentTime,0.1);
+    else if(bug && id in bug) bug[id]=v;
+  }
+  ids.forEach(id=>$('.b-'+id).addEventListener('input',()=>live(id)));
+
+  function drawScope(){
+    specColumn($('.b-scope'), SPEC.bug);
+    if(running) raf=requestAnimationFrame(drawScope);
+  }
+
+  const pc=$('.b-presets');
+  Object.keys(INSECT_PRESETS).forEach(name=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.title=name.split('  ')[0];
+    b.onclick=()=>{ const P=INSECT_PRESETS[name];
+      for(const k in P){ const el=$('.b-'+k); if(el){ el.value=P[k]; live(k); } }
+      pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on';
+    };
+    pc.appendChild(b);
+  });
+
+  $('.b-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.b-stop').onclick=stop;
+  showAll();
+})();
+
+// ---------------- 底噪·底胶 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-fan');
+  const $=s=>root.querySelector(s);
+  const ids=['level','tone','drift'];                    // 滑块(color 是 select 单独处理)
+  let fan=null, master, running=false, raf=0;
+
+  const fmt={ level:v=>(+v).toFixed(3), drift:v=>(+v).toFixed(2),
+              tone:v=>(+v<=900?'暖':+v>=5000?'亮':'中')+' '+v+'Hz' };
+  function showAll(){ ids.forEach(id=>$('.n-'+id+'_o').textContent=fmt[id]($('.n-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    const lim=ctx.createDynamicsCompressor();
+    lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    master.connect(lim).connect(ctx.destination);
+    fan=buildGlue({ color:$('.n-color').value, level:+$('.n-level').value,
+                    tone:+$('.n-tone').value, drift:+$('.n-drift').value });
+    fan.out.connect(master); SPEC.fan = specAttach(fan.out);
+    running=true; $('.n-state').textContent='● 播放中'; drawScope();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(fan){ fan.stop(); fan=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.n-state').textContent='已停止'; const g=$('.n-scope').getContext('2d'); g.clearRect(0,0,300,120); }
+
+  function live(id){
+    const v=+$('.n-'+id).value; $('.n-'+id+'_o').textContent=fmt[id](v);
+    if(running && fan && id in fan) fan[id]=v;
+  }
+  ids.forEach(id=>$('.n-'+id).addEventListener('input',()=>live(id)));
+  $('.n-color').addEventListener('change',()=>{ if(running){ stop(); start(); } });  // 换噪色=重建缓冲
+
+  function drawScope(){
+    specColumn($('.n-scope'), SPEC.fan);
+    if(running) raf=requestAnimationFrame(drawScope);
+  }
+
+  const pc=$('.n-presets');
+  Object.keys(GLUE_PRESETS).forEach(name=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.title=name.split('  ')[0];
+    b.onclick=()=>{ const P=GLUE_PRESETS[name];
+      $('.n-color').value=P.color;
+      ids.forEach(k=>{ const el=$('.n-'+k); if(el && k in P){ el.value=P[k]; } });
+      if(running){ stop(); start(); } else { showAll(); }        // color 变了要重建缓冲
+      pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on';
+    };
+    pc.appendChild(b);
+  });
+
+  $('.n-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.n-stop').onclick=stop;
+  showAll();
+})();
+
+// ---------------- 溪流滴水 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-water');
+  const $=s=>root.querySelector(s);
+  const ids=['density','pitch','turb','tone','wet','vol'];
+  let w=null, master, conv, wetG, running=false, raf=0;
+
+  const fmt={ density:v=>(+v<=0?'无':v+'/s'), pitch:v=>v+'Hz', turb:v=>(+v).toFixed(2),
+              wet:v=>(+v).toFixed(2), vol:v=>(+v).toFixed(2),
+              tone:v=>(+v<=1500?'暗':+v>=6000?'明':'中')+' '+v+'Hz' };
+  function showAll(){ ids.forEach(id=>$('.w2-'+id+'_o').textContent=fmt[id]($('.w2-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    conv=ctx.createConvolver(); conv.buffer=reverbIR();
+    wetG=ctx.createGain(); wetG.gain.value=+$('.w2-wet').value;
+    const lim=ctx.createDynamicsCompressor();
+    lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    const hp=bq('highpass',60);
+    master.connect(hp); hp.connect(lim).connect(ctx.destination);
+    master.connect(conv).connect(wetG).connect(lim);
+    w=buildWater({ density:+$('.w2-density').value, pitch:+$('.w2-pitch').value, turb:+$('.w2-turb').value,
+                   tone:+$('.w2-tone').value, vol:+$('.w2-vol').value });
+    w.out.connect(master); SPEC.water = specAttach(w.out);
+    running=true; $('.w2-state').textContent='● 播放中'; drawScope();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(w){ w.stop(); w=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.w2-state').textContent='已停止'; const g=$('.w2-scope').getContext('2d'); g.clearRect(0,0,300,120); }
+
+  function live(id){
+    const v=+$('.w2-'+id).value; $('.w2-'+id+'_o').textContent=fmt[id](v);
+    if(!running) return;
+    if(id==='wet' && wetG) wetG.gain.setTargetAtTime(v,ctx.currentTime,0.1);
+    else if(w && id in w) w[id]=v;
+  }
+  ids.forEach(id=>$('.w2-'+id).addEventListener('input',()=>live(id)));
+
+  function drawScope(){
+    specColumn($('.w2-scope'), SPEC.water);
+    if(running) raf=requestAnimationFrame(drawScope);
+  }
+
+  const pc=$('.w2-presets');
+  Object.keys(WATER_PRESETS).forEach(name=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.title=name.split('  ')[0];
+    b.onclick=()=>{ const P=WATER_PRESETS[name];
+      for(const k in P){ const el=$('.w2-'+k); if(el){ el.value=P[k]; live(k); } }
+      pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on';
+    };
+    pc.appendChild(b);
+  });
+
+  $('.w2-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.w2-stop').onclick=stop;
+  showAll();
+})();
+
+// ---------------- 寺钟木鱼 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-bell');
+  const $=s=>root.querySelector(s);
+  const ids=['pitch','interval','wet','vol'];
+  let bell=null, master, conv, wetG, running=false, raf=0;
+
+  const fmt={ pitch:v=>v+'Hz', wet:v=>(+v).toFixed(2), vol:v=>(+v).toFixed(2),
+              interval:v=>{ v=+v;
+                if(v>=45) return v>=60 ? (v/60).toFixed(v%60?1:0)+'分/次' : v.toFixed(0)+'s/次'; // 钟:分钟级
+                const b=Math.round(60/v); return v.toFixed(1)+'s · '+b+'BPM'+(b>80?' 醒':b<50?' 松':' 稳'); } };
+  function showAll(){ ids.forEach(id=>$('.k-'+id+'_o').textContent=fmt[id]($('.k-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    conv=ctx.createConvolver(); conv.buffer=reverbIR(3.4);
+    wetG=ctx.createGain(); wetG.gain.value=+$('.k-wet').value;
+    const lim=ctx.createDynamicsCompressor();
+    lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    const hp=bq('highpass',40);
+    master.connect(hp); hp.connect(lim).connect(ctx.destination);
+    master.connect(conv).connect(wetG).connect(lim);
+    bell=buildBell({ type:$('.k-type').value, pitch:+$('.k-pitch').value,
+                     interval:+$('.k-interval').value, vol:+$('.k-vol').value });
+    bell.out.connect(master); SPEC.bell = specAttach(bell.out);
+    running=true; $('.k-state').textContent='● 播放中'; drawScope();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(bell){ bell.stop(); bell=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.k-state').textContent='已停止'; const g=$('.k-scope').getContext('2d'); g.clearRect(0,0,300,120); }
+
+  function live(id){
+    const v=+$('.k-'+id).value; $('.k-'+id+'_o').textContent=fmt[id](v);
+    if(!running) return;
+    if(id==='wet' && wetG) wetG.gain.setTargetAtTime(v,ctx.currentTime,0.1);
+    else if(bell && id in bell) bell[id]=v;
+  }
+  ids.forEach(id=>$('.k-'+id).addEventListener('input',()=>live(id)));
+  $('.k-type').addEventListener('change',()=>{ if(bell) bell.type=$('.k-type').value; });
+
+  function drawScope(){
+    specColumn($('.k-scope'), SPEC.bell);
+    if(running) raf=requestAnimationFrame(drawScope);
+  }
+
+  const pc=$('.k-presets');
+  Object.keys(BELL_PRESETS).forEach(name=>{
+    const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.title=name.split('  ')[0];
+    b.onclick=()=>{ const P=BELL_PRESETS[name];
+      $('.k-type').value=P.type; if(bell) bell.type=P.type;
+      ids.forEach(k=>{ const el=$('.k-'+k); if(el && k in P){ el.value=P[k]; live(k); } });
+      showAll();
+      pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on';
+    };
+    pc.appendChild(b);
+  });
+
+  $('.k-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.k-stop').onclick=stop;
+  $('.k-hit').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume();
+    if(!running){ start(); } if(bell) bell.strike(); };
+  showAll();
+})();
+
+// ---------------- 颗粒纹理 · UI 接线 ----------------
+(function(){
+  const root=document.getElementById('cat-grain');
+  const $=s=>root.querySelector(s);
+  let g=null, master, running=false, raf=0, cur='leaves  树叶窸窣';
+  const fmt={ density:v=>(+v)+'/s', vol:v=>(+v).toFixed(2) };
+  function showAll(){ ['density','vol'].forEach(id=>$('.gr-'+id+'_o').textContent=fmt[id]($('.gr-'+id).value)); }
+
+  function start(){
+    if(running) return; AC();
+    master=ctx.createGain(); master.gain.value=1;
+    const lim=ctx.createDynamicsCompressor(); lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
+    const conv=ctx.createConvolver(); conv.buffer=reverbIR(2.0); const wet=ctx.createGain(); wet.gain.value=0.12;
+    master.connect(lim).connect(ctx.destination); master.connect(conv).connect(wet).connect(lim);
+    const P=Object.assign({}, GRANULAR_PRESETS[cur], { density:+$('.gr-density').value, vol:+$('.gr-vol').value });
+    g=buildGranular(P); g.out.connect(master); SPEC.grain = specAttach(g.out);
+    running=true; $('.gr-state').textContent='● 播放中'; draw();
+  }
+  function stop(){ running=false; cancelAnimationFrame(raf);
+    if(g){ g.stop(); g=null; } if(master){ try{master.disconnect();}catch(e){} }
+    $('.gr-state').textContent='已停止'; $('.gr-scope').getContext('2d').clearRect(0,0,300,120); }
+  function live(id){ const v=+$('.gr-'+id).value; $('.gr-'+id+'_o').textContent=fmt[id](v); if(running && g && id in g) g[id]=v; }
+  ['density','vol'].forEach(id=>$('.gr-'+id).addEventListener('input',()=>live(id)));
+
+  function draw(){
+    specColumn($('.gr-scope'), SPEC.grain);
+    if(running) raf=requestAnimationFrame(draw);
+  }
+
+  const pc=$('.gr-presets');
+  Object.keys(GRANULAR_PRESETS).forEach(name=>{ const b=document.createElement('button'); b.className='ghost'; b.textContent=name.split('  ')[1]||name;
+    b.onclick=()=>{ cur=name; const P=GRANULAR_PRESETS[name]; $('.gr-density').value=P.density; $('.gr-vol').value=P.vol; showAll();
+      if(running){ stop(); start(); } pc.querySelectorAll('button').forEach(x=>x.className='ghost'); b.className='on'; };
+    pc.appendChild(b); });
+
+  $('.gr-play').onclick=async()=>{ AC(); if(ctx.state==='suspended') await ctx.resume(); start(); };
+  $('.gr-stop').onclick=stop;
+  showAll();
+})();
+</script>
+<script>
+// 未播放时的静态底帧:把 7 块空黑框变成"待激活的示波器"。
+// 只画网格 + 零线 + 一句提示,不伪造任何数据(波形仍只在真播放时出现)。
+(function scopeAxisLabels(){
+  // 每张示波器画的是"驱动信号"而不是音频波形 —— 不标出来没人看得懂。
+  // 用 HTML 覆盖层而不是画进 canvas:这样待命态和播放态都在,也不用碰 7 个 drawScope。
+  // [信号名, 图的类型]。三类的区别是真实存在的 —— 连续包络 / 事件+基线 / 纯事件序列。
+  const L = {
+    'w-scope':  ['风速信号',    '声谱图 · 时频'],
+    'f-scope':  ['噼啪 + 嘶声', '声谱图 · 时频'],
+    'b-scope':  ['鸣叫脉冲',    '声谱图 · 时频'],
+    'n-scope':  ['噪声电平',    '声谱图 · 时频'],
+    'w2-scope': ['气泡 + 湍流', '声谱图 · 时频'],
+    'k-scope':  ['敲击事件',    '声谱图 · 时频'],
+    'gr-scope': ['颗粒事件',    '声谱图 · 时频'],
+  };
+  document.querySelectorAll('canvas').forEach(cv => {
+    const cls = [...cv.classList].find(c => L[c]);
+    if (!cls || cv.parentNode.classList.contains('scope-wrap')) return;
+    const [name, kind] = L[cls];
+    const wrap = document.createElement('div');
+    wrap.className = 'scope-wrap';
+    cv.parentNode.insertBefore(wrap, cv);
+    wrap.appendChild(cv);
+    const y = document.createElement('span');
+    y.className = 'scope-ax scope-ax-y'; y.textContent = name;
+    const t = document.createElement('span');
+    t.className = 'scope-ax scope-ax-t'; t.textContent = kind;
+    const x = document.createElement('span');
+    x.className = 'scope-ax scope-ax-x'; x.textContent = '时间 →';
+    wrap.appendChild(y); wrap.appendChild(t); wrap.appendChild(x);
+  });
+})();
+
+(function specIdle(){
+  // 待命底盘:空场 + 频率刻度线,左缘标 8k / 1k / 100。
+  // 声谱图的纵轴是频率 —— 待命态不把频率轴画出来,没人看得出这是什么图。
+  const CW = 300, CH = 120;
+  function drawIdle(cv){
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    if (cv.width !== CW*dpr || cv.height !== CH*dpr){
+      cv.width = CW*dpr; cv.height = CH*dpr;
+      cv.style.width = CW+'px'; cv.style.height = CH+'px';
+    }
+    const g = cv.getContext('2d');
+    g.setTransform(dpr,0,0,dpr,0,0);
+    g.clearRect(0,0,CW,CH);
+    const vg = g.createLinearGradient(0,0,0,CH);
+    vg.addColorStop(0,'rgba(122,142,172,.045)');
+    vg.addColorStop(1,'rgba(122,142,172,.018)');
+    g.fillStyle = vg; g.fillRect(0,0,CW,CH);
+    // 待命提示:让空框有"待激活的合成器"意义,而不是一个空场
+    g.fillStyle = 'rgba(231,227,218,.24)';
+    g.font = '500 11px -apple-system,"PingFang SC",system-ui,sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText('待命 · 按「试听」实时合成', CW/2, CH/2);
+    g.textAlign = 'start'; g.textBaseline = 'alphabetic';
+  }
+  function drawAll(){ document.querySelectorAll('canvas').forEach(drawIdle); }
+  requestAnimationFrame(() => {
+    drawAll();
+    document.querySelectorAll('button.ghost').forEach(b => {
+      if (/stop/i.test(b.className) || b.textContent.trim() === '停止')
+        b.addEventListener('click', () => setTimeout(drawAll, 60));
+    });
+  });
+})();
+</script>
+<script src="ui-icons.js"></script>
+</body>
+</html>
