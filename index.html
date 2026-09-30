@@ -207,11 +207,12 @@
         <div class="gen-fig" id="genFig"></div>
         <canvas class="gen-portrait" id="genPortrait" aria-label="Live sound portrait"></canvas>
         <div class="gen-arc" id="genArc" style="display:none"><span class="gen-arc-fill" id="genArcFill"></span></div>
+        <div class="now-rows" id="genRows"></div>
         <p class="now-cap" id="genNowCap"></p>
       </div>
-      <div class="gen-row"><span class="gen-lab" data-i18n="genWarm"></span><input type="range" id="mWarm"  min="0" max="100" value="45"></div>
-        <div class="gen-row"><span class="gen-lab" data-i18n="genSpace"></span><input type="range" id="mSpace" min="0" max="100" value="30"></div>
-        <div class="gen-row"><span class="gen-lab" data-i18n="genLive"></span><input type="range" id="mLive"  min="0" max="100" value="55"></div>
+      <div class="gen-row gen-macro"><span class="gen-lab" data-i18n="genWarm"></span><input type="range" id="mWarm"  min="0" max="100" value="45"></div>
+        <div class="gen-row gen-macro"><span class="gen-lab" data-i18n="genSpace"></span><input type="range" id="mSpace" min="0" max="100" value="30"></div>
+        <div class="gen-row gen-macro"><span class="gen-lab" data-i18n="genLive"></span><input type="range" id="mLive"  min="0" max="100" value="55"></div>
         <div class="gen-presets">
           <button class="hm-btn" id="genSleep" data-i18n="genSleep"></button>
           <button class="hm-btn" id="genWork"  data-i18n="genWork"></button>
@@ -240,11 +241,11 @@
         </div>
         <p class="hm-desc" id="hmDesc"></p>
         <div class="heart-rate-bar hr-live" id="heartBar">
-          <span class="hr-big"><span id="heartBPMDisplay" class="heart-bpm">--</span><small>BPM</small></span>
+          <span class="hr-big"><span class="hr-beat" id="hrBeatLive" aria-hidden="true"><i></i><i></i></span><span id="heartBPMDisplay" class="heart-bpm">--</span><small>BPM</small></span>
           <button id="heartConnect" class="heart-btn"></button>
         </div>
         <div class="heart-rate-bar hr-sim" id="heartSimBar" style="display:none">
-          <span class="hr-big"><span id="heartSimBPM" class="heart-bpm">70</span><small>BPM</small><em id="hrSimRel"></em></span>
+          <span class="hr-big"><span class="hr-beat" id="hrBeatSim" aria-hidden="true"><i></i><i></i></span><span id="heartSimBPM" class="heart-bpm">70</span><small>BPM</small><em id="hrSimRel"></em></span>
           <div class="hr-track">
             <input type="range" id="heartSimSlider" class="atmos-slider" min="45" max="160" value="70" aria-label="Simulated heart rate (BPM)" />
             <span class="hr-base" id="hrBaseMark" aria-hidden="true"></span>
@@ -554,6 +555,7 @@
   </script>
   <script src="script.js"></script>
   <script src="selection.js"></script>
+  <script src="nav.js"></script>
   <script src="trace-logger.js"></script><!-- 只在 ?log 时出现 / only with ?log -->
 </body>
 </html>

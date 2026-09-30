@@ -9,7 +9,7 @@
 // 全局旋钮(radius/reverb/tone/vol/glue)由引擎内部 P 持有;宿主 UI 通过 setParam 改、onParam 回显。
 // ============================================================================
 function createSceneEngine(cfg, hooks){
-  let anl=null;   // 输出旁路分析器(start 时创建)
+  let anl=null, muteG=null, muted=false;   // muteG = 右上角「声音开/关」(不改任何声音参数,只做总开关)   // 输出旁路分析器(start 时创建)
   hooks = hooks || {};
   const { SCENES, HILLS_VARIANTS, MIX } = cfg;
   const P = { radius:1.3, reverb:0.9, tone:7000, vol:0.85, glue:0.9 };   // 全局旋钮内部状态(默认=原调音台滑块默认)
@@ -116,8 +116,9 @@ function createSceneEngine(cfg, hooks){
     outGain=ctx.createGain(); outGain.gain.value=P.vol;
     const hp=bq('highpass',28), lim=ctx.createDynamicsCompressor();
     lim.threshold.value=-1.5; lim.knee.value=0; lim.ratio.value=20; lim.attack.value=0.003; lim.release.value=0.25;
-    bus.connect(masterLP).connect(glueComp).connect(glueMakeup).connect(outGain).connect(hp).connect(lim).connect(ctx.destination);
-    anl=ctx.createAnalyser(); anl.fftSize=256; anl.smoothingTimeConstant=0.6; lim.connect(anl);   // 旁路分析器:只读不改声音,供「实时声音肖像」
+    muteG=ctx.createGain(); muteG.gain.value=muted?0:1;
+    bus.connect(masterLP).connect(glueComp).connect(glueMakeup).connect(outGain).connect(hp).connect(lim).connect(muteG).connect(ctx.destination);
+    anl=ctx.createAnalyser(); anl.fftSize=256; anl.smoothingTimeConstant=0.6; muteG.connect(anl);   // 旁路分析器接在开关之后:静音时肖像也停,不画听不到的声音   // 旁路分析器:只读不改声音,供「实时声音肖像」
     setGlue(P.glue);
 
     runtime=[];
@@ -256,6 +257,7 @@ function createSceneEngine(cfg, hooks){
     applyPreset, applyWork, applySleep, applyRate, setBreathe, getBreathe:()=>breatheOn,
     startHR, stopHR, stopArc, hrDrive,
     setResting: v => { resting = v; },
+    setMute: m => { muted = !!m; if (muteG && muteG.context) { const t = muteG.context.currentTime; muteG.gain.cancelScheduledValues(t); muteG.gain.setTargetAtTime(muted ? 0 : 1, t, 0.12); } },
     setScene, setPhase,
     getScene:()=>curScene, getPhase:()=>curPhase, isPhased:()=>!!SCENES[curScene].phased,
     getLayers:()=>SCENES[curScene].layers, getRuntime:()=>runtime, isRunning:()=>running, getAnalyser:()=>anl,

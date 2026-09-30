@@ -270,6 +270,7 @@ footer .cite b{color:var(--muted); font-weight:400}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
 <style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+<style>@view-transition { navigation: auto; }</style>
 </head>
 <body>
 <!--
@@ -281,7 +282,7 @@ footer .cite b{color:var(--muted); font-weight:400}
    colors (motion/cinematic/relax/sleep/focus) are the only saturated field. Drawn SVG icons.
  STORY: reader sees inputs split honestly (arousal=labeled demo trace standing in for heart rate,
    valence=self-reported), watches the point travel the Russell circumplex, and sees the waveform
-   reshaped (low-pass veil by arousal, warm/cool EQ tint by valence). Input and output are decoupled:
+   reshaped (low-pass veil + EQ preset by arousal, warm/cool shelf tilt by valence). Input and output are decoupled:
    the audio is only the reshaped OUTPUT, never the input — the real system reads arousal from an
    independent heart-rate sensor.
  FIRST VIEWPORT: three signal-flow columns — inputs left, circumplex center (hero), sound right;
@@ -415,8 +416,8 @@ footer .cite b{color:var(--muted); font-weight:400}
   <!-- ============ OUTPUT READOUT ============ -->
   <div class="demostrip">
     <span class="ds-tag" data-t="dsTag"></span>
-    <div class="i18n-en"><b>Input ≠ output.</b> Arousal here is driven by a labeled <b>representative trace</b>; valence stays self-reported. In the live system, arousal comes from a <b>heart-rate sensor</b>, independent of the sound. The audio below is only the <b>reshaped output</b>, never the input.</div>
-    <div class="i18n-zh"><b>输入 ≠ 输出。</b>这里的唤醒度由一条标注过的「代表性轨迹」驱动，效价仍由你自报。真实系统里，唤醒来自<b>心率传感器</b>——与声音本身无关。下方的声音只作为「<b>被重塑的输出</b>」，绝不反过来当输入。</div>
+    <div class="i18n-en"><b>Input ≠ output.</b> Arousal here is driven by a labeled <b>representative trace</b>; valence stays self-reported. In the live system, arousal comes from a <b>heart-rate sensor</b>, independent of the sound. The audio on the right is only the <b>reshaped output</b>, never the input. (In the product, the mood tilt is set by hand in free listening and held neutral while heart rate drives; here both run together to show each mechanism.)</div>
+    <div class="i18n-zh"><b>输入 ≠ 输出。</b>这里的唤醒度由一条标注过的「代表性轨迹」驱动，效价仍由你自报。真实系统里，唤醒来自<b>心率传感器</b>——与声音本身无关。右侧的声音只作为「<b>被重塑的输出</b>」，绝不反过来当输入。（产品里，心情冷暖只在自由聆听时手动调，心率驱动时保持中性；这里两者同时运行，是为了把每个机制都演示出来。）</div>
   </div>
 
   <div class="outbar">
@@ -514,7 +515,7 @@ const BOARDS={
   relax:    {en:'Relax',  zh:'放松', col:[150,165,190]},
   sleep:    {en:'Sleep',  zh:'睡眠', col:[90,110,170]},
   focus:    {en:'Work',   zh:'工作', col:[90,140,150]},
-  guide:    {en:'Guide · vision', zh:'引导 · 愿景', col:[170,150,120]},
+  guide:    {en:'Guide · you choose', zh:'引导 · 由你选', col:[190,165,120]},
 };
 const EQ_NAMES={ power:{en:'Power',zh:'力量'}, grand:{en:'Grand',zh:'宏大'}, clear:{en:'Clear',zh:'透彻'}, flat:{en:'Original',zh:'原声'} };
 const EQ_WARMTH={ flat:.5, clear:.4, grand:.5, power:.6 }; // for bar fill (character, not warmth)
@@ -533,7 +534,7 @@ const ANCHORS=[
   {a:180, en:'Depressed',zh:'抑郁'},{a:225,en:'Tired',zh:'疲倦'},{a:270,en:'Sleepy',zh:'昏沉'},{a:315,en:'Relaxed',zh:'放松'},
 ];
 /* ---------- i18n ---------- */
-let langMode = 'both';   // 'en' | 'zh' | 'both'
+let langMode = 'en';     // 'en' | 'zh' | 'both'(初值在下方按网址参数/主站语言定)
 const pick=(en,zh)=> langMode==='en'?en : langMode==='zh'?zh : `${en} · ${zh}`;
 const T={
   sub:{en:'System Model',zh:'状态 → 声音 映射模型'},
@@ -693,12 +694,12 @@ function drawCirc(){
   // zone labels
   ZONES.forEach(z=>{
     const b=BOARDS[z.board], active=z.board===board;
-    const prim=langMode==='zh'?b.zh:b.en, sub=langMode==='zh'?b.en:b.zh;
+    const prim=langMode==='zh'?b.zh:b.en, sub=langMode==='both'?b.zh:'';
     cctx.fillStyle=`rgba(${b.col.join(',')},${active?.95:.34})`;
     cctx.textAlign='center';
     cctx.font=`${active?600:400} ${Math.round(R*(active?.062:.056))}px -apple-system,"PingFang SC",Arial,sans-serif`;
     cctx.fillText(prim, cx+z.x*R, cy-z.y*R);
-    if(active){
+    if(active&&sub){
       cctx.font=`${Math.round(R*.044)}px -apple-system,"PingFang SC",Arial,sans-serif`;
       cctx.fillStyle=`rgba(${b.col.join(',')},.7)`;
       cctx.fillText(sub, cx+z.x*R, cy-z.y*R+Math.round(R*.07));
@@ -928,7 +929,7 @@ scrub.addEventListener('input',e=>{ frame=(+e.target.value/1000)*NF; arousalOver
 const PRESETS={
   '1':{v:0.30,a:0.62},  // Motion
   '2':{v:0.42,a:0.20},  // Imagine (cinematic)
-  '3':{v:0.48,a:-0.34}, // Relax — 放松扇区中部,避开右侧注解框
+  '3':{v:0.44,a:-0.14}, // Relax — 放松扇区靠上,点不压板块名
   '4':{v:0.10,a:-0.62}, // Sleep
   '5':{v:0.06,a:0.06},  // Work (focus) — 中心:情绪平稳
 };
@@ -946,10 +947,10 @@ addEventListener('resize',()=>{drawFlow();});
 
 /* ============================================================
    Audio — the SAME chain as script.js, reshaping the real track:
-   track → lowpass(atmosphere←arousal) → lowshelf/peaking/highshelf(EQ←valence) → out
+   track → lowpass(atmosphere←arousal) → lowshelf/peaking/highshelf(EQ preset←arousal) → lowshelf 200/highshelf 3.5k(warm/cool tilt←valence) → out
    ============================================================ */
 const track=$('track');
-let actx, lp, eqL, eqM, eqH, srcNode;
+let actx, lp, eqL, eqM, eqH, vL, vH, srcNode;
 let audioOn=false, audioReady=false, curEQ=null;
 
 function buildAudio(){
@@ -961,7 +962,10 @@ function buildAudio(){
     eqL=actx.createBiquadFilter(); eqL.type='lowshelf';
     eqM=actx.createBiquadFilter(); eqM.type='peaking';
     eqH=actx.createBiquadFilter(); eqH.type='highshelf';
-    srcNode.connect(lp); lp.connect(eqL); eqL.connect(eqM); eqM.connect(eqH); eqH.connect(actx.destination);
+    // valence warm/cool tilt — same dedicated shelves as script.js (200 Hz / 3.5 kHz, ±6 / ∓9 dB)
+    vL=actx.createBiquadFilter(); vL.type='lowshelf';  vL.frequency.value=200;
+    vH=actx.createBiquadFilter(); vH.type='highshelf'; vH.frequency.value=3500;
+    srcNode.connect(lp); lp.connect(eqL); eqL.connect(eqM); eqM.connect(eqH); eqH.connect(vL); vL.connect(vH); vH.connect(actx.destination);
     return true;
   }catch(err){ console.warn('audio wiring failed',err); return false; }
 }
@@ -970,7 +974,7 @@ function applyDSP(a,v){
   const now=actx.currentTime, tc=0.08;
   // atmosphere lowpass ← arousal
   lp.frequency.setTargetAtTime(sliderToFreq(algoAtmosVal(a)), now, tc);
-  // EQ ← valence/arousal preset
+  // EQ preset ← arousal (algoEQPreset ignores v)
   const key=algoEQPreset(v,a), p=AUDIO_EQ[key];
   if(key!==curEQ){ curEQ=key;
     eqL.frequency.setValueAtTime(p.low.freq,now);
@@ -980,6 +984,10 @@ function applyDSP(a,v){
   eqL.gain.setTargetAtTime(p.low.gain,now,tc);
   eqM.gain.setTargetAtTime(p.mid.gain,now,tc);
   eqH.gain.setTargetAtTime(p.high.gain,now,tc);
+  // warm/cool tilt ← valence (applyEQCombined in script.js: +v = warm, lows up / highs down)
+  const t=Math.max(-1,Math.min(1,v));
+  vL.gain.setTargetAtTime( t*6,now,tc);
+  vH.gain.setTargetAtTime(-t*9,now,tc);
 }
 function setSoundIcon(on){
   $('soundIcon').innerHTML = on
@@ -1010,16 +1018,27 @@ $('soundBtn').addEventListener('click',()=>{
 
 // language toggle
 document.querySelectorAll('.langtog button').forEach(b=>{
-  b.addEventListener('click',()=>{ langMode=b.dataset.lang; applyLang(); drawFlow(); });
+  b.addEventListener('click',()=>{ langMode=b.dataset.lang; applyLang(); drawFlow();
+    if(langMode!=='both'){ try{ localStorage.setItem('ss_lang', langMode); }catch(e){} } });   // 选 EN/中 同步回主站
 });
-const _ql=(location.search.match(/lang=(en|zh|both)/)||[])[1]; if(_ql) langMode=_ql;
+// 语言:网址参数(PDF 导出用 ?lang=en)> 主站当前语言 > 英文(评委默认)。「双」只在手动点时出现
+const _ql=(location.search.match(/lang=(en|zh|both)/)||[])[1];
+let _sl=null; try{ _sl=localStorage.getItem('ss_lang'); }catch(e){}
+langMode = _ql || (_sl==='zh'||_sl==='en' ? _sl : 'en');
 // ?still → PDF 定格帧:隐藏播放条、语言切换和延伸入口(配合 #s=1…5 选状态)
-if(/[?&]still\b/.test(location.search)){ const st=document.createElement('style'); st.textContent='.controls,.langtog,.further{display:none!important}'; document.head.appendChild(st); }
-applyLang();        // populate all labels for the default (both)
+if(/[?&]still\b/.test(location.search)){ const st=document.createElement('style'); st.textContent='.controls,.langtog,.further,.flowlab{display:none!important}'; document.head.appendChild(st); }
+applyLang();        // populate all labels for the chosen language
 
 setPlay(playing);   // sync the transport icon to the initial running state
 requestAnimationFrame(t=>{lastT=t;tick(t);});
 </script>
 <script src="ui-icons.js"></script>
+<script>/* 返回:新标签打开的 → 关掉回原页(音乐和位置都还在);同标签来的 → 后退;都不行 → 回主站 About */
+document.querySelectorAll('a.back-to-site, a.back').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  let same = false; try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (_) {}
+  if (history.length > 1 && same) { history.back(); return; }
+  window.close(); setTimeout(() => { location.href = 'index.html#about'; }, 150);
+}));</script>
 </body>
 </html>

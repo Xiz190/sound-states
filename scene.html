@@ -88,6 +88,7 @@
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
 <style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+<style>@view-transition { navigation: auto; }</style>
 </head>
 <body>
 <div class="wrap">
@@ -488,5 +489,12 @@ $('lang_zh').onclick=()=>applyLang('zh');
 buildSceneSelect(); updatePhaseUI(); buildLayerUI(); bindGlobal(); applyLang(lang); refreshRadar();
 </script>
 <script src="ui-icons.js"></script>
+<script>/* 返回:新标签打开的 → 关掉回原页(音乐和位置都还在);同标签来的 → 后退;都不行 → 回主站 About */
+document.querySelectorAll('a.back-to-site, a.back').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  let same = false; try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (_) {}
+  if (history.length > 1 && same) { history.back(); return; }
+  window.close(); setTimeout(() => { location.href = 'index.html#about'; }, 150);
+}));</script>
 </body>
 </html>

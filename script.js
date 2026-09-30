@@ -153,7 +153,7 @@ const UI = {
   gdScene:  { en: 'Spatial orchestration', zh: '空间编排' },
   gdSceneD: { en: 'Every source placed by a psychoacoustic cue, not by ear.', zh: '每个声源由心理声学线索定位，而非凭耳朵。' },
   gdSynth:  { en: 'Synthesis engine', zh: '合成引擎' },
-  gdSynthD: { en: 'The generative soundscape layers, built in code.', zh: '生成式声景的每一层，由代码构建。' },
+  gdSynthD: { en: 'The generative soundscape layers, built in code. (Page in Chinese — the sounds need no translation.)', zh: '生成式声景的每一层，由代码构建。' },
   gdVision:  { en: 'From mirror to guide — the vision', zh: '从镜子到向导 · 愿景' },
   gdVisionD: { en: 'Closed-loop biofeedback, the ISO principle, and personal baseline — where this is headed.', zh: '闭环生物反馈、ISO 原则与个人基线——它要去的地方。' },
 
@@ -166,8 +166,8 @@ const UI = {
   },
   reflLimitH:  { en: 'Limitations', zh: '局限' },
   reflLimit: {
-    en: 'Timbre perception is subjective — psychoacoustics confirms that perception varies between individuals, bodies and listening environments. The mappings — arousal to layers, openness and character; valence to a warm/cool tilt — are theory-informed but not individually validated: their direction comes from theory, their amounts are designed approximations, not calibrated measurements. Heart rate is also a coarse, slow signal: seated and at rest it moves only a few beats, so its effect on the sound is subtle by nature; it reads large shifts (after exercise, during recovery), not fine moods. Heart rate measures arousal; valence is self-reported — a deliberate choice that keeps the interface accessible while grounding the arousal axis in real physiology.\n\nThere is no user testing. Nothing here proves these soundscapes improve sleep or focus: the mechanisms are defensible, the effects are a design hypothesis. The sleep arc runs on a fixed 120 seconds for everyone, which is almost certainly wrong — some people fall asleep in five minutes and others lie awake for an hour. And the soundscape boards are the least finished part of the project: one pair of hands and synthesised audio will not match the production polish of a commercial team. I would rather be judged on the design decisions than on that polish.',
-    zh: '音色感知是主观的——心理声学证实，感知因个体、体型与听音环境不同而存在差异。这些映射——唤醒决定声部、通透与音色性格，效价只给冷暖倾斜——基于理论，但未经个体验证：方向来自理论，量级是设计近似，而非校准过的测量。心率也是一个粗而慢的信号：安静坐着时只上下几拍，所以它对声音的影响本来就细微；它读得出大的变化（运动后、平复中），读不出细微的情绪。唤醒度由心率测量；效价由自我报告输入——这是有意为之的选择：在唤醒轴接入真实生理数据的同时，保持界面的可及性。\n\n没有用户测试。这里没有任何东西能证明这些声景改善了睡眠或专注：机制站得住，效果是设计假设。睡眠下行弧对所有人都是固定的 120 秒，这几乎肯定是错的——有人五分钟就睡着，有人躺一小时还醒着。而声景板块是整个项目里完成度最低的部分：一个人一双手加合成音频，比不过商业团队的制作打磨度。我更愿意被评价设计判断，而不是那层打磨。',
+    en: 'Timbre perception is subjective — psychoacoustics confirms that perception varies between individuals, bodies and listening environments. The mappings — arousal to layers, openness and character; valence to a warm/cool tilt — are theory-informed but not individually validated: their direction comes from theory, their amounts are designed approximations, not calibrated measurements. Heart rate is also a coarse, slow signal: seated and at rest it moves only a few beats, so its effect on the sound is subtle by nature; it reads large shifts (after exercise, during recovery), not fine moods. Heart rate measures arousal; valence is self-reported — a deliberate choice that keeps the interface accessible while grounding the arousal axis in real physiology.\n\nThere is no formal user study — only informal feedback from friends. Five people heard each Relax, Imagine and Motion track without being told which state it was for, and said what state and images it brought up; I reworked songs over several rounds and kept a track only once their answers matched the state I meant. Two or three people tried the site itself: "really interesting", "I could hear it change" — and also "not as polished as what\'s on the market". None of this proves these soundscapes improve sleep or focus: the mechanisms are defensible, the effects are a design hypothesis. The sleep arc runs on a fixed 120 seconds for everyone, which is almost certainly wrong — some people fall asleep in five minutes and others lie awake for an hour. And the soundscape boards are the least finished part of the project: one pair of hands and synthesised audio will not match the production polish of a commercial team. I would rather be judged on the design decisions than on that polish.',
+    zh: '音色感知是主观的——心理声学证实，感知因个体、体型与听音环境不同而存在差异。这些映射——唤醒决定声部、通透与音色性格，效价只给冷暖倾斜——基于理论，但未经个体验证：方向来自理论，量级是设计近似，而非校准过的测量。心率也是一个粗而慢的信号：安静坐着时只上下几拍，所以它对声音的影响本来就细微；它读得出大的变化（运动后、平复中），读不出细微的情绪。唤醒度由心率测量；效价由自我报告输入——这是有意为之的选择：在唤醒轴接入真实生理数据的同时，保持界面的可及性。\n\n没有正式的用户研究，只有朋友的非正式反馈：5 位朋友在不知道是哪个板块的情况下听放松、想象、运动的曲目，说出听到的状态和画面；我据此改歌、再给他们听，反复几轮，反馈与我想放的板块一致才录用。2–3 位朋友实际用过网站："非常有意思"、"听感上发生了变化"——也有人直说"没有市面上的那么精美"。这些都不能证明这些声景改善了睡眠或专注：机制站得住，效果是设计假设。睡眠下行弧对所有人都是固定的 120 秒，这几乎肯定是错的——有人五分钟就睡着，有人躺一小时还醒着。而声景板块是整个项目里完成度最低的部分：一个人一双手加合成音频，比不过商业团队的制作打磨度。我更愿意被评价设计判断，而不是那层打磨。',
   },
   reflFutureH: { en: 'Future', zh: '未来' },
   reflFuture: {
@@ -235,7 +235,7 @@ const STATES = [
     name: { en: 'Motion', zh: '运动' },
     desc: { en: 'Rhythmic, high-energy environments for activation and movement.',
             zh: '强节奏、高能量的声景,用于激活状态与运动。' },
-    covers: [['#1a0c12','#7a2030'], ['#0e0c1a','#5a2a7a'], ['#140c0c','#6a2a2a'], ['#160a1a','#7a3a6a']] },
+    covers: [['#1a0c12','#7a2030'], ['#140a0e','#8a2a3a'], ['#140c0c','#6a2a2a'], ['#180a0c','#9a3a40']] },
   { id: 'focus', glow: '90,140,150', active: true,
     name: { en: 'Work', zh: '工作' },
     desc: { en: 'Steady, low-distraction sound for deep work and study.',
@@ -643,6 +643,7 @@ async function ensureSceneEngine(){
     onLayerVol: (L, v) => { if (L._mInput) L._mInput.value = v; if (L._mOut) L._mOut.textContent = (+v).toFixed(2); }   // 每层呼吸/预设→高级区滑块
   });
   if (sceneEng && sceneEng.setResting) sceneEng.setResting(restingBPM);   // 静息基线同步进引擎
+  if (sceneEng && sceneEng.setMute) sceneEng.setMute(!soundOn);   // 新建引擎时跟上当前的声音开关
   return sceneEng;
 }
 async function sceneEnginePlay(){
@@ -656,7 +657,7 @@ function genPlaying(){ return !!(sceneEng && sceneEng.isRunning()); }   // 生�
 function togglePlay(){
   if (genMode){
     if (genPlaying()){ sceneEngineStop(); isPlaying=false; refreshPlayBtn(); }
-    else { stopVoices(); isPlaying=true; sceneEnginePlay().then(refreshPlayBtn); refreshPlayBtn(); }   // 按▶:先停旋律歌,再启声景引擎
+    else { stopVoices(); isPlaying=true; setSound(true); sceneEnginePlay().then(refreshPlayBtn); refreshPlayBtn(); }   // 按▶:先停旋律歌,再启声景引擎
     return;
   }
   // 显示的板块正在响 → 暂停;否则(没在响 或 响的是别的板块)→ 播放/切到当前显示的板块
@@ -1122,7 +1123,7 @@ function refreshSoundToggle() {
     el.classList.toggle('on', soundOn);
   });
 }
-function setSound(on) { soundOn = on; applyVolume(); refreshSoundToggle(); }
+function setSound(on) { soundOn = on; applyVolume(); if (sceneEng && sceneEng.setMute) sceneEng.setMute(!on); refreshSoundToggle(); }   // 工作/睡眠声景引擎也听这个开关
 document.querySelectorAll('.sound-toggle').forEach(el =>
   el.addEventListener('click', () => { ensureAudio(); setSound(!soundOn); })
 );
@@ -1435,6 +1436,7 @@ async function playStemSong(song) {
       bufs[L.key] = await ctx.decodeAudioData(await res.arrayBuffer());
     }));
     if (!stemPlayer || stemPlayer.token !== token) return;   // 已换歌,丢弃
+    Object.values(bufs).forEach(stemNorm);
     stemPlayer.buffers = bufs;
     startStemSources(0);
     rampGain(stemVol, soundOn ? 0.9 : 0, XFADE);
@@ -1449,12 +1451,14 @@ async function playStemSong(song) {
 function startStemSources(offset) {
   if (!stemPlayer || !stemPlayer.buffers || !ctx) return;
   const a = curArousal(), t = ctx.currentTime + 0.06;
-  stemPlayer.sources = []; stemPlayer.gains = {};
+  stemPlayer.sources = []; stemPlayer.gains = {}; stemPlayer.pres = {};
   for (const L of stemPlayer.layers) {
     const buf = stemPlayer.buffers[L.key]; if (!buf) continue;
     const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;   // 分轨(放松)连续循环,不 dead-end;列表/随机切歌用手动切封面
     const g = ctx.createGain(); g.gain.value = stemGainFor(L.curve, a);
     src.connect(g); g.connect(stemBus);
+    const pre = ctx.createAnalyser(); pre.fftSize = 1024; src.connect(pre);   // 只读旁路:「此刻的声音」看这个声部有没有在演奏
+    stemPlayer.pres[L.key] = pre;
     const off = Math.max(0, Math.min(offset, Math.max(0, buf.duration - 0.05)));
     try { src.start(t, off); } catch (e) { try { src.start(t); } catch (e2) {} }
     stemPlayer.sources.push(src); stemPlayer.gains[L.key] = g;
@@ -2109,7 +2113,8 @@ function bgLoop() {
 
   // 算法洞察面板刷新 / algo insight panel refresh
   if (bgFrame % 30 === 0) refreshSceneAlgoPanel();
-  if (bgFrame % 6 === 0 && typeof renderNow === 'function') renderNow();   // 此刻的声音
+  if (typeof renderNow === 'function') renderNow();
+  if (genMode && typeof renderGenNow === 'function') renderGenNow();   // 此刻的声音
 
   // 心率驱动氛围缓动 / heart-rate atmosphere lerp (每10帧更新一次)
   // 仅在心率实时驱动时接管滑块;否则用户手动拖动不被拉回 / only auto-lerp when heart sensor is live
@@ -2262,6 +2267,10 @@ Object.assign(UI, {
   nowOpenLabel: { en: 'Openness', zh: '通透' },
   nowOpenCap:   { en: 'As your energy rises the sound opens; as it settles, it closes around you.', zh: '能量升高，声音打开；回落时，它收拢、包住你。' },
   nowCharacter: { en: 'Character', zh: '音色' },
+  nowIn:        { en: 'in',          zh: '在场' },
+  nowEasing:    { en: 'easing off',  zh: '渐弱' },
+  nowOut:       { en: 'out',         zh: '退场' },
+  nowSilent:    { en: 'silent here', zh: '这段没演奏' },
   hrPanelTitle: { en: 'Input · your heart rate', zh: '输入 · 你的心率' },
   restEdit:     { en: 'Change', zh: '修改' },
   restDone:     { en: 'Done', zh: '完成' },
@@ -2277,12 +2286,15 @@ Object.assign(UI, {
   selWith:     { en: 'With melody', zh: '有旋律' },
   selWithout:  { en: 'Without melody · synthesised live', zh: '无旋律 · 实时合成' },
   selGuideKicker: { en: 'Tense · distressed · low', zh: '紧张 · 苦恼 · 低落' },
-  selGuideName: { en: 'Your choice', zh: '由你来选' },
+  selGuideName: { en: 'Guide · you choose', zh: '引导 · 由你选' },
   selGuideLead: { en: 'This version doesn\'t pretend to fix that for you. Pick what you need right now:', zh: '这一版不假装能替你解决。选一个你此刻需要的：' },
   selGuideRevival: { en: 'Rest and recover', zh: '休息恢复' },
   selSleep:    { en: '→ Sleep', zh: '→ 睡眠' },
   selGuideSrc: { en: 'Strategies from Saarikallio & Erkkilä (2007) and Saarikallio (2008) — you choose; nothing is prescribed.', zh: '策略来自 Saarikallio & Erkkilä（2007）与 Saarikallio（2008）——由你选择，不替你规定。' },
-  genNowHR:     { en: 'Your heart rate is moving the three sliders below: as it rises the sound gets brighter, nearer and busier; as you settle it darkens, drifts away and thins out.', zh: '下面三条滑条是你的心率在推：心率升高，声音更亮、更近、更密；平静下来，它变暗、变远、变稀。' },
+  genNowHR:     { en: 'Your heart rate sets these three: as it rises the sound gets brighter, nearer and busier; as you settle it darkens, drifts away and thins out.', zh: '这三项由你的心率来调：心率升高，声音更亮、更近、更密；平静下来，它变暗、变远、变稀。' },
+  genBright:    { en: 'Brightness', zh: '明亮' },
+  genNear:      { en: 'Nearness',   zh: '贴近' },
+  genDense:     { en: 'Density',    zh: '密度' },
   genNowFree:   { en: 'You are shaping it by hand — the three sliders below are yours.', zh: '现在由你亲手调——下面三条滑条归你。' },
   genArcLabel:  { en: 'Wind-down arc', zh: '入睡弧' },
   hrPlaceFinger: { en: 'Place finger…', zh: '请放手指…' },
@@ -2364,7 +2376,7 @@ function algoBoard(v, a) {
   const sec = NAV_SECTORS.find(x => th >= x.from && th < x.to);
   return sec ? sec.board : 'relax';
 }
-const NAV_GUIDE = { en: 'Your choice', zh: '由你来选' };
+const NAV_GUIDE = { en: 'Guide · you choose', zh: '引导 · 由你选' };
 
 // 算法：唤醒 → EQ预设 / arousal → EQ preset
 // 暖/冷已归「心情」滑块,自动路由只推荐"性格"预设(不再返回已删的 warm/dark)
@@ -2693,7 +2705,9 @@ document.getElementById('navigatorBackBtn')?.addEventListener('click', () => sho
 
 /* ============================================================
    13. 场景页迷你 Russell 指示器 / Mini Russell indicator in scene player
-   理论来源 / Theory: Russell (1980) — EQ → valence, Atmosphere → arousal
+   理论来源 / Theory: Russell (1980)。注意:这里是"反推显示"——把当前 EQ 预设近似成一个效价点画出来;
+   真实驱动方向是 唤醒 → EQ 预设、效价 → 冷暖倾斜(见 algoEQPreset / applyEQCombined)
+   Display-only inverse: plots the current preset as an approximate valence. Actual drive: arousal → preset, valence → warm/cool tilt
    ============================================================ */
 
 const miniCanvas = document.getElementById('miniRussell');
@@ -2958,7 +2972,7 @@ async function connectHeartSensor() {
         }
         if (raw === 'B') {
           if (heartMode === 'auto') {
-            window.heartPulse = 1.0;
+            window.heartPulse = 1.0; hrBeatDot('hrBeatLive');
             _heartbeatAudioPulse();
           }
           if (display && _hrWaiting) { display.textContent = t(UI.hrDetecting); display.classList.add('status'); _hrWaiting = false; }
@@ -3015,6 +3029,12 @@ function applyHeartMode(mode, drive) {
   }
   // 心情(暖冷/效价)滑条:只在自由聆听出现;心率驱动时由身体接管唤醒,手调音色会被拉回,故隐藏
   setValenceVisible(mode === 'free');
+  // 隐藏时同时归零,否则手动模式调过的冷暖会在心率模式里看不见地残留 / reset so a hidden tilt can't linger
+  if (mode !== 'free' && currentValence !== 0) {
+    const vs = document.getElementById('valenceSlider');
+    if (vs) vs.value = 0;
+    applyValence(0);
+  }
   const rh = document.getElementById('restingHintTxt');   // 基线测法说明跟着基线输入框显隐
   if (rh && heartRestingBar) rh.style.display = heartRestingBar.style.display;
   document.body.classList.toggle('hr-driven', mode !== 'free');
@@ -3182,6 +3202,19 @@ document.getElementById('navScanBtn')?.addEventListener('click', startNavScan);
    给用户看的闭环反馈:显示的就是真正在响的结构(同一套 stemGainFor / 氛围值),
    不放公式、引用、数字 —— 那些在讲解页(model-diagram / stem-test)。
    ============================================================ */
+// 同一琥珀色系只差明暗(不做彩虹):主旋律最亮、贝司最深、色彩层偏沙、最后进场的层最浅;离场褪向灰
+const NOW_SHADE = { floor: [214,188,128], rise: [160,124,72], color: [196,176,138], peak: [236,222,190], full: [185,161,107] };
+const NOW_GREY = [110,108,118];
+const NOW_ENTER = 0.15;
+// 整首 95 分位响度(2048 样本窗 RMS):安静的声部也有稳定的「在演奏」判据
+function stemNorm(b) {
+  if (!b || b._p95) return;
+  const d = b.getChannelData(0), w = 2048, r = [];
+  for (let k = 0; k + w < d.length; k += w) { let sm = 0; for (let j = k; j < k + w; j++) sm += d[j] * d[j]; r.push(Math.sqrt(sm / w)); }
+  r.sort((x, y) => x - y); b._p95 = Math.max(1e-4, r[Math.floor(r.length * .95)] || 1e-4);
+}
+const _nowTD = new Float32Array(1024);
+const _nowMeter = {};   // 每个声部:平滑响度 cs / 连续安静帧数 quiet / 上一帧是否在场 was
 function renderNow() {
   try {
     const panel = document.getElementById('nowPanel');
@@ -3191,19 +3224,58 @@ function renderNow() {
     const song = currentSong();
     if (!song) return;
     const a = curArousal();
-    const rows = song.stems
-      ? song.stems.layers.map(L => ({ label: t(L.label), v: stemGainFor(L.curve, a) }))
-      : [{ label: t(UI.nowOpenLabel), v: a }];
+    const live = !!(isPlaying && song.stems && stemPlayer && stemPlayer.song === song && stemPlayer.playing);
+    const layers = song.stems ? song.stems.layers : [{ key: 'full', curve: 'full', label: UI.nowOpenLabel }];
     const key = (song.stems ? song.stems.dir : 'full') + '|' + lang;
     if (rowsEl.dataset.key !== key) {
       rowsEl.dataset.key = key;
-      rowsEl.innerHTML = rows.map(r =>
-        `<div class="now-row"><span class="now-lab">${r.label}</span><span class="now-track"><span class="now-fill"></span></span></div>`).join('');
+      rowsEl.innerHTML = layers.map(L => {
+        const c = (NOW_SHADE[L.curve] || NOW_SHADE.floor).join(',');
+        return `<div class="now-row"><span class="now-lab"><i class="now-sw" style="background:rgb(${c})"></i>${t(L.label)}</span><span class="now-track"><canvas></canvas></span><span class="now-state"></span></div>`;
+      }).join('');
+      rowsEl.querySelectorAll('canvas').forEach(cv => { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = Math.max(1, r.width * d); cv.height = Math.max(1, r.height * d); if (!r.width) rowsEl.dataset.key = ''; });
       const capEl = document.getElementById('nowCap'); capEl.textContent = t(song.stems ? UI.nowStemsCap : UI.nowOpenCap); capEl.classList.remove('err');
       document.querySelector('#nowPanel .now-title').textContent = t(UI.nowTitle);
+      Object.keys(_nowMeter).forEach(k => delete _nowMeter[k]);
     }
-    const fills = rowsEl.querySelectorAll('.now-fill');
-    rows.forEach((r, i) => { if (fills[i]) fills[i].style.transform = `scaleX(${Math.max(0.015, Math.min(1, r.v)).toFixed(3)})`; });
+    const rows = rowsEl.querySelectorAll('.now-row'), d = devicePixelRatio || 1;
+    layers.forEach((L, i) => {
+      const row = rows[i]; if (!row) return;
+      const cv = row.querySelector('canvas'), m = _nowMeter[L.key] || (_nowMeter[L.key] = { cs: 0, quiet: 0, was: null });
+      // 长度 = 此刻实际增益(读音频节点,和耳朵同步);整曲 = 通透度
+      const gn = live && stemPlayer.gains[L.key];
+      const g = song.stems ? (gn ? gn.gain.value : stemGainFor(L.curve, a)) : a;
+      // 粗细 = 这个声部此刻有没有在演奏(增益前真实响度 ÷ 整首基准),「克制」:3–5.5px 慢起更慢落
+      let raw = 0, silent = false;
+      const pre = live && stemPlayer.pres && stemPlayer.pres[L.key], buf = live && stemPlayer.buffers[L.key];
+      if (pre && buf) {
+        pre.getFloatTimeDomainData(_nowTD);
+        let sm = 0; for (let k = 0; k < _nowTD.length; k++) sm += _nowTD[k] * _nowTD[k];
+        const rms = Math.sqrt(sm / _nowTD.length), nrm = buf._p95 || 0.05;
+        raw = Math.min(1, rms / nrm);
+        m.quiet = rms < nrm * 0.08 ? m.quiet + 1 : 0; silent = m.quiet > 45;
+      }
+      m.cs += (raw - m.cs) * (raw > m.cs ? 0.12 : 0.03);
+      const tt = Math.min(1, g / 0.5), shade = NOW_SHADE[L.curve] || NOW_SHADE.floor;
+      const col = shade.map((v, k) => (NOW_GREY[k] + (v - NOW_GREY[k]) * (song.stems ? tt : 1)) | 0);
+      const th = (silent ? 1.5 : (pre ? 3 + 2.5 * m.cs : 3)) * d;
+      if (cv) {
+        const c = cv.getContext('2d'), W = cv.width, H = cv.height, mid = H / 2;
+        c.clearRect(0, 0, W, H);
+        c.fillStyle = 'rgba(255,255,255,.07)'; c.beginPath(); c.roundRect(0, mid - 2 * d, W, 4 * d, 2 * d); c.fill();
+        c.fillStyle = `rgba(${col.join(',')},${(silent ? 0.35 : song.stems ? 0.45 + 0.55 * tt : 0.9).toFixed(3)})`;
+        c.beginPath(); c.roundRect(0, mid - th / 2, Math.max(3 * d, W * Math.min(1, g)), th, th / 2); c.fill();
+      }
+      const lab = row.querySelector('.now-lab'); lab.style.opacity = (song.stems ? (silent ? 0.4 : 0.4 + 0.6 * tt) : 1).toFixed(2);
+      if (song.stems) {
+        const on = g >= NOW_ENTER;
+        if (m.was === false && on && !reduceMotion) { row.classList.remove('enter'); void row.offsetWidth; row.classList.add('enter'); }
+        m.was = on;
+      }
+      const st = row.querySelector('.now-state');
+      const w = !song.stems ? '' : silent ? t(UI.nowSilent) : g >= 0.5 ? t(UI.nowIn) : g >= NOW_ENTER ? t(UI.nowEasing) : t(UI.nowOut);
+      if (st.textContent !== w) st.textContent = w;
+    });
     const ch = document.getElementById('nowChar');
     const p = EQ_PRESETS[currentEQPreset];
     if (ch) ch.textContent = p ? `${t(UI.nowCharacter)} · ${t(p.name)}` : '';
@@ -3226,9 +3298,57 @@ function setGenArc(pct) {
   bar.style.display = ''; fill.style.transform = `scaleX(${Math.max(0.01, pct / 100)})`;
   txt.textContent = `${t(UI.genArcLabel)} · ${pct}%`;
 }
+// 工作/睡眠「此刻的声音」三行:读引擎实时同步的三个参数(滑条值由引擎 onParam 回写),
+// 方向统一成「心率升高 → 变长」,与放松页同一读法;它们是参数不是乐器,所以粗细不呼吸
+function renderGenNow() {
+  try {
+    const box = document.getElementById('genRows');
+    if (!box || !genMode || !document.body.classList.contains('hr-driven')) return;
+    const v = id => (+(document.getElementById(id)?.value || 0)) / 100;
+    const rows = [
+      { key: 'b', label: UI.genBright, shade: NOW_SHADE.floor, g: v('mWarm') },
+      { key: 'n', label: UI.genNear,   shade: NOW_SHADE.color, g: 1 - v('mSpace') },
+      { key: 'd', label: UI.genDense,  shade: NOW_SHADE.rise,  g: v('mLive') },
+    ];
+    const key = 'gen|' + lang;
+    if (box.dataset.key !== key) {
+      box.dataset.key = key;
+      box.innerHTML = rows.map(r => `<div class="now-row"><span class="now-lab"><i class="now-sw" style="background:rgb(${r.shade.join(',')})"></i>${t(r.label)}</span><span class="now-track"><canvas></canvas></span><span class="now-state"></span></div>`).join('');
+      box.querySelectorAll('canvas').forEach(cv => { const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = Math.max(1, r.width * d); cv.height = Math.max(1, r.height * d); if (!r.width) box.dataset.key = ''; });
+    }
+    const d = devicePixelRatio || 1;
+    box.querySelectorAll('canvas').forEach((cv, i) => {
+      const r = rows[i], c = cv.getContext('2d'), W = cv.width, H = cv.height, mid = H / 2, th = 3 * d;
+      c.clearRect(0, 0, W, H);
+      c.fillStyle = 'rgba(255,255,255,.07)'; c.beginPath(); c.roundRect(0, mid - 2 * d, W, 4 * d, 2 * d); c.fill();
+      c.fillStyle = `rgba(${r.shade.join(',')},.9)`;
+      c.beginPath(); c.roundRect(0, mid - th / 2, Math.max(3 * d, W * Math.max(0, Math.min(1, r.g))), th, th / 2); c.fill();
+    });
+  } catch (e) { /* 引擎未就绪时跳过 */ }
+}
 function refreshGenNow() {
   const cap = document.getElementById('genNowCap');
   if (cap) cap.textContent = t(heartMode === 'free' ? UI.genNowFree : UI.genNowHR);
   const title = document.querySelector('#genNow .now-title');
   if (title) title.textContent = t(UI.nowTitle);
 }
+
+
+// 心跳点:实时心率 = 传感器每一拍(见 'B' 行);演示模式 = 按模拟心率的节拍 / heartbeat dot
+function hrBeatDot(id) {
+  if (reduceMotion) return;
+  const b = document.getElementById(id); if (!b) return;
+  b.classList.remove('on'); void b.offsetWidth; b.classList.add('on');
+}
+(function simBeatLoop() {
+  let next = 0;
+  (function tick(tm) {
+    if (heartMode === 'sim') {
+      const bpm = +(document.getElementById('heartSimSlider')?.value || 70);
+      if (!next || tm >= next) { next = tm + 60000 / Math.max(30, bpm); hrBeatDot('hrBeatSim'); }
+    } else next = 0;
+    requestAnimationFrame(tick);
+  })(0);
+})();
+// 窗口尺寸变化:重建「此刻的声音」画布尺寸
+window.addEventListener('resize', () => { ['nowRows', 'genRows'].forEach(id => { const r = document.getElementById(id); if (r) r.dataset.key = ''; }); });

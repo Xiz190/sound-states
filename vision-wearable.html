@@ -62,6 +62,9 @@
   #detail .dmine{ margin-top:14px; padding-top:12px; border-top:1px solid var(--hair); font-size:11px; color:var(--faint); line-height:1.6; }
 
   .overlay{ position:fixed; inset:0; z-index:3; padding:48px 56px; display:flex; flex-direction:column; justify-content:space-between; pointer-events:none; }
+  .back-to-site{ pointer-events:auto; display:inline-block; margin-bottom:18px; font-size:12px; letter-spacing:.04em; color:var(--faint); text-decoration:none; }
+  .back-to-site:hover{ color:var(--accent); }
+  body.still .back-to-site{ display:none; }
   .top .eyebrow{ font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--faint); }
   .top h1{ font-size:30px; font-weight:300; letter-spacing:.01em; margin-top:11px; }
   .top h1 b{ font-weight:600; }
@@ -105,12 +108,14 @@
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
 <style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+<style>@view-transition { navigation: auto; }</style>
 </head>
 <body>
 <canvas id="scene"></canvas>
 <svg id="leaders"></svg>
 <div class="overlay">
   <div class="top">
+    <a class="back-to-site" id="backLink" href="model-diagram.html"></a>
     <div class="eyebrow" id="eyebrow"></div>
     <h1 id="title"></h1>
     <div class="sub" id="sub"></div>
@@ -143,10 +148,12 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 const ZH=/[?&]zh\b/.test(location.search);
 if(ZH) document.body.classList.add('zh');
 const STILL=/[?&]still\b/.test(location.search);
+if (STILL) document.body.classList.add('still');   // PDF 定格:不显示返回
 const t=(en,zh)=>ZH?zh:en;
 const $=id=>document.getElementById(id);
 
 // ---- copy ----
+$('backLink').textContent=t('← Back','← 返回');
 $('eyebrow').textContent=t('Vision · envisioned hardware — what\'s inside','愿景 · 设想硬件 — 内部构造');
 $('title').innerHTML=t('Not a black box — a <b>sensing loop</b>','不是黑盒 — 一个<b>感知闭环</b>');
 $('sub').innerHTML=t('Same earbud form, opened up: where it reads you, and where state becomes sound.','同样的耳机形态，拆开看：它在哪儿读你、状态在哪儿变成声音。');
@@ -444,5 +451,12 @@ function fitView(){ camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); }
 fitView(); addEventListener('resize',fitView);
 </script>
+<script>/* 返回:新标签打开的 → 关掉回原页(音乐和位置都还在);同标签来的 → 后退;都不行 → 回主站 About */
+document.querySelectorAll('a.back-to-site, a.back').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  let same = false; try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (_) {}
+  if (history.length > 1 && same) { history.back(); return; }
+  window.close(); setTimeout(() => { location.href = 'index.html#about'; }, 150);
+}));</script>
 </body>
 </html>

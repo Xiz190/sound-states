@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sound States — 分轨 / Vertical Remixing</title>
+<title>Sound States — Stems</title>
 <style>
 /* ============================================================
    Sound States — 分轨讲解台 (portfolio artifact)
@@ -94,7 +94,8 @@ h1.brand b{font-weight:600}
 .axnote b{color:var(--ink);font-weight:500}
 .field .flab{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:11px; gap:10px}
 .field .flab .fname{font-size:.82rem; font-weight:400; letter-spacing:.02em; color:var(--ink)}
-.field .flab .fval{font-family:var(--mono); font-size:1.05rem; font-variant-numeric:tabular-nums; color:var(--ink)}
+.field .flab .fname{flex:1; min-width:0}
+.field .flab .fval{white-space:nowrap; font-family:var(--mono); font-size:1.05rem; font-variant-numeric:tabular-nums; color:var(--ink)}
 .field .fhint{font-size:.6rem; color:var(--faint); margin-top:9px; line-height:1.5}
 .srange{-webkit-appearance:none; appearance:none; width:100%; height:3px; border-radius:3px; outline:none; cursor:grab}
 .srange:active{cursor:grabbing}
@@ -124,6 +125,16 @@ h1.brand b{font-weight:600}
 .vm .cap .cv{display:block; font-size:.54rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); margin-top:2px}
 .layers.dim .vm .track i{opacity:.28}
 
+/* 3 · 每层真实响度(最近 8 秒)*/
+.lanes{display:grid; gap:10px}
+.lane{display:grid; grid-template-columns:5.2rem 1fr; align-items:center; gap:14px}
+.lane .ln{font-size:.78rem; color:var(--ink); transition:opacity .25s}
+.lane .ln small{display:block; font-size:.56rem; letter-spacing:.08em; color:var(--faint); margin-top:2px}
+.lane canvas{width:100%; height:40px; display:block}
+.laneaxis{display:grid; grid-template-columns:5.2rem 1fr; gap:14px; margin-top:4px}
+.laneaxis span:last-child{display:flex; justify-content:space-between; font-family:var(--mono); font-size:.58rem; color:var(--faint)}
+body.still .lanepanel{display:none}
+
 /* honest demo strip */
 .demostrip{display:flex; gap:14px; border:1px solid rgba(var(--glow),.30); border-radius:12px;
   background:rgba(var(--glow),.055); padding:13px 16px; font-size:.72rem; line-height:1.62; color:var(--muted)}
@@ -141,100 +152,119 @@ footer .cite .num{color:var(--muted)}
 .back-to-site{display:inline-block; margin-bottom:14px; font-size:12px; letter-spacing:.04em; color:var(--muted); text-decoration:none; transition:color .2s}
 .back-to-site:hover{color:var(--accent)}
 .backlink:hover{color:var(--ink); border-color:rgba(var(--glow),.5)}
+/* 中英:只隐藏另一种语言,不给显示的那种加 display(避免把块级元素强制成内联) */
+body:not(.zh) .zh{display:none} body.zh .en{display:none}
+.langtog{display:flex; gap:2px; font-size:.7rem}
+.langtog button{background:none; border:0; color:var(--faint); cursor:pointer; font:inherit; padding:3px 6px}
+.langtog button.on{color:var(--accent)}
+.toprow{display:flex; justify-content:space-between; align-items:center}
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
 <style>/* 标题字体统一:Fraunces + 思源宋体(与主站一致)*/ h1, h2, .brand, .ntitle { font-family: "Fraunces", "Noto Serif SC", Georgia, serif !important; font-variation-settings: "SOFT" 50; letter-spacing: -.01em !important; }</style>
+<style>@view-transition { navigation: auto; }</style>
 </head>
 <body>
 <div class="stage">
 
-  <a class="back-to-site" href="index.html">← Sound States</a>
+  <div class="toprow">
+    <a class="back-to-site" href="index.html">← Sound States</a>
+    <div class="langtog" role="group" aria-label="Language"><button data-l="en">EN</button><button data-l="zh">中</button></div>
+  </div>
 
   <header class="top">
     <div class="brandline">
-      <h1 class="brand">Sound States <b>· 分轨</b></h1>
-      <span class="sub">放松板块 · 心率驱动的垂直重混 <span class="zh">/ Heart-rate-driven vertical remixing</span></span>
+      <h1 class="brand">Sound States <b>· <span class="en">Stems</span><span class="zh">分轨</span></b></h1>
+      <span class="sub"><span class="en">Relax board · heart-rate-driven vertical remixing</span><span class="zh">放松板块 · 心率驱动的垂直重混</span></span>
     </div>
     <div class="topcite">
-      模拟心率 → 唤醒度 → 分轨层进退<br>
-      <b>层曲线经作者 A/B 试听调校</b> · 素材=放松板块实际曲目
+      <span class="en">Simulated heart rate → arousal → layers step in and out</span><span class="zh">模拟心率 → 唤醒度 → 分轨层进退</span><br>
+      <b><span class="en">Layer curves tuned by the author's A/B listening</span><span class="zh">层曲线经作者 A/B 试听调校</span></b> · <span class="en">audio = the tracks the Relax board actually plays</span><span class="zh">素材=放松板块实际曲目</span>
     </div>
   </header>
 
   <!-- transport + A/B -->
   <div class="panel">
     <div class="transport">
-      <button id="playBtn" class="pbtn primary">▶ 播放</button>
-      <button id="sweepBtn" class="pbtn" disabled>模拟心率自动扫过 ⟳</button>
-      <span class="status" id="status">未加载 · 戴耳机</span>
+      <button id="playBtn" class="pbtn primary"></button>
+      <button id="sweepBtn" class="pbtn" disabled></button>
+      <button id="jumpBtn" class="pbtn" disabled></button>
+      <span class="status" id="status"></span>
     </div>
     <div class="abtoggle" id="ab">
-      <button data-mode="full" class="on">整首 A</button>
-      <button data-mode="stems" class="stems">分轨 B</button>
+      <button data-mode="full" class="on"><span class="en">A · Full track</span><span class="zh">整首 A</span></button>
+      <button data-mode="stems" class="stems"><span class="en">B · Stems</span><span class="zh">分轨 B</span></button>
     </div>
-    <div class="modeNote" id="modeNote">当前：<b class="cool">整首</b> —— 只有 EQ + 低通在作用，编排不变（固定歌的天花板）。</div>
+    <div class="modeNote" id="modeNote"></div>
   </div>
 
   <!-- inputs | layers -->
   <div class="grid">
 
     <div class="panel">
-      <div class="ptag"><span class="step">1</span><span class="lab">输入</span></div>
+      <div class="ptag"><span class="step">1</span><span class="lab"><span class="en">Input</span><span class="zh">输入</span></span></div>
 
       <div class="field">
         <div class="flab">
-          <span class="fname">模拟心率（相对你的基线）</span>
+          <span class="fname"><span class="en">Simulated heart rate (relative to your baseline)</span><span class="zh">模拟心率（相对你的基线）</span></span>
           <span class="fval" id="arVal">—</span>
         </div>
         <input type="range" id="arousal" class="srange hr" min="0" max="100" value="40">
-        <p class="fhint">低于基线 → 变轻、收拢（趋向只剩钢琴）　·　高于基线 → 满 / 亮（层回来）　·　在基线约半满</p>
+        <p class="fhint"><span class="en">Below baseline → lighter, closer in (towards piano alone) · above baseline → fuller and brighter (layers return) · at baseline, about half full</span><span class="zh">低于基线 → 变轻、收拢（趋向只剩钢琴）　·　高于基线 → 满 / 亮（层回来）　·　在基线约半满</span></p>
       </div>
 
       <div class="field">
         <div class="flab">
-          <span class="fname">心情 · 效价</span>
+          <span class="fname"><span class="en">Mood · valence</span><span class="zh">心情 · 效价</span></span>
           <span class="fval" id="vaVal">0</span>
         </div>
         <input type="range" id="valence" class="srange val" min="-100" max="100" value="0">
-        <p class="fhint">负 → 清冷（低压高抬）　·　正 → 温暖（低抬高压）· 只碰 EQ，不碰编排</p>
+        <p class="fhint"><span class="en">Negative → cooler (lows down, highs up) · positive → warmer (lows up, highs down) · touches only EQ, never the arrangement</span><span class="zh">负 → 清冷（低压高抬）　·　正 → 温暖（低抬高压）· 只碰 EQ，不碰编排</span></p>
       </div>
-      <p class="axnote"><b>心率测的是唤醒（多兴奋），不是意图。</b> 放松 / 工作 / 睡眠的<b>目标由你选</b>——心率只在选定目标里调节这些层的进退。</p>
+      <p class="axnote"><span class="en"><b>Heart rate measures arousal (how activated you are), not intention.</b> <b>You choose the goal</b> — Relax, Work or Sleep; heart rate only moves these layers in and out within the goal you chose.</span><span class="zh"><b>心率测的是唤醒（多兴奋），不是意图。</b> 放松 / 工作 / 睡眠的<b>目标由你选</b>——心率只在选定目标里调节这些层的进退。</span></p>
     </div>
 
     <div class="panel">
-      <div class="ptag"><span class="step">2</span><span class="lab">分轨层 · 随心率进退</span></div>
+      <div class="ptag"><span class="step">2</span><span class="lab"><span class="en">Stem layers · in and out with heart rate</span><span class="zh">分轨层 · 随心率进退</span></span></div>
       <div class="layers" id="layers">
         <div class="vm">
           <div class="track"><i id="mMelody"></i><span class="mid"></span></div>
-          <div class="cap"><div class="nm">钢琴</div><div class="pct" id="pMelody">—</div><span class="cv">地板 · 恒定</span></div>
+          <div class="cap"><div class="nm"><span class="en">Piano</span><span class="zh">钢琴</span></div><div class="pct" id="pMelody">—</div><span class="cv"><span class="en">floor · constant</span><span class="zh">地板 · 恒定</span></span></div>
         </div>
         <div class="vm">
           <div class="track"><i id="mBass"></i><span class="mid"></span></div>
-          <div class="cap"><div class="nm">贝司</div><div class="pct" id="pBass">—</div><span class="cv">随心率上来</span></div>
+          <div class="cap"><div class="nm"><span class="en">Bass</span><span class="zh">贝司</span></div><div class="pct" id="pBass">—</div><span class="cv"><span class="en">rises with heart rate</span><span class="zh">随心率上来</span></span></div>
         </div>
         <div class="vm">
           <div class="track"><i id="mDrums"></i><span class="mid"></span></div>
-          <div class="cap"><div class="nm">弦乐</div><div class="pct" id="pDrums">—</div><span class="cv">绑最紧 · 平静≈空</span></div>
+          <div class="cap"><div class="nm"><span class="en">Strings</span><span class="zh">弦乐</span></div><div class="pct" id="pDrums">—</div><span class="cv"><span class="en">tightest · calm ≈ gone</span><span class="zh">绑最紧 · 平静≈空</span></span></div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- 3 · 每层此刻真的在响什么 -->
+  <div class="panel lanepanel">
+    <div class="ptag"><span class="step">3</span><span class="lab"><span class="en">What each layer is really playing · last 8 seconds</span><span class="zh">每一层真实的响度 · 最近 8 秒</span></span></div>
+    <div class="lanes" id="lanes">
+      <div class="lane"><span class="ln"><span class="en">Piano</span><span class="zh">钢琴</span><small data-en="floor" data-zh="地板"></small></span><canvas></canvas></div>
+      <div class="lane"><span class="ln"><span class="en">Bass</span><span class="zh">贝司</span><small data-en="rises with heart rate" data-zh="随心率上来"></small></span><canvas></canvas></div>
+      <div class="lane"><span class="ln"><span class="en">Strings</span><span class="zh">弦乐</span><small data-en="tightest" data-zh="绑最紧"></small></span><canvas></canvas></div>
+    </div>
+    <div class="laneaxis"><span></span><span><span><span class="en">8 s ago</span><span class="zh">8 秒前</span></span><span><span class="en">now</span><span class="zh">现在</span></span></span></div>
+    <p class="axnote" id="laneNote"><span class="en">Once playing, each lane shows how loud that instrument <b>actually is</b> (its own level × its current gain), flowing right to left. <b>A · Full track</b>: all three layers are always there — in the finished song they never leave. <b>B · Stems</b>: drag heart rate down and the strings really flatten and fade to grey — they exit. The bass in this track only enters at 1:00; press “Jump to 1:00” to see all three.</span><span class="zh">按「播放」后，这里画的是每件乐器<b>真实在响的音量</b>（该声部本身的响度 × 当前增益），从右往左流过。<b>整首 A</b>：三层始终都在（整首歌里它们本来就一直在）。<b>分轨 B</b>：把心率往下拖，弦乐会真的变平、褪成灰——退场。这首的贝司第 60 秒才进来，点「跳到 1:00」三层都能看到。</span></p>
+  </div>
+
   <!-- honest demo framing -->
   <div class="demostrip">
-    <span class="ds-tag">怎么听</span>
+    <span class="ds-tag"><span class="en">How to listen</span><span class="zh">怎么听</span></span>
     <div class="ds-body">
-      先放 <b class="cool">整首 A</b>，把心率从高拖到低——声音变闷、变暗，但四件乐器<b>一直都在</b>。<br>
-      再切 <b class="hot">分轨 B</b>，同样从高拖到低——弦乐、贝司会<b>真的退场</b>，只剩钢琴独奏垫底。那个"空"是整首版做不出来的。<br>
-      <b>改的不是音量，是构成（哪些层在响）。</b>
+      <span class="en">Start with <b class="cool">A · Full track</b> and drag heart rate from high to low — the sound gets duller and darker, but every instrument <b>stays</b>.<br>Then switch to <b class="hot">B · Stems</b> and do the same — the strings and bass <b>really leave</b>, until solo piano carries it. That emptiness is something the full track can’t do.<br><b>What changes is not the volume but the make-up — which layers are playing.</b></span><span class="zh">先放 <b class="cool">整首 A</b>，把心率从高拖到低——声音变闷、变暗，但四件乐器<b>一直都在</b>。<br>再切 <b class="hot">分轨 B</b>，同样从高拖到低——弦乐、贝司会<b>真的退场</b>，只剩钢琴独奏垫底。那个"空"是整首版做不出来的。<br><b>改的不是音量，是构成（哪些层在响）。</b></span>
     </div>
   </div>
 
   <footer class="foot">
     <div class="cite">
-      层增益曲线（通透度 <span class="num">a</span> ∈ 0–1，= 0.55 + 0.45 × 唤醒）：钢琴 <span class="num">.85+.15a</span> · 贝司 <span class="num">.20+.80·smooth(a)</span> · 弦乐 <span class="num">a<sup>1.6</sup></span>　<b>· 作者 A/B 试听调校</b><br>
-      下游共享：心情 → EQ 冷暖 · 心率 → 低通（<span class="num">350Hz–18kHz</span> log）。合成/引擎参考 Farnell《Designing Sound》<br>
-      <b>演示用绝对心率扫过</b>；真实版以你自己的静息心率为基线（相对偏移），避免"人人被钉在同一档"。
+      <span class="en">Layer gain curves (openness <span class="num">a</span> ∈ 0–1, = 0.55 + 0.45 × arousal): piano <span class="num">.85+.15a</span> · bass <span class="num">.20+.80·smooth(a)</span> · strings <span class="num">a<sup>1.6</sup></span>　<b>· tuned by the author’s A/B listening</b><br>Shared downstream: heart rate → arousal → low-pass + character preset · mood → warm/cool tilt (manual mode only) · low-pass range <span class="num">350 Hz–18 kHz</span> (log). Synthesis and engine after Farnell, <i>Designing Sound</i>.<br><b>Readings are offsets from your resting baseline</b> (the same mapping as the main site: baseline ±25 BPM → arousal ±1), so nobody is pinned to one population-average setting.</span><span class="zh">层增益曲线（通透度 <span class="num">a</span> ∈ 0–1，= 0.55 + 0.45 × 唤醒）：钢琴 <span class="num">.85+.15a</span> · 贝司 <span class="num">.20+.80·smooth(a)</span> · 弦乐 <span class="num">a<sup>1.6</sup></span>　<b>· 作者 A/B 试听调校</b><br>下游共享：心率 → 唤醒 → 低通 + 音色预设 · 心情 → 冷暖倾斜（仅手动模式） · 低通范围（<span class="num">350Hz–18kHz</span> log）。合成/引擎参考 Farnell《Designing Sound》<br><b>读数 = 相对你的静息基线的偏移</b>（与主站同一映射：基线 ±25 BPM → 唤醒 ±1），避免"人人被钉在同一档"。</span>
     </div>
   </footer>
 
@@ -250,13 +280,29 @@ const FILES = { full:'audio/relax/song1/full.m4a',
 let ctx, buffers={}, nodes={}, playing=false, mode='full', started=false;
 let eqLow, eqHigh, lowpass, stemBus, stemModeGain, fullModeGain, stemMakeup;
 const $ = id => document.getElementById(id);
+// 语言:网址参数 > 主站当前语言 > 英文(评委默认)
+let PL = (location.search.match(/lang=(en|zh)/) || [])[1];   // 页面语言(别用 L:下方声部循环里 L 是每条声部)
+if (!PL) { try { PL = localStorage.getItem('ss_lang'); } catch (e) {} }
+if (PL !== 'zh') PL = 'en';
+const T = (en, zh) => PL === 'zh' ? zh : en;
+function applyPageLang() {
+  document.body.classList.toggle('zh', PL === 'zh'); document.documentElement.lang = PL === 'zh' ? 'zh' : 'en';
+  document.querySelectorAll('.langtog button').forEach(b => b.classList.toggle('on', b.dataset.l === PL));
+  $('playBtn').textContent = playing ? T('❚❚ Pause', '❚❚ 暂停') : T('▶ Play', '▶ 播放');
+  $('sweepBtn').textContent = sweep ? T('Stop sweep ■', '停止扫过 ■') : T('Sweep heart rate ⟳', '模拟心率自动扫过 ⟳');
+  $('jumpBtn').textContent = T('Jump to 1:00 (all three layers)', '跳到 1:00（三层都在）');
+  if (!ctx) $('status').textContent = T('Not loaded · use headphones', '未加载 · 戴耳机');
+  else if (buffers.full) $('status').textContent = T('Ready · ', '就绪 · 时长 ') + buffers.full.duration.toFixed(0) + 's';
+  document.querySelectorAll('#lanes small').forEach(sm => { sm.textContent = sm.dataset[PL]; });
+  applyAxes();
+}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=t=>t*t*(3-2*t);
 
 // 滑块 = 通透度 a(0–100),与主站氛围值同一尺度。换算回「相对你基线的心率」:a = 55 + 45·clamp(Δ/25) → Δ = (a−55)/45·25
 // 主站通透度最低 10(=基线 −25);低于 10 的部分只在这里可听,主站达不到,如实标出
-const arToBPM = a => { if (a < 10) return '< 基线 −25<small style="font-size:.55em;opacity:.6;margin-left:.5em">主站达不到</small>';
-  const d = Math.round((a - 55) / 45 * 25); return '基线 ' + (d === 0 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d)) + '<small style="font-size:.55em;opacity:.6;margin-left:.5em">通透 ' + a + '</small>'; };
+const arToBPM = a => { if (a < 10) return T('< baseline −25', '< 基线 −25') + '<small style="font-size:.55em;opacity:.6;margin-left:.5em">' + T('beyond the main site', '主站达不到') + '</small>';
+  const d = Math.round((a - 55) / 45 * 25); return T('baseline ', '基线 ') + (d === 0 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d)) + '<small style="font-size:.55em;opacity:.6;margin-left:.5em">' + T('openness ', '通透 ') + a + '</small>'; };
 
 // 唤醒→低通 (复用主站映射 350Hz→18kHz log)
 const sliderToFreq = v => 350 * Math.pow(18000/350, clamp(v,0,100)/100);
@@ -272,12 +318,17 @@ function stemGains(a){
 
 async function load(){
   ctx = new (window.AudioContext||window.webkitAudioContext)();
-  $('status').textContent = '加载音频中…';
+  $('status').textContent = T('Loading audio…', '加载音频中…');
   await Promise.all(Object.entries(FILES).map(async ([k,url])=>{
     buffers[k] = await ctx.decodeAudioData(await (await fetch(url)).arrayBuffer());
   }));
+  Object.values(buffers).forEach(b => {   // 整首 95 分位响度 = 归一基准
+    const d = b.getChannelData(0), w = 2048, r = [];
+    for (let k = 0; k + w < d.length; k += w) { let sm = 0; for (let j = k; j < k + w; j++) sm += d[j] * d[j]; r.push(Math.sqrt(sm / w)); }
+    r.sort((x, y) => x - y); b._p95 = Math.max(1e-4, r[Math.floor(r.length * .95)] || 1e-4);
+  });
   buildGraph();
-  $('status').textContent = '就绪 · 时长 ' + buffers.full.duration.toFixed(0) + 's';
+  $('status').textContent = T('Ready · ', '就绪 · 时长 ') + buffers.full.duration.toFixed(0) + 's';
 }
 
 function buildGraph(){
@@ -292,15 +343,16 @@ function buildGraph(){
   stemMakeup.connect(stemModeGain);
 }
 
-function startSources(){
+function startSources(off = 0){
   const t = ctx.currentTime + 0.12;
   const loopEnd = Math.min(buffers.full.duration, buffers.melody.duration, buffers.bass.duration, buffers.drums.duration) - 0.05;
   const mk = (key, dest, gain=1)=>{
     const src = ctx.createBufferSource(); src.buffer = buffers[key];
     src.loop = true; src.loopStart = 0; src.loopEnd = loopEnd;
     const g = ctx.createGain(); g.gain.value = gain;
-    src.connect(g); g.connect(dest); src.start(t);
-    return { src, g };
+    src.connect(g); g.connect(dest); src.start(t, Math.min(off, loopEnd - 1));
+    const pre = ctx.createAnalyser(); pre.fftSize = 1024; src.connect(pre);   // 只读旁路:这件乐器本身此刻有没有在响
+    return { src, g, pre };
   };
   nodes.full = mk('full', fullModeGain, 1);
   stemBus = ctx.createGain(); stemBus.gain.value = 1; stemBus.connect(stemMakeup);
@@ -341,8 +393,8 @@ function setMode(m){
   mode=m;
   document.querySelectorAll('#ab button').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
   $('modeNote').innerHTML = m==='full'
-    ? '当前：<b class="cool">整首</b> —— 只有 EQ + 低通在作用，编排不变（固定歌的天花板）。'
-    : '当前：<b class="hot">分轨</b> —— 心率同时控制三层的进退，声音会真的变满 / 变空。';
+    ? T('Now: <b class="cool">full track</b> — only EQ and low-pass are acting; the arrangement never changes (the ceiling of a fixed song).', '当前：<b class="cool">整首</b> —— 只有 EQ + 低通在作用，编排不变（固定歌的天花板）。')
+    : T('Now: <b class="hot">stems</b> — heart rate moves all three layers in and out, so the sound really fills up and empties out.', '当前：<b class="hot">分轨</b> —— 心率同时控制三层的进退，声音会真的变满 / 变空。');
   if(ctx && started){
     const now=ctx.currentTime;
     fullModeGain.gain.cancelScheduledValues(now); stemModeGain.gain.cancelScheduledValues(now);
@@ -354,8 +406,8 @@ function setMode(m){
 
 let sweep=null;
 function toggleSweep(){
-  if(sweep){ clearInterval(sweep); sweep=null; $('sweepBtn').textContent='模拟心率自动扫过 ⟳'; return; }
-  $('sweepBtn').textContent='停止扫过 ■';
+  if(sweep){ clearInterval(sweep); sweep=null; $('sweepBtn').textContent=T('Sweep heart rate ⟳', '模拟心率自动扫过 ⟳'); return; }
+  $('sweepBtn').textContent=T('Stop sweep ■', '停止扫过 ■');
   let dir=-1;
   sweep=setInterval(()=>{
     const el=$('arousal'); let x=+el.value + dir*0.7;
@@ -370,17 +422,79 @@ $('playBtn').onclick = async ()=>{
   if(!started){ startSources(); applyAxes(); }
   playing=!playing;
   document.body.classList.toggle('playing', playing);
-  if(playing){ await ctx.resume(); $('playBtn').textContent='❚❚ 暂停'; $('sweepBtn').disabled=false; }
-  else{ await ctx.suspend(); $('playBtn').textContent='▶ 播放'; }
+  if(playing){ await ctx.resume(); $('playBtn').textContent=T('❚❚ Pause', '❚❚ 暂停'); $('sweepBtn').disabled=false; $('jumpBtn').disabled=false; }
+  else{ await ctx.suspend(); $('playBtn').textContent=T('▶ Play', '▶ 播放'); }
 };
 $('sweepBtn').onclick = toggleSweep;
+// 这首的贝司第 60 秒才进来、弦乐约 15 秒 —— 从 1:00 起三层都在,A/B 对比最清楚
+$('jumpBtn').onclick = () => {
+  if (!started) return;
+  ['full','melody','bass','drums'].forEach(k => { try { nodes[k].src.stop(); } catch (e) {} });
+  startSources(60); applyAxes();
+  LANES.forEach(L => { L.h.fill(0); L.hg.fill(0); L.quiet = 0; });
+};
 document.querySelectorAll('#ab button').forEach(b=> b.onclick=()=>setMode(b.dataset.mode));
 $('arousal').oninput = applyAxes;
 $('valence').oninput = applyAxes;
 // PDF 定格:分轨模式 + 中低唤醒,三层高度差最清楚(钢琴满/贝司中/弦乐空)
-if(/[?&]still\b/.test(location.search)){ $('arousal').value=35; setMode('stems'); }
-applyAxes();
+if(/[?&]still\b/.test(location.search)){ $('arousal').value=35; setMode('stems'); document.body.classList.add('still'); }
+document.querySelectorAll('.langtog button').forEach(b => b.onclick = () => {
+  PL = b.dataset.l; try { localStorage.setItem('ss_lang', PL); } catch (e) {} applyPageLang(); setMode(mode);
+});
+applyPageLang(); setMode(mode);
+
+// ===== 3 · 每层真实响度:整首模式按增益 1(整首里三件乐器一直都在);分轨模式按真实增益 =====
+const LANES = [
+  { key: 'melody', col: [196,208,228] },   // 同放松板块色系,只差明暗
+  { key: 'bass',   col: [120,138,170] },
+  { key: 'drums',  col: [160,176,204] },
+];
+const LGREY = [96,96,108], LHIST = 480;   // 480 点 × 每帧 ≈ 8 秒
+const laneEls = [...document.querySelectorAll('#lanes .lane')];
+const laneTD = new Float32Array(1024);
+LANES.forEach(L => { L.h = new Float32Array(LHIST); L.hg = new Float32Array(LHIST); });
+function sizeLanes(){ laneEls.forEach(el => { const cv = el.querySelector('canvas'), r = cv.getBoundingClientRect(), d = devicePixelRatio || 1; cv.width = Math.max(1, r.width * d); cv.height = Math.max(1, r.height * d); }); }
+sizeLanes(); addEventListener('resize', sizeLanes);
+let lf = 0;
+(function drawLanes(){
+  requestAnimationFrame(drawLanes);
+  const live = playing && started;
+  if (live && (lf++ % 1 === 0)) LANES.forEach(L => {
+    const n = nodes[L.key], b = buffers[L.key];
+    n.pre.getFloatTimeDomainData(laneTD);
+    let sm = 0; for (let k = 0; k < laneTD.length; k++) sm += laneTD[k] * laneTD[k];
+    const raw = Math.min(1, Math.sqrt(sm / laneTD.length) / (b._p95 || .05));
+    const g = mode === 'stems' ? n.g.gain.value : 1;
+    L.quiet = raw < .08 ? (L.quiet || 0) + 1 : 0;   // 连续约 0.75 秒几乎无声 = 这段没演奏
+    L.h.copyWithin(0, 1); L.h[LHIST - 1] = raw * g;
+    L.hg.copyWithin(0, 1); L.hg[LHIST - 1] = g;
+  });
+  LANES.forEach((L, i) => {
+    const cv = laneEls[i].querySelector('canvas'), c = cv.getContext('2d'), W = cv.width, H = cv.height, mid = H / 2, bw = W / LHIST, d = devicePixelRatio || 1;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = 'rgba(255,255,255,.07)'; c.fillRect(0, mid - .5 * d, W, d);
+    for (let k = 0; k < LHIST; k++) {
+      const h = L.h[k] * (mid - 1); if (h < .4) continue;
+      const t = Math.min(1, L.hg[k] / .5), age = .35 + .65 * (k / (LHIST - 1));
+      const col = L.col.map((v, j) => (LGREY[j] + (v - LGREY[j]) * t) | 0);
+      c.fillStyle = `rgba(${col.join(',')},${((.35 + .65 * t) * age).toFixed(3)})`;
+      c.fillRect(k * bw, mid - h, Math.max(1, bw), h * 2);
+    }
+    const gNow = L.hg[LHIST - 1];
+    const silent = live && L.quiet > 45, ln = laneEls[i].querySelector('.ln');
+    ln.style.opacity = live ? (silent ? .4 : .4 + .6 * Math.min(1, gNow / .5)).toFixed(2) : 1;
+    const sm = ln.querySelector('small');
+    const want = silent ? T('silent here', '这段没演奏') : sm.dataset[PL]; if (sm.textContent !== want) sm.textContent = want;
+  });
+})();
 </script>
 <script src="ui-icons.js"></script>
+<script>/* 返回:新标签打开的 → 关掉回原页(音乐和位置都还在);同标签来的 → 后退;都不行 → 回主站 About */
+document.querySelectorAll('a.back-to-site, a.back').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault();
+  let same = false; try { same = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (_) {}
+  if (history.length > 1 && same) { history.back(); return; }
+  window.close(); setTimeout(() => { location.href = 'index.html#about'; }, 150);
+}));</script>
 </body>
 </html>
