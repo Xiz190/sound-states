@@ -1582,3 +1582,19 @@ html[lang=zh] #landing .subtitle { max-width: 26em; }
 .hr-beat.on i + i { animation: hrBeatRing .9s var(--ease-out); }
 @keyframes hrBeatCore { 0% { transform: scale(1.55); opacity: 1; } 100% { transform: scale(1); opacity: .45; } }
 @keyframes hrBeatRing { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(3.2); opacity: 0; } }
+
+/* 触屏:点击区域至少 44px(苹果建议),图标看起来的大小不变 */
+@media (pointer: coarse) {
+  #menuBtn { width: 44px; height: 44px; margin: -4px 0 0 -4px; }
+  .back-btn { min-height: 44px; }
+  #langToggle button, #langToggle .sound-toggle { min-height: 44px; min-width: 32px; display: inline-flex; align-items: center; justify-content: center; }
+}
+
+/* 「关于 · 深入了解」的次要两页:折叠在「更多」里,点开才出现 */
+.gd-more { margin-top: .9rem; }
+.gd-more summary { cursor: pointer; list-style: none; font-size: .78rem; color: var(--muted); padding: .5rem 0; min-height: 44px; display: flex; align-items: center; gap: .5rem; }
+.gd-more summary::-webkit-details-marker { display: none; }
+.gd-more summary::before { content: '+'; color: var(--accent); width: 1em; }
+.gd-more[open] summary::before { content: '−'; }
+.gd-more summary:hover { color: var(--ink); }
+.gd-more .gd-list { margin-top: .3rem; }

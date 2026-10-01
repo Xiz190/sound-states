@@ -146,6 +146,7 @@ const UI = {
   // 深入了解 / Go deeper — 两组入口(机制 / 愿景)
   gdHowTitle:    { en: 'Go deeper · how it works', zh: '深入了解 · 幕后机制' },
   gdVisionTitle: { en: 'Where it’s going', zh: '走向何处' },
+  gdMore:        { en: 'Two more, for the curious — spatial orchestration and the synthesis engine', zh: '还有两页，给想深入的人：空间编排、合成引擎' },
   gdModel:  { en: 'Interactive system model', zh: '交互系统模型' },
   gdModelD: { en: 'Watch a state map to sound in real time — arousal → structure.', zh: '实时看一个状态如何映射成声音——唤醒 → 结构。' },
   gdStems:  { en: 'Stems, on one board', zh: '分轨讲解台' },
@@ -2973,7 +2974,7 @@ async function connectHeartSensor() {
         if (raw === 'B') {
           if (heartMode === 'auto') {
             window.heartPulse = 1.0; hrBeatDot('hrBeatLive');
-            _heartbeatAudioPulse();
+            // _heartbeatAudioPulse();   // 每拍低音 +6dB 脉冲:旧固件从不发 B 所以从没响过;会改变听感,待作者试听后决定是否打开
           }
           if (display && _hrWaiting) { display.textContent = t(UI.hrDetecting); display.classList.add('status'); _hrWaiting = false; }
           continue;

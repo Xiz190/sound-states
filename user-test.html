@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listening Test</title>
+<!--
+  第二轮小测试(n = 5,远程语音访谈时让对方打开这一页)。
+  X / Y = 同一首歌同一段:原曲(四层全开、不滤波) vs 系统版(按预设「刚到家、心率偏高、慢慢平复」曲线,声部退场+收拢)。
+  顺序按编号交替:?p=1,3,5 先原曲;?p=2,4 先系统版。测试者看不到哪个是哪个;主持人用 ?p=N&key 看答案。
+  诚实约束:系统版跟的是预设曲线,不是测试者自己的心率 —— 流程单与结果措辞里写明。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..500,50&family=Noto+Serif+SC:wght@300;400;500&display=swap">
+<style>
+:root{ --bg:#0c0e14; --ink:#e7e3da; --muted:#8b8a96; --faint:#7a7984; --accent:#b9a16b; --line:rgba(255,255,255,.09);
+  --display:"Fraunces","Noto Serif SC",Georgia,serif; --ease-out:cubic-bezier(.16,1,.3,1); }
+*{ box-sizing:border-box; margin:0; padding:0; }
+body{ background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang SC","Helvetica Neue",Arial,sans-serif; -webkit-font-smoothing:antialiased; line-height:1.65; }
+body:not(.zh) .zh{ display:none } body.zh .en{ display:none }
+.wrap{ max-width:620px; margin:0 auto; padding:36px 16px 80px; }
+.top{ display:flex; justify-content:space-between; align-items:center; color:var(--faint); font-size:.78rem; margin-bottom:28px; }
+.top button{ background:none; border:0; color:var(--muted); font:inherit; cursor:pointer; min-height:44px; padding:0 8px; }
+h1{ font-family:var(--display); font-weight:350; font-size:clamp(1.7rem,6vw,2.3rem); margin-bottom:.6rem; letter-spacing:-.01em; }
+h2{ font-family:var(--display); font-weight:350; font-size:1.35rem; margin:0 0 .5rem; }
+p{ color:var(--muted); font-size:.95rem; margin-bottom:.9rem; }
+p b{ color:var(--ink); font-weight:500; }
+.step{ display:none; animation:in .5s var(--ease-out); } .step.on{ display:block; }
+@keyframes in{ from{ opacity:0; transform:translateY(10px) } to{ opacity:1; transform:none } }
+.btn{ background:var(--accent); color:#15130f; border:0; border-radius:999px; padding:12px 26px; font:inherit; font-size:.95rem; cursor:pointer; min-height:44px; }
+.btn.ghost{ background:none; color:var(--ink); border:1px solid var(--line); }
+.btn:disabled{ opacity:.4; cursor:default; }
+.row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:18px; }
+.clip{ border:1px solid var(--line); border-radius:14px; padding:22px; margin:18px 0; }
+.bar{ height:3px; background:rgba(255,255,255,.08); border-radius:2px; overflow:hidden; margin:16px 0 6px; }
+.bar i{ display:block; height:100%; width:0; background:var(--accent); }
+.time{ font-size:.75rem; color:var(--faint); font-variant-numeric:tabular-nums; }
+.q{ margin:22px 0 8px; color:var(--ink); font-size:.95rem; }
+.scale{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.scale button{ background:none; border:1px solid var(--line); color:var(--muted); border-radius:10px; min-height:44px; font:inherit; cursor:pointer; }
+.scale button.on{ border-color:var(--accent); color:var(--ink); background:rgba(185,161,107,.12); }
+.ends{ display:flex; justify-content:space-between; font-size:.72rem; color:var(--faint); margin-top:4px; }
+textarea{ width:100%; min-height:84px; background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; color:var(--ink); font:inherit; font-size:.92rem; padding:10px 12px; resize:vertical; }
+.choice{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.choice button{ background:none; border:1px solid var(--line); color:var(--muted); border-radius:10px; min-height:48px; font:inherit; cursor:pointer; }
+.choice button.on{ border-color:var(--accent); color:var(--ink); background:rgba(185,161,107,.12); }
+pre{ white-space:pre-wrap; background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:10px; padding:14px; font-size:.8rem; color:var(--muted); max-height:260px; overflow:auto; }
+.key{ border:1px dashed rgba(217,114,122,.5); color:#f0a0a6; border-radius:10px; padding:10px 14px; font-size:.85rem; margin-bottom:20px; }
+a{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span id="pid"></span><button id="langBtn"></button></div>
+  <div class="key" id="key" hidden></div>
+
+  <!-- 0 开始 -->
+  <section class="step on" data-s="0">
+    <h1><span class="en">A short listening test</span><span class="zh">一个简短的聆听测试</span></h1>
+    <p><span class="en">About 10 minutes. You'll hear two versions of the same music, X and Y, and tell me how each felt. There are no right answers — I want your honest reaction, including what you don't like.</span><span class="zh">大约 10 分钟。你会听到同一段音乐的两个版本 X 和 Y，然后说说各自的感受。没有标准答案——我想听你真实的反应，包括不喜欢的地方。</span></p>
+    <p><b><span class="en">Please use headphones</span><span class="zh">请戴耳机</span></b><span class="en">, in a quiet place, volume at a comfortable level.</span><span class="zh">，找个安静的地方，音量调到舒服的程度。</span></p>
+    <p class="en" style="font-size:.85rem">Your answers are anonymous and are used only to improve this project and describe it in my portfolio.</p>
+    <p class="zh" style="font-size:.85rem">你的回答是匿名的，只用于改进这个项目、以及在作品集里描述测试结果。</p>
+    <div class="row"><button class="btn" id="startBtn" disabled><span class="en">Loading…</span><span class="zh">加载中…</span></button></div>
+  </section>
+
+  <!-- 1 场景 -->
+  <section class="step" data-s="1">
+    <h2><span class="en">Imagine this</span><span class="zh">先想象一个场景</span></h2>
+    <p><span class="en">You've just got home after a rushed day. Your heart is still going a bit fast. You sit down and put this on, <b>wanting to settle</b>.</span><span class="zh">你刚结束忙乱的一天回到家，心跳还有点快。你坐下来放点音乐，<b>想让自己平静下来</b>。</span></p>
+    <p><span class="en">Listen to each version from start to end (75 seconds). Try not to skip.</span><span class="zh">每个版本请从头听到尾（75 秒），尽量别跳过。</span></p>
+    <div class="row"><button class="btn" data-next><span class="en">Go to X</span><span class="zh">开始听 X</span></button></div>
+  </section>
+
+  <!-- 2 / 3 两段 -->
+  <section class="step" data-s="2"></section>
+  <section class="step" data-s="3"></section>
+
+  <!-- 4 比较 -->
+  <section class="step" data-s="4">
+    <h2><span class="en">Comparing the two</span><span class="zh">两个版本比一比</span></h2>
+    <div class="q"><span class="en">If you wanted to settle down, which would you put on?</span><span class="zh">如果你想平静下来，你会选哪个？</span></div>
+    <div class="choice" data-k="prefer"><button data-v="X">X</button><button data-v="Y">Y</button><button data-v="same"><span class="en">No difference</span><span class="zh">差不多</span></button></div>
+    <div class="q"><span class="en">What was different between X and Y, if anything?</span><span class="zh">X 和 Y 有什么不同（如果有的话）？</span></div>
+    <textarea data-k="diff"></textarea>
+    <div class="row"><button class="btn" data-next><span class="en">Next</span><span class="zh">下一步</span></button></div>
+  </section>
+
+  <!-- 5 界面 -->
+  <section class="step" data-s="5">
+    <h2><span class="en">Now, the website</span><span class="zh">接下来看看网站</span></h2>
+    <p><span class="en">Open the site below. <b>Don't read the About page yet</b> — just use it for about 3 minutes, the way you'd use a music app. Then come back here.</span><span class="zh">打开下面的网站。<b>先别看"关于"页面</b>，就像用一个音乐 App 那样随便用 3 分钟左右，然后回到这里。</span></p>
+    <p><a href="https://xiz190.github.io/sound-states/" target="_blank" rel="noopener">xiz190.github.io/sound-states ↗</a></p>
+    <p style="font-size:.85rem"><span class="en">Tip: pick <b>Relax</b>, then a song, and press Play. Under “Input · your heart rate”, choose <b>Demo · no sensor</b> and drag the heart-rate slider.</span><span class="zh">提示：选<b>放松</b>，选一首歌，按播放。在「输入 · 你的心率」里选<b>演示 · 无传感器</b>，拖动心率滑条。</span></p>
+    <div class="q"><span class="en">On the playing page, what do you think the “What the sound is doing” panel shows?</span><span class="zh">播放页上「此刻的声音」那一块，你觉得它在显示什么？</span></div>
+    <textarea data-k="panel"></textarea>
+    <div class="q"><span class="en">When you moved the heart-rate slider, what changed — in the sound, and on screen?</span><span class="zh">你拖动心率滑条时，什么变了？（声音上、屏幕上）</span></div>
+    <textarea data-k="hr"></textarea>
+    <div class="q"><span class="en">Was anything confusing, or did anything feel off?</span><span class="zh">有没有哪里让你困惑、或者感觉不对劲？</span></div>
+    <textarea data-k="confusing"></textarea>
+    <div class="row"><button class="btn" data-next><span class="en">Finish</span><span class="zh">完成</span></button></div>
+  </section>
+
+  <!-- 6 结束 -->
+  <section class="step" data-s="6">
+    <h2><span class="en">Thank you</span><span class="zh">谢谢你</span></h2>
+    <p><span class="en">Please press the button to copy your answers, and paste them to me in our chat.</span><span class="zh">请点下面的按钮复制你的回答，然后粘贴到我们的聊天里发给我。</span></p>
+    <div class="row"><button class="btn" id="copyBtn"><span class="en">Copy my answers</span><span class="zh">复制我的回答</span></button></div>
+    <p id="copied" style="margin-top:10px" hidden><span class="en">Copied ✓</span><span class="zh">已复制 ✓</span></p>
+    <pre id="out"></pre>
+  </section>
+</div>
+
+<script>
+// ---------- 语言 ----------
+let LANG = (location.search.match(/lang=(en|zh)/) || [])[1];
+if (!LANG) { try { LANG = localStorage.getItem('ss_lang'); } catch (e) {} }
+if (LANG !== 'en') LANG = 'zh';   // 测试对象多为中文母语朋友,默认中文
+const T = (en, zh) => LANG === 'zh' ? zh : en;
+const $ = id => document.getElementById(id);
+function applyLang() { document.body.classList.toggle('zh', LANG === 'zh'); document.documentElement.lang = LANG; $('langBtn').textContent = LANG === 'zh' ? 'EN' : '中文'; }
+$('langBtn').onclick = () => { LANG = LANG === 'zh' ? 'en' : 'zh'; applyLang(); };
+applyLang();
+
+// ---------- 编号与顺序(交替,平衡)----------
+const P = +((location.search.match(/[?&]p=(\d+)/) || [])[1] || 0);
+const sysFirst = P > 0 && P % 2 === 0;
+const ORDER = sysFirst ? ['system', 'original'] : ['original', 'system'];   // X, Y
+$('pid').textContent = P ? 'P' + P : T('no participant number', '未填编号');
+if (/[?&]key\b/.test(location.search)) { $('key').hidden = false; $('key').textContent = `P${P}：X = ${ORDER[0] === 'original' ? '原曲' : '系统版'}，Y = ${ORDER[1] === 'original' ? '原曲' : '系统版'}（只给主持人看）`; }
+
+// ---------- 音频:照抄主站的曲线 ----------
+const DIR = 'audio/relax/song2/', FILES = ['piano', 'synth', 'bass', 'drums'];
+const CURVE = { piano: 'floor', synth: 'color', bass: 'rise', drums: 'peak' };
+const sm = x => x * x * (3 - 2 * x);
+const gainFor = (c, a) => { a = Math.max(0, Math.min(1, a)); return c === 'floor' ? .85 + .15 * a : c === 'rise' ? .2 + .8 * sm(a) : c === 'color' ? .3 + .7 * sm(a) : Math.pow(a, 1.6); };
+const cutoff = v => 350 * Math.pow(18000 / 350, Math.max(0, Math.min(100, v)) / 100);
+// 预设「刚到家、心率偏高、慢慢平复」:通透度 100 → 40(≈ 从基线 +25 回落到基线以下一点)
+const CLIP = 75, OFFSET = 30;
+const openness = s => s < 8 ? 100 : 40 + 60 * Math.exp(-(s - 8) / 18);
+let ctx, bufs = {}, playing = null;
+async function load() {
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  await Promise.all(FILES.map(async k => { bufs[k] = await ctx.decodeAudioData(await (await fetch(DIR + k + '.m4a')).arrayBuffer()); }));
+  $('startBtn').disabled = false; $('startBtn').innerHTML = `<span class="en">Start</span><span class="zh">开始</span>`;
+}
+load().catch(() => { $('startBtn').innerHTML = `<span class="en">Could not load audio — please refresh</span><span class="zh">音频加载失败，请刷新</span>`; });
+
+function play(kind, onTick, onEnd) {
+  stop();
+  const t0 = ctx.currentTime + .1, lp = ctx.createBiquadFilter(), out = ctx.createGain(), lim = ctx.createDynamicsCompressor();
+  lp.type = 'lowpass'; lp.frequency.value = kind === 'system' ? cutoff(openness(0)) : 20000;
+  lim.threshold.value = -2; lim.ratio.value = 20;
+  out.gain.value = 0; out.gain.setTargetAtTime(1, t0, .15); out.gain.setTargetAtTime(0, t0 + CLIP - .8, .25);
+  lp.connect(out).connect(lim).connect(ctx.destination);
+  const gs = {}, srcs = FILES.map(k => {
+    const s = ctx.createBufferSource(); s.buffer = bufs[k]; s.loop = true;
+    const g = ctx.createGain(); g.gain.value = kind === 'system' ? gainFor(CURVE[k], 1) : 1; gs[k] = g;
+    s.connect(g).connect(lp); s.start(t0, OFFSET); s.stop(t0 + CLIP); return s;
+  });
+  if (kind === 'system') for (let s = 0; s <= CLIP; s += .5) {   // 预先排好整段自动化,和主站同一套曲线
+    const o = openness(s), a = o / 100;
+    FILES.forEach(k => gs[k].gain.linearRampToValueAtTime(gainFor(CURVE[k], a), t0 + s));
+    lp.frequency.linearRampToValueAtTime(cutoff(o), t0 + s);
+  }
+  const tick = setInterval(() => { const e = ctx.currentTime - t0; onTick(Math.max(0, Math.min(1, e / CLIP)), e); if (e >= CLIP) { stop(); onEnd(); } }, 200);
+  playing = { srcs, tick };
+}
+function stop() { if (!playing) return; clearInterval(playing.tick); playing.srcs.forEach(s => { try { s.stop(); } catch (e) {} }); playing = null; }
+
+// ---------- 两段试听的页面 ----------
+function clipStep(i) {
+  const name = i === 0 ? 'X' : 'Y', sec = document.querySelector(`[data-s="${i + 2}"]`);
+  sec.innerHTML = `<h2>${name}</h2>
+    <div class="clip"><div class="row" style="margin:0"><button class="btn" data-play><span class="en">▶ Play ${name}</span><span class="zh">▶ 播放 ${name}</span></button></div>
+      <div class="bar"><i></i></div><div class="time">0:00 / 1:15</div></div>
+    <div class="q"><span class="en">How settling was ${name}?</span><span class="zh">${name} 让你平静下来的程度？</span></div>
+    <div class="scale" data-k="settle${name}">${[1,2,3,4,5,6,7].map(n => `<button data-v="${n}">${n}</button>`).join('')}</div>
+    <div class="ends"><span><span class="en">not at all</span><span class="zh">完全没有</span></span><span><span class="en">very</span><span class="zh">非常</span></span></div>
+    <div class="q"><span class="en">Did the music change while you listened? How?</span><span class="zh">听的过程中，音乐有没有变化？怎么变的？</span></div>
+    <textarea data-k="change${name}"></textarea>
+    <div class="row"><button class="btn" data-next disabled><span class="en">Next</span><span class="zh">下一步</span></button></div>`;
+  const next = sec.querySelector('[data-next]'), bar = sec.querySelector('.bar i'), tm = sec.querySelector('.time');
+  const pb = sec.querySelector('[data-play]');
+  pb.onclick = async () => {
+    await ctx.resume();
+    pb.innerHTML = `<span class="en">⟲ Play ${name} again from the start</span><span class="zh">⟲ 从头再听 ${name}</span>`;
+    play(ORDER[i], (p, e) => { bar.style.width = (p * 100) + '%'; const s = Math.floor(e); tm.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} / 1:15`; },
+      () => { answers['heard' + name] = true; check(); });
+  };
+  const check = () => { next.disabled = !(answers['heard' + name] && answers['settle' + name]); };
+  sec.addEventListener('click', e => { if (e.target.closest('.scale')) setTimeout(check, 0); });
+}
+const answers = {};
+clipStep(0); clipStep(1);
+
+// ---------- 通用:选择、文本、翻页 ----------
+document.addEventListener('click', e => {
+  const b = e.target.closest('.scale button, .choice button');
+  if (b) { const box = b.parentElement; box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); answers[box.dataset.k] = b.dataset.v; }
+  if (e.target.closest('[data-next]') && !e.target.closest('[data-next]').disabled) go(+1);
+});
+document.addEventListener('input', e => { if (e.target.dataset.k) answers[e.target.dataset.k] = e.target.value; });
+let cur = 0;
+function go(d) { stop(); document.querySelector(`[data-s="${cur}"]`).classList.remove('on'); cur += d; document.querySelector(`[data-s="${cur}"]`).classList.add('on'); scrollTo(0, 0); if (cur === 6) summary(); }
+$('startBtn').onclick = () => go(+1);
+
+function summary() {
+  const r = Object.assign({ participant: P ? 'P' + P : '?', lang: LANG, order_X_Y: ORDER.join(' / '), date: new Date().toISOString().slice(0, 10) }, answers);
+  delete r.heardX; delete r.heardY;
+  $('out').textContent = Object.entries(r).map(([k, v]) => `${k}: ${v}`).join('\n');
+}
+$('copyBtn').onclick = async () => { try { await navigator.clipboard.writeText($('out').textContent); $('copied').hidden = false; } catch (e) { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($('out')); s.removeAllRanges(); s.addRange(rg); } };
+</script>
+</body>
+</html>
