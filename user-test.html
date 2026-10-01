@@ -205,8 +205,22 @@ let cur = 0;
 function go(d) { stop(); document.querySelector(`[data-s="${cur}"]`).classList.remove('on'); cur += d; document.querySelector(`[data-s="${cur}"]`).classList.add('on'); scrollTo(0, 0); if (cur === 6) summary(); }
 $('startBtn').onclick = () => go(+1);
 
+// ?all = 预览全部:所有步骤一次显示,给作者检查文字用(测试者的链接里不要带)
+if (/[?&]all\b/.test(location.search)) {
+  const NAMES = ['开始', '场景', '听 X', '听 Y', '比较', '看网站', '结束'];
+  document.querySelectorAll('.step').forEach((sec, i) => {
+    sec.classList.add('on'); sec.style.animation = 'none';
+    const tag = document.createElement('div');
+    tag.style.cssText = 'margin:46px 0 14px;padding-top:14px;border-top:1px dashed rgba(217,114,122,.5);color:#f0a0a6;font-size:.78rem';
+    tag.textContent = `第 ${i + 1} 步 · ${NAMES[i]}（预览模式：测试者是一步一步看到的）`;
+    sec.prepend(tag);
+  });
+  document.querySelectorAll('[data-next], #startBtn').forEach(b => b.style.display = 'none');
+  summary();
+}
+
 function summary() {
-  const r = Object.assign({ participant: P ? 'P' + P : '?', lang: LANG, order_X_Y: ORDER.join(' / '), date: new Date().toISOString().slice(0, 10) }, answers);
+  const r = Object.assign({ participant: P ? 'P' + P : '?', lang: LANG, date: new Date().toISOString().slice(0, 10) }, answers);   // 不写顺序:编号已决定(单号先原曲),写出来=测试者在揭晓前就看到答案
   delete r.heardX; delete r.heardY;
   $('out').textContent = Object.entries(r).map(([k, v]) => `${k}: ${v}`).join('\n');
 }
