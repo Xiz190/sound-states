@@ -135,9 +135,10 @@ const CURVE = { piano: 'floor', synth: 'color', bass: 'rise', drums: 'peak' };
 const sm = x => x * x * (3 - 2 * x);
 const gainFor = (c, a) => { a = Math.max(0, Math.min(1, a)); return c === 'floor' ? .85 + .15 * a : c === 'rise' ? .2 + .8 * sm(a) : c === 'color' ? .3 + .7 * sm(a) : Math.pow(a, 1.6); };
 const cutoff = v => 350 * Math.pow(18000 / 350, Math.max(0, Math.min(100, v)) / 100);
-// 预设「刚到家、心率偏高、慢慢平复」:通透度 100 → 40(≈ 从基线 +25 回落到基线以下一点)
+// 预设「平复」曲线,用满设计范围:通透度 100 → ≈15(≈ 从运动后到深度放松),一开始就往下走。
+// 真实使用时 75 秒内的变化会比这细得多 —— 流程单「必须写明的局限」里写明(10-01 作者确认:真实幅度下一般人听不出区别)
 const CLIP = 75, OFFSET = 30;
-const openness = s => s < 8 ? 100 : 40 + 60 * Math.exp(-(s - 8) / 18);
+const openness = s => 15 + 85 * Math.exp(-s / 14);
 let ctx, bufs = {}, playing = null;
 async function load() {
   ctx = new (window.AudioContext || window.webkitAudioContext)();
