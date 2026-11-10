@@ -10,7 +10,7 @@ It is built around three questions:
 
 - **What should change?** Melody makes the brain predict the next note, and a predicting brain can't rest (Huron, 2006). So the non-melodic states (Work, Sleep) are synthesised live in code, and the melodic ones keep their melody while the layers around it move.
 - **How should it change?** Arousal from heart rate opens a low-pass filter and moves stem layers in and out. Directions come from theory (Russell, 1980; Juslin, 2013); the amounts are design choices.
-- **Who decides?** Heart rate measures arousal, not intention. You choose the state; if you're tense or low, you pick a strategy (Saarikallio & Erkkilä, 2007; Saarikallio, 2008). You can always take over by hand.
+- **Who decides?** Heart rate measures arousal, not intention. You choose the state; if you're tense or low, you pick a strategy (Saarikallio & Erkkilä, 2007). You can always take over by hand.
 
 ## Try it
 - Open the live site and press **Begin**. Hover the disc, then click a state.

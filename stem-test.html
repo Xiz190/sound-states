@@ -174,10 +174,10 @@ body:not(.zh) .zh{display:none} body.zh .en{display:none}
   <header class="top">
     <div class="brandline">
       <h1 class="brand">Sound States <b>· <span class="en">Stems</span><span class="zh">分轨</span></b></h1>
-      <span class="sub"><span class="en">Relax board · heart-rate-driven vertical remixing</span><span class="zh">放松板块 · 心率驱动的垂直重混</span></span>
+      <span class="sub"><span class="en">Relax board · vertical remixing, guided toward calm</span><span class="zh">放松板块 · 垂直重混，引导向平静</span></span>
     </div>
     <div class="topcite">
-      <span class="en">Simulated heart rate → arousal → layers step in and out</span><span class="zh">模拟心率 → 唤醒度 → 分轨层进退</span><br>
+      <span class="en">Openness → layers step in and out · in Relax, the system guides openness toward calm</span><span class="zh">通透度 → 分轨层进退 · 放松板块里，系统把通透度引导向平静</span><br>
       <b><span class="en">Layer curves tuned by the author's A/B listening</span><span class="zh">层曲线经作者 A/B 试听调校</span></b> · <span class="en">audio = the tracks the Relax board actually plays</span><span class="zh">素材=放松板块实际曲目</span>
     </div>
   </header>
@@ -205,11 +205,11 @@ body:not(.zh) .zh{display:none} body.zh .en{display:none}
 
       <div class="field">
         <div class="flab">
-          <span class="fname"><span class="en">Simulated heart rate (relative to your baseline)</span><span class="zh">模拟心率（相对你的基线）</span></span>
+          <span class="fname"><span class="en">Openness</span><span class="zh">通透度</span></span>
           <span class="fval" id="arVal">—</span>
         </div>
         <input type="range" id="arousal" class="srange hr" min="0" max="100" value="40">
-        <p class="fhint"><span class="en">Below baseline → lighter, closer in (towards piano alone) · above baseline → fuller and brighter (layers return) · at baseline, about half full</span><span class="zh">低于基线 → 变轻、收拢（趋向只剩钢琴）　·　高于基线 → 满 / 亮（层回来）　·　在基线约半满</span></p>
+        <p class="fhint"><span class="en">Lower → sparser, toward piano alone · higher → fuller, layers return · <b>45 = the calm landing</b> the Relax guide heads for</span><span class="zh">越低 → 越稀，趋向只剩钢琴　·　越高 → 越满，层回来　·　<b>45 = 放松引导要去的平静落点</b></span></p>
       </div>
 
       <div class="field">
@@ -220,11 +220,11 @@ body:not(.zh) .zh{display:none} body.zh .en{display:none}
         <input type="range" id="valence" class="srange val" min="-100" max="100" value="0">
         <p class="fhint"><span class="en">Negative → cooler (lows down, highs up) · positive → warmer (lows up, highs down) · touches only EQ, never the arrangement</span><span class="zh">负 → 清冷（低压高抬）　·　正 → 温暖（低抬高压）· 只碰 EQ，不碰编排</span></p>
       </div>
-      <p class="axnote"><span class="en"><b>Heart rate measures arousal (how activated you are), not intention.</b> <b>You choose the goal</b> — Relax, Work or Sleep; heart rate only moves these layers in and out within the goal you chose.</span><span class="zh"><b>心率测的是唤醒（多兴奋），不是意图。</b> 放松 / 工作 / 睡眠的<b>目标由你选</b>——心率只在选定目标里调节这些层的进退。</span></p>
+      <p class="axnote"><span class="en"><b>Heart rate doesn't set this slider directly.</b> You chose Relax, so you want calm. The system first meets you where you are (a racing heart starts fuller), then over a minute or two guides openness down to the calm landing, slowing down if your heart rate keeps climbing. Press <b>Run the Relax guide</b> to hear that path.</span><span class="zh"><b>心率不直接决定这个滑条。</b>你选了放松，就是想平静。系统先接住你此刻的状态（心跳快就从更满开始），再用一两分钟把通透度引导到平静落点；心率还在往上走就放慢。按<b>「运行放松引导」</b>听这条路径。</span></p>
     </div>
 
     <div class="panel">
-      <div class="ptag"><span class="step">2</span><span class="lab"><span class="en">Stem layers · in and out with heart rate</span><span class="zh">分轨层 · 随心率进退</span></span></div>
+      <div class="ptag"><span class="step">2</span><span class="lab"><span class="en">Stem layers · in and out with openness</span><span class="zh">分轨层 · 随通透度进退</span></span></div>
       <div class="layers" id="layers">
         <div class="vm">
           <div class="track"><i id="mMelody"></i><span class="mid"></span></div>
@@ -232,7 +232,7 @@ body:not(.zh) .zh{display:none} body.zh .en{display:none}
         </div>
         <div class="vm">
           <div class="track"><i id="mBass"></i><span class="mid"></span></div>
-          <div class="cap"><div class="nm"><span class="en">Bass</span><span class="zh">贝司</span></div><div class="pct" id="pBass">—</div><span class="cv"><span class="en">rises with heart rate</span><span class="zh">随心率上来</span></span></div>
+          <div class="cap"><div class="nm"><span class="en">Bass</span><span class="zh">贝司</span></div><div class="pct" id="pBass">—</div><span class="cv"><span class="en">rises with openness</span><span class="zh">随通透度上来</span></span></div>
         </div>
         <div class="vm">
           <div class="track"><i id="mDrums"></i><span class="mid"></span></div>
@@ -247,24 +247,24 @@ body:not(.zh) .zh{display:none} body.zh .en{display:none}
     <div class="ptag"><span class="step">3</span><span class="lab"><span class="en">What each layer is really playing · last 8 seconds</span><span class="zh">每一层真实的响度 · 最近 8 秒</span></span></div>
     <div class="lanes" id="lanes">
       <div class="lane"><span class="ln"><span class="en">Piano</span><span class="zh">钢琴</span><small data-en="floor" data-zh="地板"></small></span><canvas></canvas></div>
-      <div class="lane"><span class="ln"><span class="en">Bass</span><span class="zh">贝司</span><small data-en="rises with heart rate" data-zh="随心率上来"></small></span><canvas></canvas></div>
+      <div class="lane"><span class="ln"><span class="en">Bass</span><span class="zh">贝司</span><small data-en="rises with openness" data-zh="随通透度上来"></small></span><canvas></canvas></div>
       <div class="lane"><span class="ln"><span class="en">Strings</span><span class="zh">弦乐</span><small data-en="tightest" data-zh="绑最紧"></small></span><canvas></canvas></div>
     </div>
     <div class="laneaxis"><span></span><span><span><span class="en">8 s ago</span><span class="zh">8 秒前</span></span><span><span class="en">now</span><span class="zh">现在</span></span></span></div>
-    <p class="axnote" id="laneNote"><span class="en">Once playing, each lane shows how loud that instrument <b>actually is</b> (its own level × its current gain), flowing right to left. <b>A · Full track</b>: all three layers are always there — in the finished song they never leave. <b>B · Stems</b>: drag heart rate down and the strings really flatten and fade to grey — they exit. The bass in this track only enters at 1:00; press “Jump to 1:00” to see all three.</span><span class="zh">按「播放」后，这里画的是每件乐器<b>真实在响的音量</b>（该声部本身的响度 × 当前增益），从右往左流过。<b>整首 A</b>：三层始终都在（整首歌里它们本来就一直在）。<b>分轨 B</b>：把心率往下拖，弦乐会真的变平、褪成灰——退场。这首的贝司第 60 秒才进来，点「跳到 1:00」三层都能看到。</span></p>
+    <p class="axnote" id="laneNote"><span class="en">Once playing, each lane shows how loud that instrument <b>actually is</b> (its own level × its current gain), flowing right to left. <b>A · Full track</b>: all three layers are always there — in the finished song they never leave. <b>B · Stems</b>: drag openness down and the strings really flatten and fade to grey — they exit. The bass in this track only enters at 1:00; press “Jump to 1:00” to see all three.</span><span class="zh">按「播放」后，这里画的是每件乐器<b>真实在响的音量</b>（该声部本身的响度 × 当前增益），从右往左流过。<b>整首 A</b>：三层始终都在（整首歌里它们本来就一直在）。<b>分轨 B</b>：把通透度往下拖，弦乐会真的变平、褪成灰——退场。这首的贝司第 60 秒才进来，点「跳到 1:00」三层都能看到。</span></p>
   </div>
 
   <!-- honest demo framing -->
   <div class="demostrip">
     <span class="ds-tag"><span class="en">How to listen</span><span class="zh">怎么听</span></span>
     <div class="ds-body">
-      <span class="en">Start with <b class="cool">A · Full track</b> and drag heart rate from high to low — the sound gets duller and darker, but every instrument <b>stays</b>.<br>Then switch to <b class="hot">B · Stems</b> and do the same — the strings and bass <b>really leave</b>, until solo piano carries it. That emptiness is something the full track can’t do.<br><b>What changes is not the volume but the make-up — which layers are playing.</b></span><span class="zh">先放 <b class="cool">整首 A</b>，把心率从高拖到低——声音变闷、变暗，但四件乐器<b>一直都在</b>。<br>再切 <b class="hot">分轨 B</b>，同样从高拖到低——弦乐、贝司会<b>真的退场</b>，只剩钢琴独奏垫底。那个"空"是整首版做不出来的。<br><b>改的不是音量，是构成（哪些层在响）。</b></span>
+      <span class="en">Start with <b class="cool">A · Full track</b> and drag openness from high to low — the sound gets duller and darker, but every instrument <b>stays</b>.<br>Then switch to <b class="hot">B · Stems</b> and do the same — the strings and bass <b>really leave</b>, until solo piano carries it. That emptiness is something the full track can’t do.<br><b>What changes is not the volume but the make-up — which layers are playing.</b></span><span class="zh">先放 <b class="cool">整首 A</b>，把通透度从高拖到低——声音变闷、变暗，但三件乐器<b>一直都在</b>。<br>再切 <b class="hot">分轨 B</b>，同样从高拖到低——弦乐、贝司会<b>真的退场</b>，只剩钢琴独奏垫底。那个"空"是整首版做不出来的。<br><b>改的不是音量，是构成（哪些层在响）。</b></span>
     </div>
   </div>
 
   <footer class="foot">
     <div class="cite">
-      <span class="en">Layer gain curves (openness <span class="num">a</span> ∈ 0–1, = 0.55 + 0.45 × arousal): piano <span class="num">.85+.15a</span> · bass <span class="num">.20+.80·smooth(a)</span> · strings <span class="num">a<sup>1.6</sup></span>　<b>· tuned by the author’s A/B listening</b><br>Shared downstream: heart rate → arousal → low-pass + character preset · mood → warm/cool tilt (manual mode only) · low-pass range <span class="num">350 Hz–18 kHz</span> (log). Synthesis and engine after Farnell, <i>Designing Sound</i>.<br><b>Readings are offsets from your resting baseline</b> (the same mapping as the main site: baseline ±25 BPM → arousal ±1), so nobody is pinned to one population-average setting.</span><span class="zh">层增益曲线（通透度 <span class="num">a</span> ∈ 0–1，= 0.55 + 0.45 × 唤醒）：钢琴 <span class="num">.85+.15a</span> · 贝司 <span class="num">.20+.80·smooth(a)</span> · 弦乐 <span class="num">a<sup>1.6</sup></span>　<b>· 作者 A/B 试听调校</b><br>下游共享：心率 → 唤醒 → 低通 + 音色预设 · 心情 → 冷暖倾斜（仅手动模式） · 低通范围（<span class="num">350Hz–18kHz</span> log）。合成/引擎参考 Farnell《Designing Sound》<br><b>读数 = 相对你的静息基线的偏移</b>（与主站同一映射：基线 ±25 BPM → 唤醒 ±1），避免"人人被钉在同一档"。</span>
+      <span class="en">Layer gain curves (openness <span class="num">a</span> ∈ 0–1): piano <span class="num">.85+.15a</span> · bass <span class="num">.20+.80·smooth(a)</span> · strings <span class="num">a<sup>1.6</sup></span>　<b>· tuned by the author’s A/B listening</b><br><b>How Relax sets openness</b> (fact sheet K2): match your current heart rate for a few seconds, then guide down to the calm landing (45) over a minute or two; slow down if heart rate keeps climbing; if you are already calm, follow you. Here the guide runs <b>3× faster</b> so you can hear it in half a minute.<br>Low-pass: <b>A · Full track</b> 350 Hz–18 kHz (presentation is all a fixed song can change) · <b>B · Stems</b> 2.5–18 kHz, only a helper; the layers do the work. Mood → warm/cool tilt (EQ only). Synthesis and engine after Farnell, <i>Designing Sound</i>.</span><span class="zh">层增益曲线（通透度 <span class="num">a</span> ∈ 0–1）：钢琴 <span class="num">.85+.15a</span> · 贝司 <span class="num">.20+.80·smooth(a)</span> · 弦乐 <span class="num">a<sup>1.6</sup></span>　<b>· 作者 A/B 试听调校</b><br><b>放松板块怎么定通透度</b>（事实表 K2）：先按你当前的心率匹配几秒，再用一两分钟引导到平静落点（45）；心率还在往上走就放慢；本来就平静就跟着你。这里的引导按 <b>3 倍速</b>播放，半分钟就能听完。<br>低通：<b>整首 A</b> 350 Hz–18 kHz（固定的歌只能改呈现）· <b>分轨 B</b> 2.5–18 kHz，只作辅助，主要靠层的进出。心情 → 冷暖倾斜（只动 EQ）。合成/引擎参考 Farnell《Designing Sound》。</span>
     </div>
   </footer>
 
@@ -289,7 +289,7 @@ function applyPageLang() {
   document.body.classList.toggle('zh', PL === 'zh'); document.documentElement.lang = PL === 'zh' ? 'zh' : 'en';
   document.querySelectorAll('.langtog button').forEach(b => b.classList.toggle('on', b.dataset.l === PL));
   $('playBtn').textContent = playing ? T('❚❚ Pause', '❚❚ 暂停') : T('▶ Play', '▶ 播放');
-  $('sweepBtn').textContent = sweep ? T('Stop sweep ■', '停止扫过 ■') : T('Sweep heart rate ⟳', '模拟心率自动扫过 ⟳');
+  $('sweepBtn').textContent = guideLabel();
   $('jumpBtn').textContent = T('Jump to 1:00 (all three layers)', '跳到 1:00（三层都在）');
   if (!ctx) $('status').textContent = T('Not loaded · use headphones', '未加载 · 戴耳机');
   else if (buffers.full) $('status').textContent = T('Ready · ', '就绪 · 时长 ') + buffers.full.duration.toFixed(0) + 's';
@@ -299,19 +299,20 @@ function applyPageLang() {
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=t=>t*t*(3-2*t);
 
-// 滑块 = 通透度 a(0–100),与主站氛围值同一尺度。换算回「相对你基线的心率」:a = 55 + 45·clamp(Δ/25) → Δ = (a−55)/45·25
+// 滑块 = 通透度 a(0–100),与主站氛围值同一尺度。放松板块里心率不直接定它:先匹配再引导到 45(事实表 K2)
 // 主站通透度最低 10(=基线 −25);低于 10 的部分只在这里可听,主站达不到,如实标出
-const arToBPM = a => { if (a < 10) return T('< baseline −25', '< 基线 −25') + '<small style="font-size:.55em;opacity:.6;margin-left:.5em">' + T('beyond the main site', '主站达不到') + '</small>';
-  const d = Math.round((a - 55) / 45 * 25); return T('baseline ', '基线 ') + (d === 0 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d)) + '<small style="font-size:.55em;opacity:.6;margin-left:.5em">' + T('openness ', '通透 ') + a + '</small>'; };
+const arToBPM = a => T('openness ', '通透度 ') + a + (Math.round(a) === 45 ? '<small style="font-size:.55em;opacity:.6;margin-left:.5em">' + T('calm landing', '平静落点') + '</small>' : '');
 
 // 唤醒→低通 (复用主站映射 350Hz→18kHz log)
 const sliderToFreq = v => 350 * Math.pow(18000/350, clamp(v,0,100)/100);
+// 分轨的低通只作辅助(事实表 K2,11-04 A/B):下限 2.5kHz,与主站 stemCutoff 一致
+const stemCutoff = v => 2500 * Math.pow(18000/2500, clamp(v,0,100)/100);
 
 // 分轨增益曲线:a=唤醒0..1
 function stemGains(a){
   return {
     melody: 0.85 + 0.15*a,              // 地板,几乎恒定
-    bass:   0.20 + 0.80*smooth(a),      // 随心率上来
+    bass:   0.20 + 0.80*smooth(a),      // 随通透度上来
     drums:  Math.pow(a,1.6)             // 平静≈0(空),激动≈1(满)
   };
 }
@@ -376,7 +377,7 @@ function applyAxes(){
   if(!ctx) return;
   const now = ctx.currentTime;
   lowpass.frequency.cancelScheduledValues(now);
-  lowpass.frequency.linearRampToValueAtTime(sliderToFreq(a), now+0.15);
+  lowpass.frequency.linearRampToValueAtTime(mode==='stems' ? stemCutoff(a) : sliderToFreq(a), now+0.15);
   const t = v/100;
   eqLow.gain.cancelScheduledValues(now);  eqHigh.gain.cancelScheduledValues(now);
   eqLow.gain.linearRampToValueAtTime( t*6, now+0.15);
@@ -394,7 +395,7 @@ function setMode(m){
   document.querySelectorAll('#ab button').forEach(b=>b.classList.toggle('on', b.dataset.mode===m));
   $('modeNote').innerHTML = m==='full'
     ? T('Now: <b class="cool">full track</b> — only EQ and low-pass are acting; the arrangement never changes (the ceiling of a fixed song).', '当前：<b class="cool">整首</b> —— 只有 EQ + 低通在作用，编排不变（固定歌的天花板）。')
-    : T('Now: <b class="hot">stems</b> — heart rate moves all three layers in and out, so the sound really fills up and empties out.', '当前：<b class="hot">分轨</b> —— 心率同时控制三层的进退，声音会真的变满 / 变空。');
+    : T('Now: <b class="hot">stems</b> — openness moves all three layers in and out, so the sound really fills up and empties out.', '当前：<b class="hot">分轨</b> —— 通透度同时控制三层的进退，声音会真的变满 / 变空。');
   if(ctx && started){
     const now=ctx.currentTime;
     fullModeGain.gain.cancelScheduledValues(now); stemModeGain.gain.cancelScheduledValues(now);
@@ -404,17 +405,24 @@ function setMode(m){
   applyAxes();
 }
 
-let sweep=null;
+// 放松板块的引导(事实表 K2,与主站 _relaxAtmos 同一做法):先匹配 → 线性引导到平静落点 45。主站 10 s + 60 s,这里 3 倍速
+const GUIDE_FROM = 90, CALM = 45, MATCH_S = 10/3, GUIDE_S = 60/3;
+let sweep=null, guidePhase='';
+const guideLabel = () => sweep ? (guidePhase==='match' ? T('Matching you… ■', '先匹配… ■') : T('Guiding toward calm… ■', '引导向平静… ■')) : T('Run the Relax guide ▶ (3× speed)', '运行放松引导 ▶（3 倍速）');
 function toggleSweep(){
-  if(sweep){ clearInterval(sweep); sweep=null; $('sweepBtn').textContent=T('Sweep heart rate ⟳', '模拟心率自动扫过 ⟳'); return; }
-  $('sweepBtn').textContent=T('Stop sweep ■', '停止扫过 ■');
-  let dir=-1;
+  if(sweep){ clearInterval(sweep); sweep=null; $('sweepBtn').textContent=guideLabel(); return; }
+  const el=$('arousal'), t0=performance.now();
+  el.value=GUIDE_FROM; guidePhase='match'; applyAxes();
   sweep=setInterval(()=>{
-    const el=$('arousal'); let x=+el.value + dir*0.7;
-    if(x<=0){x=0;dir=1;} if(x>=100){x=100;dir=-1;}
-    el.value=x; applyAxes();
-  },40);
+    const s=(performance.now()-t0)/1000;
+    if(s<MATCH_S){ guidePhase='match'; }
+    else { guidePhase='guide'; const k=Math.min(1,(s-MATCH_S)/GUIDE_S); el.value=Math.round(GUIDE_FROM+(CALM-GUIDE_FROM)*k); applyAxes();
+      if(k>=1){ clearInterval(sweep); sweep=null; } }
+    $('sweepBtn').textContent=guideLabel();
+  },100);
+  $('sweepBtn').textContent=guideLabel();
 }
+$('arousal').addEventListener('pointerdown', ()=>{ if(sweep){ clearInterval(sweep); sweep=null; $('sweepBtn').textContent=guideLabel(); } });   // 手动拖动 = 你接管
 
 $('playBtn').onclick = async ()=>{
   if(!ctx){ await load(); }

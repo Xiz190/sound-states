@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Hand · Sound States</title>
+<style>
+:root{--bg:#0c0e14;--ink:#e7e3da;--muted:#a3a1ad;--faint:#6f6e7a;--accent:#b9a16b;--rule:rgba(231,227,218,.12);
+  --piano:236,222,190;--bass:184,124,66;--synth:170,150,200;--drums:150,165,190;--display:Georgia,"Songti SC",serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+body{font:14px/1.5 -apple-system,"Helvetica Neue",Arial,sans-serif}
+#view{position:fixed;inset:0}
+.top{position:fixed;left:24px;top:20px;right:24px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+h1{font:400 30px/1.1 var(--display);margin:6px 0 4px}
+.sub{color:var(--muted);max-width:420px;font-size:13px}
+#badge{font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border:1px solid currentColor;border-radius:3px;color:var(--accent)}
+.panel{position:fixed;left:24px;bottom:22px;width:min(380px,calc(100vw - 48px));background:rgba(12,14,20,.82);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;backdrop-filter:blur(6px)}
+.seg{display:flex;border:1px solid rgba(231,227,218,.28);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.seg button{flex:1;font:inherit;font-size:13px;color:var(--muted);background:transparent;border:0;padding:7px 4px;cursor:pointer}
+.seg button+button{border-left:1px solid rgba(231,227,218,.28)}.seg button.on{color:var(--ink);background:rgba(231,227,218,.08)}
+.row{display:grid;grid-template-columns:92px 1fr 40px;gap:10px;align-items:center;margin:7px 0}
+.lab{font-size:13px;line-height:1.15}.lab small{display:block;font-size:11px;color:var(--faint)}
+.bar{height:3px;background:rgba(231,227,218,.1);border-radius:2px;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:100%;transform-origin:left;transform:scaleX(0);border-radius:2px}
+.pct{font:400 13px var(--display);text-align:right}
+input[type=range]{width:100%;accent-color:var(--accent);margin:0}
+.meta{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:12px;color:var(--faint)}
+.meta b{color:var(--ink);font:400 14px var(--display)}
+.tools{display:flex;gap:8px;margin-top:10px}
+.tools button{font:inherit;font-size:12px;color:var(--muted);background:transparent;border:1px solid rgba(231,227,218,.28);border-radius:3px;padding:5px 9px;cursor:pointer}
+.tools button.on{color:var(--ink);background:rgba(231,227,218,.08)}
+.hide{display:none}
+#loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--faint);font-size:13px}
+.legend{position:fixed;right:24px;bottom:22px;font-size:12px;color:var(--muted);text-align:right;line-height:1.9}
+.legend span{display:inline-block;width:10px;height:10px;border-radius:2px;margin-left:8px;vertical-align:-1px}
+@media (max-width:700px){.legend{display:none}.top{left:16px;right:16px}.panel{left:16px}}
+</style></head>
+<body>
+<div id="view"></div>
+<div id="loading">Loading the hand…</div>
+<div class="top">
+  <div><div class="kick">Sound States · Call and Response · I. Answer</div><h1>The hand that listens</h1>
+    <div class="sub">Each finger follows one voice of the song: a voice comes in, its finger straightens; it leaves, the finger curls back over the ear. Drag to turn the hand.</div></div>
+  <div id="badge">simulated</div>
+</div>
+
+<div class="panel">
+  <div class="seg"><button data-m="sim" class="on">Music (simulated)</button><button data-m="hand">By hand</button></div>
+  <div id="rows"></div>
+  <div class="meta" id="simMeta"><span>Heart <b id="hr">–</b> BPM</span><span>Phase <b id="phase">–</b></span><span>Breath <b id="rip">–</b></span></div>
+  <div class="tools"><button id="fast">Time ×4</button><button id="xray">See the line</button><button id="restart">Restart</button></div>
+</div>
+<div class="legend">printed parts<span style="background:#e7e3da"></span><br>MG90S servo<span style="background:#4a505c"></span><br>pulley<span style="background:#b9a16b"></span><br>fishing line<span style="background:#f0d79a"></span><br>rubber band<span style="background:#d9826b"></span></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), ease = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+
+/* ===== the same model as the hat (sound_states_hat/data/index.html) ===== */
+const smooth01 = t => t * t * (3 - 2 * t);
+function stemGainFor(curve, a) { a = clamp(a, 0, 1); switch (curve) {
+  case 'floor': return .85 + .15 * a; case 'rise': return .20 + .80 * smooth01(a); case 'color': return .30 + .70 * smooth01(a); case 'peak': return Math.pow(a, 1.6); default: return 1; } }
+const FINGERS = [{ f: 'index', lab: 'Rhodes', curve: 'floor', col: '--piano' }, { f: 'middle', lab: 'Bass', curve: 'rise', col: '--bass' },
+  { f: 'ring', lab: 'Color', curve: 'color', col: '--synth' }, { f: 'pinky', lab: 'Drums', curve: 'peak', col: '--drums' }];
+const REST = 70, MATCH = 10, GUIDE = 60, CALM = 45, ZONE = 5;
+const VMAX = 1 / 3.5, AMAX = VMAX / .8, KP = 1.6;
+const RIPPLE = .15, RIPPLE_BPM = 3;      // 心率起伏 ±3 BPM = 手指 ±15%(原来 ±6% / ±5 BPM 看不出来)
+const CURL_SCALE = .5;                  // 全弯 = 半握，罩住耳朵，不握成拳(关节最大角 × 0.5)
+const SILENCE = 5;                      // 开头 5 秒没有音乐：手合着
+function simHr(t) {
+  const settle = REST + 1 + 13 * (1 - ease((t - 12) / 95)), guided = ease((t - 35) / 40);
+  const natural = .9 * Math.sin(2 * Math.PI * t / 3.7) + .6 * Math.sin(2 * Math.PI * t / 5.3 + 1);
+  return settle + (1 - guided) * natural + 4.5 * guided * Math.sin(2 * Math.PI * .1 * t);
+}
+
+/* ===== scene ===== */
+const view = $('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x0c0e14); view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 1, 5000);
+camera.position.set(-330, 300, 90);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.target.set(70, -25, -10);
+scene.add(new THREE.HemisphereLight(0xf4efe4, 0x1a1c24, 1.6));
+const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(-120, 260, 160); scene.add(key);
+const rim = new THREE.DirectionalLight(0xb9a16b, .8); rim.position.set(200, 80, -200); scene.add(rim);
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const MAT = {
+  printed: new THREE.MeshStandardMaterial({ color: 0xe7e3da, roughness: .75, metalness: 0, transparent: true }),
+  servo: new THREE.MeshStandardMaterial({ color: 0x4a505c, roughness: .5 }),
+  pulley: new THREE.MeshStandardMaterial({ color: 0xb9a16b, roughness: .55, metalness: .1 }),
+  screw: new THREE.MeshStandardMaterial({ color: 0x23262d, roughness: .35, metalness: .4 }),
+  line: new THREE.MeshStandardMaterial({ color: 0xf0d79a, emissive: 0x6b5a30, roughness: .3 }),
+  band: new THREE.MeshStandardMaterial({ color: 0xd9826b, emissive: 0x3a1a12, roughness: .6 }),
+};
+const matFor = n => n.startsWith('servo') ? MAT.servo : n.startsWith('pulley') ? MAT.pulley : n.startsWith('screw') ? MAT.screw : MAT.printed;
+
+const [gltf, rig] = await Promise.all([new GLTFLoader().loadAsync('hand.glb'), fetch('rig.json').then(r => r.json())]);
+const hand = gltf.scene; scene.add(hand);
+const nodes = {};
+hand.traverse(o => { nodes[o.name] = o; if (o.isMesh) o.material = matFor(o.name.replace(/_\d+$/, '').split('.')[0]); });
+const named = n => nodes[n] || nodes[n.replace(/-/g, '_')];
+const joints = Object.entries(rig.joints).map(([n, j]) => { const o = named(n); return o && { o, f: j.finger, max: j.max, rest: o.quaternion.clone() }; }).filter(Boolean);
+$('loading').remove();
+
+// fishing line + rubber bands: rebuilt every frame from the parts they ride on
+const tubes = rig.paths.map(p => {
+  const mesh = new THREE.Mesh(new THREE.BufferGeometry(), p.kind === 'line' ? MAT.line : MAT.band);
+  mesh.renderOrder = 2; scene.add(mesh);
+  return { ...p, mesh, owners: p.pts.map(q => q.o && named(q.o)), local: p.pts.map(q => new THREE.Vector3(...q.p)) };
+});
+function updateTubes(thick) {
+  hand.updateMatrixWorld(true);
+  for (const t of tubes) {
+    const pts = t.local.map((v, i) => t.owners[i] ? v.clone().applyMatrix4(t.owners[i].matrixWorld) : v.clone().applyMatrix4(hand.matrixWorld));
+    const curve = new THREE.CatmullRomCurve3(pts, false, 'centripetal');
+    t.mesh.geometry.dispose();
+    t.mesh.geometry = new THREE.TubeGeometry(curve, Math.max(24, pts.length * 3), t.kind === 'line' ? (thick ? .7 : .3) : t.r, 6, false);
+  }
+}
+
+/* ===== UI ===== */
+$('rows').innerHTML = FINGERS.map((F, i) => `<div class="row"><div class="lab" style="color:rgb(var(${F.col}))">${F.lab}<small>${F.f} finger</small></div>
+  <div><div class="bar sim"><i id="g${i}" style="background:rgb(var(${F.col}))"></i></div><input class="hand hide" type="range" min="0" max="100" value="100" id="s${i}"></div>
+  <div class="pct" id="p${i}">–</div></div>`).join('');
+let mode = 'sim', fast = false, xray = false;
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
+  mode = b.dataset.m; document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.sim').forEach(e => e.classList.toggle('hide', mode !== 'sim'));
+  document.querySelectorAll('.hand').forEach(e => e.classList.toggle('hide', mode !== 'hand'));
+  $('simMeta').classList.toggle('hide', mode !== 'sim'); $('badge').textContent = mode === 'sim' ? 'simulated' : 'by hand';
+});
+$('fast').onclick = () => { fast = !fast; $('fast').classList.toggle('on', fast); };
+$('xray').onclick = () => { xray = !xray; $('xray').classList.toggle('on', xray); MAT.printed.opacity = xray ? .28 : 1; MAT.printed.depthWrite = !xray; };
+$('restart').onclick = () => { t = 0; guide = null; hrHist.length = 0; };
+
+/* ===== loop ===== */
+let t = 0, guide = null, atm = 55, last = performance.now();
+const hrHist = [], pos = [0, 0, 0, 0], vel = [0, 0, 0, 0];
+function relaxAtmos(bpm, dt) {
+  const match = 55 + clamp((bpm - REST) / 25, -1, 1) * 45;
+  if (!guide) guide = { t0: t, level: 1, lastHr: bpm };
+  if (t - guide.t0 > MATCH) { let pace = 1; if (bpm <= REST + ZONE) pace = 1.5; else if (bpm > guide.lastHr + 1) pace = .3; guide.level = Math.max(0, guide.level - dt / GUIDE * pace); }
+  guide.lastHr = bpm;
+  return match <= CALM ? Math.max(30, match) : CALM + (match - CALM) * guide.level;
+}
+renderer.setAnimationLoop(now => {
+  const rdt = Math.min(.1, (now - last) / 1000); last = now;
+  const dt = rdt * (fast && mode === 'sim' ? 4 : 1);
+  let target;
+  if (mode === 'sim') {
+    t += dt; if (t > 150 + SILENCE) { t = 0; guide = null; hrHist.length = 0; }
+    const silent = t < SILENCE, ts = Math.max(0, t - SILENCE), hr = simHr(ts); hrHist.push([t, hr]); while (hrHist.length && hrHist[0][0] < t - 10) hrHist.shift();
+    const mean = hrHist.reduce((s, x) => s + x[1], 0) / hrHist.length, ripple = clamp((hr - mean) / RIPPLE_BPM, -1, 1);
+    if (!silent) atm += (relaxAtmos(hr, dt) - atm) * (1 - Math.pow(.98, dt * 60));
+    const gains = silent ? [0, 0, 0, 0] : FINGERS.map(F => stemGainFor(F.curve, atm / 100));
+    target = gains.map(g => silent ? 0 : clamp(g + ripple * RIPPLE, 0, 1));
+    gains.forEach((g, i) => $('g' + i).style.transform = `scaleX(${g.toFixed(3)})`);
+    $('hr').textContent = Math.round(hr); $('rip').textContent = (hr - mean >= 0 ? '+' : '') + (hr - mean).toFixed(1);
+    $('phase').textContent = silent ? 'no music yet' : t - guide.t0 < MATCH ? 'matching' : guide.level <= 0 ? 'settled' : `guiding ${Math.round((1 - guide.level) * 100)}%`;
+  } else target = FINGERS.map((F, i) => +$('s' + i).value / 100);
+  for (let i = 0; i < 4; i++) {                       // same speed limits as the servos on the hat
+    const vdes = clamp((target[i] - pos[i]) * KP, -VMAX, VMAX);
+    vel[i] += clamp(vdes - vel[i], -AMAX * dt, AMAX * dt); pos[i] = clamp(pos[i] + vel[i] * dt, 0, 1);
+    $('p' + i).textContent = Math.round(pos[i] * 100) + '%';
+  }
+  const curl = { index: 1 - pos[0], middle: 1 - pos[1], ring: 1 - pos[2], pinky: 1 - pos[3], thumb: 0 }   // 拇指固定在你摆好的姿势;
+  for (const j of joints) j.o.quaternion.copy(j.rest).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), curl[j.f] * j.max * CURL_SCALE));
+  updateTubes(xray);
+  controls.update(); renderer.render(scene, camera);
+});
+</script>
+</body></html>

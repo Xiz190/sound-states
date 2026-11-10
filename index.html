@@ -283,9 +283,16 @@
         <div class="heart-rate-bar hr-rest" id="heartRestingBar" style="display:none">
           <span class="hr-rest-line"><span data-i18n="restingLabel"></span> <b id="hrRestVal">70</b> BPM <button type="button" class="hr-rest-edit" id="hrRestEdit" data-i18n="restEdit"></button></span>
           <span class="hr-rest-editor">
-            <input type="number" id="restingBPMInput" class="resting-input" min="40" max="120" step="1" value="70" aria-label="Resting heart rate" />
+            <label for="restingBPMInput" data-i18n="restingLabel"></label>
+            <input type="number" id="restingBPMInput" class="resting-input" min="45" max="120" step="1" value="70" aria-label="Resting heart rate" />
             <span>BPM</span>
             <p class="resting-hint" id="restingHintTxt" data-i18n="restingHint"></p>
+            <span class="hr-age">
+              <label for="ageInput" data-i18n="ageLabel"></label>
+              <input type="number" id="ageInput" class="resting-input" min="10" max="100" step="1" placeholder="—" aria-label="Age (optional)" />
+            </span>
+            <p class="resting-hint hr-age-hint" data-i18n="ageHint"></p>
+            <p class="resting-hint hr-age-hint hr-age-calc" id="ageCalcTxt"></p>
           </span>
         </div>
       </section>
@@ -402,6 +409,13 @@
               <span class="gd-desc" data-i18n="gdSynthD"></span></a></li>
           </ul>
         </details>
+        <!-- 走进身体：网站的模型戴到身上(VIS 147B 可穿戴原型)；期末 Plotlet 以后也放这组 -->
+        <h4 class="gd-group-title" data-i18n="gdBodyTitle"></h4>
+        <ul class="gd-list">
+          <li><a href="hand.html" target="_blank" rel="noopener">
+            <span class="gd-name" data-i18n="gdHand"></span>
+            <span class="gd-desc" data-i18n="gdHandD"></span></a></li>
+        </ul>
         <h4 class="gd-group-title" data-i18n="gdVisionTitle"></h4>
         <ul class="gd-list">
           <li><a href="vision-page.html" target="_blank" rel="noopener" class="gd-vision">

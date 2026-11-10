@@ -18,8 +18,16 @@ function createSceneEngine(cfg, hooks){
   let bus, masterLP, conv, convOut, outGain, glueComp, glueMakeup, running=false, runtime=[];
   const aiBuffers={}, groupBusyUntil={};
   let arcTimer=null, hrTimer=null, hrT0=0, breatheTimer=null, breatheOn=true;
+  // 雨声提亮(2026-11-08 A/B 试听选 G)：工作模式 rainBright=1，睡眠=0(保持安静、不提亮)
+  //   近雨 near_loop：削 1.2 kHz "盒子感" −3 dB + 3.5 kHz 以上 +6 dB；远雨 far_loop：5 kHz 低通，往后退一点
+  let rainBright=0; const rainFX=[];
+  function setRainBright(v){ rainBright=v; if(!ctx) return; const t=ctx.currentTime;
+    rainFX.forEach(fx=>{ if(fx.dip){ fx.dip.gain.setTargetAtTime(-3*v,t,0.4); fx.shelf.gain.setTargetAtTime(6*v,t,0.4); }
+      if(fx.lp) fx.lp.frequency.setTargetAtTime(v>0?5000:20000,t,0.4);
+      if(fx.winLp) fx.winLp.frequency.setTargetAtTime(v>0?fx.hi:fx.lo,t,0.4); }); }
+  let arcPace=1, workEx=0;   // 睡眠下行弧速度(心率调) · 工作板块心率超出量(慢速平滑)
 
-  function initLayerState(layers){ layers.forEach(L=>{ L._on=!L.placeholder; L._vol=(L.vol!=null?L.vol:0.7);
+  function initLayerState(layers){ layers.forEach(L=>{ L._on=!L.placeholder && !L.off; L._vol=(L.vol!=null?L.vol:0.7);
     if(L.ivMin!=null){ L._ivMin0=L.ivMin; L._ivMax0=L.ivMax; } }); }
   SCENES.hills.layers = HILLS_VARIANTS.night;                 // 默认黑夜
   Object.values(SCENES).forEach(S=>initLayerState(S.layers));
@@ -39,8 +47,8 @@ function createSceneEngine(cfg, hooks){
     wind:  { hp:170 },
     drip:  { hp:450 },
     'ai:rainbed': { hp:110 },
-    'ai:rainwin': { hp:110, lp:1200 },
-    'ai:raindrip':{ hp:200, lp:900 },
+    'ai:rainwin': { hp:110, lp:1200, lpWork:7000 },   // 隔窗：睡眠 1200(闷)，工作 3500(还是隔窗，但不闷) — 11-08 用户
+    'ai:raindrip':{ hp:200, lp:900,  lpWork:4500 },
     'ai:fire':   { hp:50,  lp:6500 },
     'ai:insect': { hp:900 },
     'ai:stream': { hp:240, lp:9500 },
@@ -49,7 +57,8 @@ function createSceneEngine(cfg, hooks){
   };
   function buildEQ(key){ const c=LAYER_EQ[key]; if(!c) return null; const nodes=[];
     if(c.hp) nodes.push(bq('highpass',c.hp,0.7));
-    if(c.lp) nodes.push(bq('lowpass',c.lp,0.7));
+    if(c.lp){ const n=bq('lowpass',(c.lpWork&&rainBright>0)?c.lpWork:c.lp,0.7); nodes.push(n);
+      if(c.lpWork) rainFX.push({ winLp:n, lo:c.lp, hi:c.lpWork }); }   // 隔窗雨：工作模式放宽低通(见 setRainBright)
     if(c.peak) nodes.push(bq('peaking',c.peak[0],c.peak[2]||1,c.peak[1]));
     if(!nodes.length) return null;
     for(let i=0;i<nodes.length-1;i++) nodes[i].connect(nodes[i+1]);
@@ -69,8 +78,13 @@ function createSceneEngine(cfg, hooks){
       const src=ctx.createBufferSource(); src.buffer=b; src.loop=true;
       if((L.files||[]).length>1) src.playbackRate.value=1+(i-(L.files.length-1)/2)*0.025;
       const p=mkPanner(); const pos=(L.pos&&L.pos[i])||{ang:L.ang||0,dist:L.dist||1.5}; p._ang=pos.ang; p._dist=pos.dist; setPos(p);
-      src.connect(p).connect(g); src.start(0, Math.random()*b.duration); list.push({src,p}); });
-    return { panners:list.map(x=>x.p), stop(){ list.forEach(x=>{try{x.src.stop();}catch(e){}}); } };
+      let node=src, fx=null;                                          // 雨声提亮(见 setRainBright)：只挂在近雨/远雨两段素材上
+      if(/near_loop/.test(f)){ const dip=bq('peaking',1200,1,-3*rainBright), shelf=bq('highshelf',3500,0.7,6*rainBright);
+        node.connect(dip); dip.connect(shelf); node=shelf; fx={dip,shelf}; }
+      else if(/far_loop/.test(f)){ const lp=bq('lowpass',rainBright>0?5000:20000,0.7); node.connect(lp); node=lp; fx={lp}; }
+      if(fx) rainFX.push(fx);
+      node.connect(p).connect(g); src.start(0, Math.random()*b.duration); list.push({src,p,fx}); });
+    return { panners:list.map(x=>x.p), stop(){ list.forEach(x=>{try{x.src.stop();}catch(e){} if(x.fx){ const k=rainFX.indexOf(x.fx); if(k>=0) rainFX.splice(k,1); }}); } };
   }
   function aiEvt(L,g){ let timer=null, stopped=false;
     function fire(){ const f=(L.files&&L.files.length)?L.files[(Math.random()*L.files.length)|0]:L.file;
@@ -207,16 +221,18 @@ function createSceneEngine(cfg, hooks){
   }
 
   function applyPreset(mode){ mode==='work'?applyWork():applySleep(); }
-  function applyWork(){ stopArc(); applyMixLayers('work'); const g=mixOf('work').g||{};
+  function applyWork(){ stopArc(); setRainBright(1); applyMixLayers('work'); const g=mixOf('work').g||{};
     setParam('tone',g.tone??8000); setParam('radius',g.radius??1.2); setParam('reverb',g.reverb??0.6); if(g.vol!=null)setParam('vol',g.vol);
     applyRate(1); if(hooks.onArc) hooks.onArc('工作：恒定平台(稳态·去突起)'); }
-  function applySleep(){ stopArc(); applyMixLayers('sleep'); const g=mixOf('sleep').g||{};
+  function applySleep(){ stopArc(); setRainBright(0); applyMixLayers('sleep'); const g=mixOf('sleep').g||{};
     if(g.vol!=null) setParam('vol',g.vol);
-    const dur=120, t0=performance.now();
+    const dur=120;   // 基准时长;有心率时速度由 arcPace 调(K4:心率还高就把弧拉长)
     const s0={ tone:P.tone, radius:P.radius, reverb:P.reverb };
     const s1={ tone:g.tone??2600, radius:g.radius??2.2, reverb:g.reverb??1.05 };
+    let p=0, last=performance.now(); arcPace=1;
     arcTimer=setInterval(()=>{ if(!running){ stopArc(); return; }
-      const p=Math.min(1,(performance.now()-t0)/1000/dur), e=p*p*(3-2*p);
+      const now=performance.now(); p=Math.min(1,p+(now-last)/1000/dur*arcPace); last=now;
+      const e=p*p*(3-2*p);
       setParam('tone',Math.round(s0.tone+(s1.tone-s0.tone)*e));
       setParam('radius',+(s0.radius+(s1.radius-s0.radius)*e).toFixed(2));
       setParam('reverb',+(s0.reverb+(s1.reverb-s0.reverb)*e).toFixed(2));
@@ -234,7 +250,16 @@ function createSceneEngine(cfg, hooks){
     if(mode==='work'){ return 72 + 4*Math.sin(2*Math.PI*0.02*t) + rsa(2) + (Math.random()-0.5)*3; }
     return ((getManual?getManual():70)) + rsa(2) + (Math.random()-0.5)*1.5;
   }
-  function hrDrive(hr){ const n=Math.max(0,Math.min(1,(hr-resting)/34));
+  // 心率 → 声音,按板块意图分开(事实表 K 节):
+  // 睡眠 K4:不跟着心率变亮变密,只决定下行弧走多快 —— 心率离入睡目标还远就放慢(最慢 0.3×),接近目标按原速
+  //   目标 = 坐姿基线 − 躺姿差约 10(Hnatkova 2019)− 入睡下降约 6.6(Carrington 2005)
+  // 工作 K3:基线到基线 +8 之内完全不动(用脑时心率本来会略升,Hughes 2019);明显更高时只慢慢减少事件、变得更稳
+  function hrDrive(hr, mode){
+    if(mode==='sleep'){ const target=resting-16;
+      arcPace=Math.max(0.3,Math.min(1,1-(hr-target)/40)); return; }
+    if(mode==='focus'){ const ex=Math.max(0,Math.min(1,(hr-resting-8)/20));
+      workEx+=(ex-workEx)*0.1; applyRate(1-0.25*workEx); return; }
+    const n=Math.max(0,Math.min(1,(hr-resting)/34));
     setParam('tone', Math.round(2600+n*5400));
     setParam('radius', +(2.3-n*0.95).toFixed(2));
     applyRate(0.4+n*0.65);
@@ -244,7 +269,7 @@ function createSceneEngine(cfg, hooks){
     hrTimer=setInterval(()=>{ if(!running){ stopHR(); return; }
       const hr=simHR(mode,(performance.now()-hrT0)/1000,getManual);
       if(hooks.onHR) hooks.onHR(hr);
-      hrDrive(hr);
+      hrDrive(hr, mode==='work'?'focus':mode);
     },300);
   }
 

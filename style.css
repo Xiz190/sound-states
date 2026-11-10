@@ -1549,6 +1549,10 @@ html[lang=zh] #landing .subtitle { max-width: 26em; }
 .hr-rest-edit:hover { color: var(--ink); border-color: var(--accent); }
 .hr-rest-editor { display: none; margin-top: .6rem; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .hr-rest.editing .hr-rest-editor { display: flex; }
+.hr-age { display: flex; align-items: center; gap: .5rem; flex-basis: 100%; margin-top: .4rem; font-size: .74rem; color: var(--muted); }
+/* 年龄只给运动板块用:别的板块不显示,免得让人以为它影响放松/工作 */
+body:not(.scene-motion) .hr-age, body:not(.scene-motion) .hr-age-hint { display: none; }
+.hr-age-calc { color: var(--ink); opacity: .8; }
 .hr-rest:not(.editing) #restingHintTxt { display: none !important; }
 .hr-rest #restingHintTxt { flex-basis: 100%; text-align: left; margin-top: .3rem; }
 /* 睡眠/工作:肖像未开始时是一只安静的空盘,不是空洞 */

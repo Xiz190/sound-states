@@ -352,7 +352,9 @@
     const sim = $('heartSimSlider'), rest = typeof restingBPM === 'number' ? restingBPM : 70;
     if ($('hrRestVal')) $('hrRestVal').textContent = rest;
     const mark = $('hrBaseMark');
-    if (sim && mark) { const lo = +sim.min, hi = +sim.max; mark.style.left = ((rest - lo) / (hi - lo) * 100) + '%'; mark.dataset.l = t(UI.restingLabel) + ' ' + rest; }
+    if (sim && mark) { const lo = +sim.min, hi = +sim.max, pct = (rest - lo) / (hi - lo) * 100; mark.style.left = pct + '%'; mark.dataset.l = t(UI.restingLabel) + ' ' + rest;
+      const ends = document.querySelectorAll('#heartSimBar .hr-ends > span');   // 基线标签靠近两端时让出端点刻度,免得叠字 / hide an end tick the baseline label would overlap
+      if (ends.length === 2) { ends[0].style.visibility = pct < 14 ? 'hidden' : ''; ends[1].style.visibility = pct > 86 ? 'hidden' : ''; } }
     if (sim && $('hrSimRel')) { const d = +sim.value - rest; $('hrSimRel').textContent = (lang === 'zh' ? '相对基线 ' : 'vs baseline ') + (d === 0 ? '±0' : (d > 0 ? '+' : '−') + Math.abs(d)); }
     if (sim && $('heartSimBPM')) $('heartSimBPM').textContent = sim.value;
   }

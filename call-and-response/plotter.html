@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en"><meta charset="utf-8">
+<title>The Card Plotter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+/* single dark look on purpose: same world as the hand page (hardware-iso/web/hand.html) */
+:root{color-scheme:dark;--bg:#0c0e14;--ink:#e7e3da;--muted:#a3a1ad;--faint:#6f6e7a;--accent:#b9a16b;--rule:rgba(231,227,218,.12);--listen:#c96f5a;--guide:#7fa3c9;
+  --display:Georgia,"Songti SC",serif;--sans:-apple-system,"Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--sans);overflow:hidden}
+#view{position:fixed;inset:0}
+#view canvas{display:block;width:100%;height:100%;touch-action:none}
+.top{position:fixed;left:24px;right:24px;top:calc(env(safe-area-inset-top,0px) + 20px);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;pointer-events:none}
+.kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+h1{font:400 30px/1.1 var(--display);margin:6px 0 4px;text-wrap:balance}
+.sub{color:var(--muted);max-width:440px;font-size:13px}
+#badge{font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border:1px solid currentColor;border-radius:3px;color:var(--accent);white-space:nowrap}
+.panel{position:fixed;left:24px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);width:min(380px,calc(100vw - 48px));background:rgba(12,14,20,.84);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;backdrop-filter:blur(6px)}
+.phase{display:flex;gap:8px;margin-bottom:12px}
+.phase span{flex:1;font-size:12px;text-align:center;padding:6px 4px;border:1px solid var(--rule);border-radius:3px;color:var(--faint)}
+.phase span.on{color:var(--ink);border-color:currentColor}
+.phase span.on.l{color:var(--listen)} .phase span.on.g{color:var(--guide)}
+.meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:12px;color:var(--faint)}
+.meta b{display:block;color:var(--ink);font:400 18px var(--display);font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tools button{font:inherit;font-size:12px;color:var(--muted);background:transparent;border:1px solid rgba(231,227,218,.28);border-radius:3px;padding:5px 9px;cursor:pointer}
+.tools button.on{color:var(--ink);background:rgba(231,227,218,.08)}
+.tools button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{position:fixed;right:24px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);font-size:12px;color:var(--muted);text-align:right;line-height:1.9}
+.legend span{display:inline-block;width:10px;height:10px;border-radius:2px;margin-left:8px;vertical-align:-1px}
+.credit{position:fixed;right:24px;top:calc(env(safe-area-inset-top,0px) + 64px);font-size:11px;color:var(--faint);text-align:right}
+.credit a{color:var(--muted)}
+#loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--faint);font-size:13px}
+@media (max-width:760px){.legend,.credit{display:none}.top{left:16px;right:16px}.panel{left:16px;width:calc(100vw - 32px)}h1{font-size:24px}}
+@media (prefers-reduced-motion:reduce){.panel{backdrop-filter:none}}
+</style>
+
+<div id="view"></div>
+<div id="loading">Loading the plotter…</div>
+<div class="top">
+  <div><div class="kick">Sound States · Call and Response · II. Record</div><h1>A card that keeps your heartbeat</h1>
+    <div class="sub">While you listen, the pen draws the time between your heartbeats. First you just listen; then the music starts breathing at six breaths a minute, and the line settles into a wave. You take the card home. Drag to turn.</div></div>
+  <div id="badge">simulated</div>
+</div>
+<div class="credit">Machine: <a href="https://github.com/LingDong-/plotlet" target="_blank" rel="noopener">Plotlet</a> by Lingdong Huang (MIT)</div>
+
+<div class="panel">
+  <div class="phase"><span class="l" id="phL">1 · Listen</span><span class="g" id="phG">2 · Guided</span><span id="phD">Done</span></div>
+  <div class="meta"><span>Beat gap<b id="ibi">–</b></span><span>Beats<b id="beats">0</b></span><span>Pen<b id="pen">up</b></span></div>
+  <div class="tools"><button id="fast" type="button">Time ×4</button><button id="cam" type="button">Top view</button><button id="restart" type="button">New card</button></div>
+</div>
+<div class="legend">printed parts (PLA)<span style="background:#8b9097"></span><br>28BYJ-48 stepper ×3<span style="background:#cfd1d4"></span><br>SG90 servo · pen lift<span style="background:#2b2a2e;outline:1px solid #555"></span><br>controller board<span style="background:#1d2a3a;outline:1px solid #555"></span></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+/* ===== scene (units: mm) ===== */
+const view = $('view');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setClearColor(0x0c0e14); view.appendChild(renderer.domElement);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(32, 1, 1, 5000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.target.set(0, -10, 20);
+const VIEWS = { iso: [-230, 190, 260], top: [0, 330, 40] };
+let camView = 'iso'; camera.position.set(...VIEWS.iso);
+// studio lighting: soft room reflections + one shadow-casting key light + a warm rim
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture;
+scene.add(new THREE.HemisphereLight(0xf4efe4, 0x1a1c24, .35));
+const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(-160, 280, 200); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); Object.assign(key.shadow.camera, { left: -180, right: 180, top: 180, bottom: -180, near: 50, far: 800 }); key.shadow.bias = -.0004; key.shadow.normalBias = .4;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0xb9a16b, .7); rim.position.set(220, 90, -200); scene.add(rim);
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.fov = w / h < 1 ? 46 : 32; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+const MAT = {
+  printed: new THREE.MeshStandardMaterial({ color: 0x8b9097, roughness: .72, metalness: 0 }),
+  stepper: new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: .38, metalness: .55 }),
+  servo: new THREE.MeshStandardMaterial({ color: 0x2b2a2e, roughness: .45 }),
+  gear: new THREE.MeshStandardMaterial({ color: 0x8b9097, roughness: .6 }),
+  pen: new THREE.MeshStandardMaterial({ color: 0x9a9da3, roughness: .35, metalness: .4 }),
+  tip: new THREE.MeshStandardMaterial({ color: 0x1b1b1f, roughness: .3 }),
+  tape: new THREE.MeshStandardMaterial({ color: 0x2f5fd0, roughness: .8 }),
+  pcb: new THREE.MeshStandardMaterial({ color: 0x1d2a3a, roughness: .55 }),
+  chip: new THREE.MeshStandardMaterial({ color: 0xb8bcc2, roughness: .3, metalness: .8 }),
+  pin: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: .5 }),
+  floor: new THREE.MeshStandardMaterial({ color: 0x15171d, roughness: .95 }),
+};
+/* node names come from plotter-standard.step (see assembly drawing in the Plotlet README) */
+// role = "<what moves it>:<what it looks like>"
+const ROLE = {
+  'Rack (67 teeth)': 'bed:printed',          // part 10, flatbed with racks; slides for Y
+  'Part 4_1': 'body:printed',                // part 1, main body
+  'Rack (67 teeth)_1': 'x:printed',          // part 4, X slider
+  'Part 1_2': 'x:printed',                   // part 6, carriage
+  'Part 4': 'z:printed',                     // part 7, pen holder; the servo lifts it
+  'Servo-sg90-final': 'x:servo', 'Servo-sg90-final_1': 'x:servo', 'Base (coxa) Joint v10': 'x:printed',
+  'Part 1': 'body:stepper', 'Part 1_3': 'body:stepper', 'Part 1_1': 'body:stepper',   // Ya, Yb, X motors
+  'Spur gear (20 teeth)': 'gx:gear', 'Spur gear (20 teeth)_1': 'gy:gear', 'Spur gear (20 teeth)_2': 'gy:gear',
+  'Part 9': 'body:printed', 'Part 13': 'body:printed',                                 // parts 2, 3
+};
+
+const j = await fetch('plotlet-glb.json').then(r => r.json());
+const bytes = Uint8Array.from(atob(j.glb), c => c.charCodeAt(0));
+const gltf = await new GLTFLoader().parseAsync(bytes.buffer, '');
+const model = gltf.scene; model.scale.setScalar(1000); scene.add(model); model.updateMatrixWorld(true);
+
+const groups = { bed: new THREE.Group(), x: new THREE.Group(), z: new THREE.Group() };
+scene.add(groups.bed, groups.x); groups.x.add(groups.z);   // the pen holder rides the X carriage
+const gears = [], meshes = [];
+model.traverse(o => { if (o.isMesh) meshes.push(o); });
+// 28BYJ-48: silver can + blue connector cap. The cap is the part that sticks out past the can's 14 mm radius.
+const caps = [];
+function tintCap(m) {
+  const g = m.geometry, pos = g.attributes.position, n = pos.count, v = new THREE.Vector3();
+  const box = new THREE.Box3().setFromObject(m), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  const dims = ['x', 'y', 'z'].sort((p, q) => size[p] - size[q]);        // shortest = shaft axis, longest = mounting ears
+  const ax = dims[0], ears = dims[2], capDim = dims[1];
+  // the output shaft is offset ~8 mm from the can's centre, on the side away from the cap:
+  // find the shaft end (the axial end with fewer vertices) and put the cap on the opposite side
+  const endStats = ['min', 'max'].map(end => { let sum = 0, cnt = 0;
+    for (let i = 0; i < n; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+      if (Math.abs(v[ax] - box[end][ax]) < 3) { sum += v[capDim] - c[capDim]; cnt++; } }
+    return { cnt, off: sum / Math.max(1, cnt) }; });
+  const shaft = endStats[0].cnt < endStats[1].cnt ? endStats[0] : endStats[1];
+  const sign = shaft.off < 0 ? 1 : -1, canC = sign > 0 ? box.min[capDim] + 14 : box.max[capDim] - 14;
+  const col = new Float32Array(n * 3), silver = [.80, .81, .83], blue = [.12, .32, .80];
+  let capPt = new THREE.Vector3(), k = 0;
+  for (let i = 0; i < n; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+    const r = Math.hypot(v[capDim] - canC, v[ears] - c[ears]);
+    const isCap = sign * (v[capDim] - canC) > 12.5 && Math.abs(v[ears] - c[ears]) < 9.5;
+    col.set(isCap ? blue : silver, i * 3); if (isCap) { capPt.add(v); k++; } }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  if (k) caps.push(capPt.divideScalar(k));
+}
+// GLTFLoader sanitizes node names (spaces → underscores), so match them the same way
+const san = n => THREE.PropertyBinding.sanitizeNodeName(n || '').replace(/_c[0-9a-f]{6}$/, '');
+const ROLE_S = Object.fromEntries(Object.entries(ROLE).map(([k, v]) => [san(k), v]));
+const unknown = [];
+for (const m of meshes) {
+  const role = ROLE_S[san(m.name)] ?? ROLE_S[san(m.parent?.name)] ?? (unknown.push(m.name), 'body:printed');
+  const [mover, look] = role.split(':');
+  m.material = MAT[look]; m.castShadow = true; m.receiveShadow = true;
+  if (look === 'stepper') tintCap(m);
+  if (mover === 'bed' || mover === 'x' || mover === 'z') groups[mover].attach(m);
+  if (mover === 'gx' || mover === 'gy') {          // spin each gear about its own centre
+    const box = new THREE.Box3().setFromObject(m), c = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+    const pivot = new THREE.Group(); pivot.position.copy(c); scene.add(pivot); pivot.attach(m);
+    const axis = sz.z < sz.x && sz.z < sz.y ? 'z' : sz.x < sz.y ? 'x' : 'y';
+    gears.push({ pivot, role: mover, axis });
+  }
+}
+if (unknown.length) console.warn('parts without a role (left static):', unknown);
+
+/* pen + card, measured off the model */
+const holder = new THREE.Box3(); groups.z.children.forEach(c => holder.expandByObject(c));
+const bedBox = new THREE.Box3(); groups.bed.children.forEach(c => bedBox.expandByObject(c));
+const penX = (holder.min.x + holder.max.x) / 2, penZ = (holder.min.z + holder.max.z) / 2;
+const bedTop = bedBox.max.y;
+const pen = new THREE.Group();
+const body = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.6, 130, 32), MAT.pen); body.position.y = 65 + 6; body.castShadow = true;
+const cone = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 1, 6, 32), MAT.tip); cone.position.y = 3;
+pen.add(body, cone); pen.position.set(penX, bedTop + .3, penZ); groups.z.attach(pen);
+
+const CARD_W = 152, CARD_H = 102, PX = 8;           // 6 x 4 in postcard, 8 px per mm on the texture
+const cardCanvas = document.createElement('canvas'); cardCanvas.width = CARD_W * PX; cardCanvas.height = CARD_H * PX;
+const ctx = cardCanvas.getContext('2d');
+const tex = new THREE.CanvasTexture(cardCanvas); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 8;
+const card = new THREE.Mesh(new THREE.PlaneGeometry(CARD_W, CARD_H), new THREE.MeshStandardMaterial({ map: tex, roughness: .95 }));
+card.rotation.x = -Math.PI / 2;
+const bedCx = (bedBox.min.x + bedBox.max.x) / 2, bedCz = (bedBox.min.z + bedBox.max.z) / 2;
+card.position.set(bedCx, bedTop + .15, bedCz); card.receiveShadow = true; groups.bed.attach(card);
+for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {             // masking tape, like the build photo
+  const t = new THREE.Mesh(new THREE.BoxGeometry(22, .3, 8), MAT.tape);
+  t.position.set(bedCx + sx * (CARD_W / 2 - 4), bedTop + .4, bedCz + sz * (CARD_H / 2 - 2)); t.rotation.y = sx * sz * .65; t.receiveShadow = true; groups.bed.attach(t);
+}
+const floor = new THREE.Mesh(new THREE.CircleGeometry(600, 64), MAT.floor); floor.rotation.x = -Math.PI / 2;
+floor.position.y = bedBox.min.y - .2; floor.receiveShadow = true; scene.add(floor);
+
+// controller board behind the machine (stand-in for the ESP32-S3) + wires from each stepper cap and the servo
+const bodyBox = new THREE.Box3(); meshes.forEach(m => { if (!groups.bed.children.includes(m)) bodyBox.expandByObject(m); });
+const boardPos = new THREE.Vector3(bodyBox.min.x + 40, bodyBox.max.y - 6, bodyBox.min.z - 34);
+const board = new THREE.Group(); board.position.copy(boardPos); scene.add(board);
+const pcb = new THREE.Mesh(new THREE.BoxGeometry(52, 1.6, 26), MAT.pcb); pcb.castShadow = pcb.receiveShadow = true; board.add(pcb);
+const chip = new THREE.Mesh(new THREE.BoxGeometry(18, 3, 16), MAT.chip); chip.position.set(6, 2, 0); chip.castShadow = true; board.add(chip);
+for (const z of [-11.5, 11.5]) { const h = new THREE.Mesh(new THREE.BoxGeometry(48, 6, 2.5), MAT.pin); h.position.set(0, -4, z); board.add(h); }
+const WIRE = [0x2f6fd8, 0xe78ac3, 0xf2c94c, 0xf08a3c, 0xd9473b];          // 28BYJ-48 lead colours
+const SERVO_WIRE = [0x6b4a2f, 0xd9473b, 0xf08a3c];
+function wireBundle(from, to, colors, sag) {
+  return colors.map((c, i) => {
+    const off = (i - (colors.length - 1) / 2) * 1.6, mat = new THREE.MeshStandardMaterial({ color: c, roughness: .5 });
+    const mesh = new THREE.Mesh(new THREE.BufferGeometry(), mat); mesh.castShadow = true; scene.add(mesh);
+    const w = { mesh, off, sag, from, to }; buildWire(w); return w;
+  });
+}
+function buildWire(w) {
+  const a = w.from.clone().add(new THREE.Vector3(w.off, 0, 0)), b = w.to.clone().add(new THREE.Vector3(w.off * .6, 0, 0));
+  const mid = a.clone().lerp(b, .5); mid.y += w.sag;
+  const q1 = a.clone().lerp(mid, .5); q1.y += w.sag * .5;
+  w.mesh.geometry.dispose(); w.mesh.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a, q1, mid, b]), 48, .55, 6, false);
+}
+caps.forEach((p, i) => wireBundle(p, boardPos.clone().add(new THREE.Vector3(-18 + i * 14, 1, 12)), WIRE, 38 + i * 10));
+const servoMesh = groups.x.children.find(m => m.material === MAT.servo);
+const servoBox = servoMesh ? new THREE.Box3().setFromObject(servoMesh) : null;
+const servoLocal = servoBox ? groups.x.worldToLocal(servoBox.getCenter(new THREE.Vector3()).add(new THREE.Vector3(0, servoBox.max.y - servoBox.getCenter(new THREE.Vector3()).y, 0))) : null;
+const servoWires = servoLocal ? wireBundle(servoLocal.clone(), boardPos.clone().add(new THREE.Vector3(20, 1, 12)), SERVO_WIRE, 55) : [];
+$('loading').remove();
+
+/* ===== the heartbeat program ===== */
+// card coordinates: u (mm, left→right), v (mm, top→bottom). Pen sits still in Z; the bed slides to bring v under it.
+const ROW_Y = [30, 56, 82], U0 = 10, U1 = CARD_W - 10, BEATS_PER_ROW = 56;
+function makeProgram() {
+  const steps = []; let t = 0;
+  ROW_Y.forEach((rowY, r) => {
+    const guided = r > 0;                                     // row 1 = listen, rows 2–3 = guided
+    steps.push({ up: true, u: U0, v: rowY, guided });
+    for (let b = 0; b <= BEATS_PER_ROW; b++) {
+      let ibi;
+      if (!guided) ibi = .84 + .045 * Math.sin(t * 1.9) + .035 * Math.sin(t * 4.3 + 1) + (Math.random() - .5) * .07;
+      else { const k = r === 1 ? clamp(b / BEATS_PER_ROW * 1.4, 0, 1) : 1;      // takes about a minute to lock on
+        ibi = .86 + k * .085 * Math.sin(2 * Math.PI * .1 * t) + (1 - k) * (Math.random() - .5) * .06 + (Math.random() - .5) * .012; }
+      t += ibi;
+      steps.push({ up: false, u: U0 + (U1 - U0) * b / BEATS_PER_ROW, v: rowY - (ibi - .86) * 120, ibi, beat: true, guided });
+    }
+  });
+  steps.push({ up: true, u: CARD_W / 2, v: 4, done: true });
+  return steps;
+}
+function clearCard() {
+  ctx.fillStyle = '#f4efe4'; ctx.fillRect(0, 0, cardCanvas.width, cardCanvas.height);
+  ctx.strokeStyle = 'rgba(40,38,48,.16)'; ctx.lineWidth = 1; ctx.strokeRect(PX * 4, PX * 4, (CARD_W - 8) * PX, (CARD_H - 8) * PX);
+  ctx.fillStyle = 'rgba(40,38,48,.45)'; ctx.font = `${3.2 * PX}px Georgia, serif`;
+  ctx.fillText('listen', U0 * PX, (ROW_Y[0] - 14) * PX); ctx.fillText('guided · 6 breaths / min', U0 * PX, (ROW_Y[1] - 14) * PX);
+  tex.needsUpdate = true;
+}
+let prog, idx, pos, penDown, penLift, beats, fast = false, last = performance.now();
+function restart() { prog = makeProgram(); idx = 0; pos = { u: U0, v: ROW_Y[0] }; penDown = false; penLift = 1; beats = 0; clearCard(); $('beats').textContent = 0; $('ibi').textContent = '–'; }
+restart();
+
+$('fast').onclick = () => { fast = !fast; $('fast').classList.toggle('on', fast); $('fast').setAttribute('aria-pressed', fast); };
+$('cam').onclick = () => { camView = camView === 'iso' ? 'top' : 'iso'; camera.position.set(...VIEWS[camView]); $('cam').textContent = camView === 'iso' ? 'Top view' : 'Angle view'; };
+$('restart').onclick = restart;
+
+const SPEED = 24;                                         // mm/s, Plotlet's real speed (4 ms per step, ~0.095 mm per step)
+const DRAW_INK = { false: '#a8432f', true: '#2d4f7a' };   // listen row in red ink, guided rows in blue (two pens)
+const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+renderer.setAnimationLoop(now => {
+  let dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (document.hidden) return;
+  dt *= fast ? 4 : 1;
+  let budget = dt;
+  while (budget > 0 && idx < prog.length) {
+    const s = prog[idx];
+    const wantDown = !s.up;
+    if (wantDown !== penDown) {                           // servo: lift or drop the pen (~0.3 s)
+      penLift += (wantDown ? -1 : 1) * budget / .3; budget = 0;
+      if (penLift <= 0) { penLift = 0; penDown = true; } else if (penLift >= 1) { penLift = 1; penDown = false; }
+      break;
+    }
+    const du = s.u - pos.u, dv = s.v - pos.v, d = Math.hypot(du, dv), stepLen = SPEED * budget;
+    const nu = d <= stepLen ? s.u : pos.u + du / d * stepLen, nv = d <= stepLen ? s.v : pos.v + dv / d * stepLen;
+    if (penDown) { ctx.strokeStyle = DRAW_INK[!!s.guided]; ctx.lineWidth = .45 * PX; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(pos.u * PX, pos.v * PX); ctx.lineTo(nu * PX, nv * PX); ctx.stroke(); tex.needsUpdate = true; }
+    // gears turn with the motion they drive (pitch radius ~7 mm)
+    for (const g of gears) g.pivot.rotation[g.axis] += (g.role === 'gx' ? -(nu - pos.u) : (nv - pos.v)) / 7;
+    pos = { u: nu, v: nv };
+    if (d <= stepLen) { budget -= d / SPEED; idx++;
+      if (s.beat) { beats++; $('beats').textContent = beats; $('ibi').textContent = Math.round(s.ibi * 1000) + ' ms'; }
+    } else budget = 0;
+  }
+  if (idx >= prog.length) { if (!restart.wait) restart.wait = now; if (now - restart.wait > 6000) { restart.wait = 0; restart(); } }
+  const cur = prog[Math.min(idx, prog.length - 1)];
+  $('phL').classList.toggle('on', !cur.done && !cur.guided); $('phG').classList.toggle('on', !cur.done && !!cur.guided); $('phD').classList.toggle('on', !!cur.done);
+  $('pen').textContent = penDown ? 'down' : 'up';
+
+  // map card position to machine: X carriage slides with u, bed slides so that v sits under the pen, servo lifts the holder
+  groups.x.position.x = pos.u - CARD_W / 2 + (bedCx - penX);
+  groups.bed.position.z = penZ - (bedCz - CARD_H / 2 + pos.v);
+  groups.z.position.y = penLift * 4;
+  if (servoLocal) { const p = servoLocal.clone().add(groups.x.position); for (const w of servoWires) { w.from = p; buildWire(w); } }
+  controls.update(); renderer.render(scene, camera);
+});
+if (still) { fast = true; }
+</script>

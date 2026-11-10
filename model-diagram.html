@@ -331,13 +331,13 @@ footer .cite b{color:var(--muted); font-weight:400}
             <div class="ameter"><div class="fill" id="aFill"></div><div class="mid"></div><div class="cap" id="aCap"></div></div>
             <div class="aside">
               <div class="aendlab"><span data-t="arHi1"></span><span data-t="arHi2"></span></div>
-              <div class="aval"><span id="aValTxt">+0.00</span><span class="u">A</span></div>
+              <div class="aval"><span id="aValTxt">+0</span><span class="u">BPM</span></div>
               <div class="aendlab"><span data-t="arLo1"></span><span data-t="arLo2"></span></div>
             </div>
           </div>
           <p class="anote">
-            <span class="i18n-en">Live: a <b style="color:rgba(var(--motion),.95)">heart-rate sensor</b> drives this. Here a labeled <b style="color:rgba(var(--cinematic),.95)">demo trace</b> stands in, decoupled from the audio.</span>
-            <span class="i18n-zh">真实系统由<b style="color:rgba(var(--motion),.95)">心率传感器</b>驱动；这里用一条标注过的<b style="color:rgba(var(--cinematic),.95)">演示轨迹</b>替代——与声音解耦。</span>
+            <span class="i18n-en">Live: a <b style="color:rgba(var(--motion),.95)">heart-rate sensor</b>. Here a labeled <b style="color:rgba(var(--cinematic),.95)">demo trace</b> stands in. It <b>never moves the point</b> on the disc; it only feeds the rule of the state you chose.</span>
+            <span class="i18n-zh">真实系统用<b style="color:rgba(var(--motion),.95)">心率传感器</b>；这里用一条标注过的<b style="color:rgba(var(--cinematic),.95)">演示轨迹</b>替代。它<b>从不移动圆盘上的点</b>，只送进你所选状态的规则。</span>
           </p>
         </div>
 
@@ -395,7 +395,7 @@ footer .cite b{color:var(--muted); font-weight:400}
             <div class="mk lab" data-t="atmosK"></div>
             <div class="mv num"><span id="atmosTxt">60</span><span style="color:var(--faint); font-size:.7em"> / 100</span></div>
             <div class="mbar"><i id="atmosBar" style="background:rgba(var(--sleep),.8)"></i></div>
-            <div class="lab" style="text-transform:none; font-size:.56rem; color:var(--faint); margin-top:7px; letter-spacing:.04em" data-t="atmosSub"></div>
+            <div class="lab" style="text-transform:none; font-size:.56rem; color:var(--muted); margin-top:7px; letter-spacing:.04em" id="atmosSubTxt"></div>
           </div>
           <div class="mcard">
             <div class="mk lab" data-t="eqK"></div>
@@ -416,8 +416,8 @@ footer .cite b{color:var(--muted); font-weight:400}
   <!-- ============ OUTPUT READOUT ============ -->
   <div class="demostrip">
     <span class="ds-tag" data-t="dsTag"></span>
-    <div class="i18n-en"><b>Input ≠ output.</b> Arousal here is driven by a labeled <b>representative trace</b>; valence stays self-reported. In the live system, arousal comes from a <b>heart-rate sensor</b>, independent of the sound. The audio on the right is only the <b>reshaped output</b>, never the input. (In the product, the mood tilt is set by hand in free listening and held neutral while heart rate drives; here both run together to show each mechanism.)</div>
-    <div class="i18n-zh"><b>输入 ≠ 输出。</b>这里的唤醒度由一条标注过的「代表性轨迹」驱动，效价仍由你自报。真实系统里，唤醒来自<b>心率传感器</b>——与声音本身无关。右侧的声音只作为「<b>被重塑的输出</b>」，绝不反过来当输入。（产品里，心情冷暖只在自由聆听时手动调，心率驱动时保持中性；这里两者同时运行，是为了把每个机制都演示出来。）</div>
+    <div class="i18n-en"><b>Two inputs, kept apart.</b> The point on the disc is <b>where you say you are</b> (mood and how activated you feel); its field suggests a state, and <b>you choose</b>. Heart rate, read against your own baseline, <b>never picks the state</b>: it only tells the chosen state how far you are from its goal, and <b>each state answers in its own way</b> (fact sheet K). The audio on the right is only the reshaped output, never an input. Work and Sleep really run on the synthesised engine; here one track stands in so you can hear each rule.</div>
+    <div class="i18n-zh"><b>两个输入，分开来看。</b>圆盘上的点是<b>你自己说你在哪</b>（心情、觉得自己有多兴奋）；它落在哪个区就建议哪个状态，<b>由你来选</b>。心率以你自己的基线为参照，<b>从不选状态</b>：它只告诉所选的状态你离目标还有多远，<b>每个状态按自己的方式回应</b>（事实表 K 节）。右侧的声音只是被重塑的输出，绝不当输入。工作和睡眠实际用的是合成引擎；这里用同一首歌代替，好让你听出每条规则。</div>
   </div>
 
   <div class="outbar">
@@ -445,9 +445,9 @@ footer .cite b{color:var(--muted); font-weight:400}
 
   <footer class="foot">
     <div class="cite">
-      Axes: <b>Russell (1980)</b> circumplex &nbsp;·&nbsp; low-pass↔arousal via brain-stem reflex, <b>Juslin BRECVEMA (2013)</b> &nbsp;·&nbsp; tempo &lt;80 BPM for recuperation <b>Karageorghis &amp; Priest (2012)</b>
+      Disc: <b>Russell (1980)</b> circumplex, self-reported &nbsp;·&nbsp; heart-rate rules per state: Relax match → guide <b>Lowe-Brown et al. (2026)</b>, <b>Ding et al. (2026, preprint)</b> · Motion intensity <b>Tanaka et al. (2001)</b> · Work holds <b>Hughes et al. (2019)</b> · Sleep target <b>Carrington et al. (2005)</b> &nbsp;·&nbsp; tempo &lt;80 BPM for recuperation <b>Karageorghis &amp; Priest (2012)</b>
     </div>
-    <div class="cite">Output waveform: real analysis of a track from the system · <b>glass2.wav</b> (AI-generated from my prompts, remixed by me) &nbsp;·&nbsp; arousal input = labeled demo trace</div>
+    <div class="cite">Output waveform: real analysis of a track from the system · <b>glass2.wav</b> (AI-generated from my prompts, remixed by me) &nbsp;·&nbsp; heart-rate input = labeled demo trace</div>
   </footer>
 
   <!-- ============ GO DEEPER · 整合入口(分轨机制 + 愿景硬件) ============ -->
@@ -507,6 +507,49 @@ function algoEQPreset(v,a){          // arousal-only, verbatim from script.js (w
   return 'clear';
 }
 function algoAtmosVal(a){ return Math.round(55 + a*45); } // -1→10, +1→100
+/* ============================================================
+   Heart-rate rules per state — fact sheet K, same code as script.js
+   (_relaxAtmos / _motionAtmos / _driveFromHeart) and scene-engine.js hrDrive.
+   hr = heart rate minus your resting baseline, in BPM.
+   ============================================================ */
+const K={MATCH:10, GUIDE:60, CALM:45, ZONE:5};
+let kS={board:null};
+function kRule(board,hr,dt){
+  if(board!==kS.board) kS={board,t:0,level:1,lastHr:hr,nextS:0,arc:0};
+  kS.t+=dt;
+  const ar=clamp(hr/25,-1,1);
+  if(board==='relax'){                                  // K2: short match → guide to a calm landing; never push
+    const match=algoAtmosVal(ar);
+    if(kS.t>=kS.nextS){                                 // once a second, like sensor readings
+      if(kS.t>K.MATCH){ let pace=1; if(hr<=K.ZONE) pace=1.5; else if(hr>kS.lastHr+1) pace=.3; kS.level=Math.max(0,kS.level-pace/K.GUIDE); }
+      kS.lastHr=hr; kS.nextS+=1; }
+    if(match<=K.CALM) return {atmos:Math.max(30,match), eq:ar<-.25?'flat':'clear', phase:'with'};
+    return {atmos:Math.round(K.CALM+(match-K.CALM)*kS.level), eq:'clear', phase:kS.t<=K.MATCH?'match':kS.level>0?'guiding':'landed'};
+  }
+  if(board==='motion'){                                 // K1: follow, never darker (no age given → +60 BPM = full)
+    const hrr=clamp(hr/60,0,1);
+    return {atmos:Math.round(80+20*clamp((hrr-.3)/.6,0,1)), eq:hrr>.6?'power':'grand', phase:hrr<.3?'idle':'follow'};
+  }
+  if(board==='cinematic') return {atmos:Math.round(55+20*ar), eq:'grand', phase:'light'};   // K5: follows lightly
+  if(board==='focus'){                                  // K3: within +8 nothing changes; above, events slowly thin
+    const ex=clamp((hr-8)/20,0,1); return {atmos:55, eq:'flat', phase:ex>0?'thin':'hold', ex};
+  }
+  if(board==='sleep'){                                  // K4: heart rate sets the arc's pace (target = baseline − 16)
+    const pace=clamp(1-(hr+16)/40,.3,1); kS.arc=Math.min(1,kS.arc+dt/120*pace);
+    return {atmos:Math.round(50-40*kS.arc), eq:'flat', phase:'arc', pace};
+  }
+  return {atmos:null, eq:null, phase:'guide'};          // guide zone: you pick a strategy, nothing is forced
+}
+function kRuleText(k){
+  const P={with:['already calm · following you','本来就平静 · 跟着你'], match:['matching you first','先接住你此刻的状态'], guiding:['guiding toward calm (45)','引导向平静（45）'], landed:['landed · calm','已落在平静点'],
+    idle:['already bright · not exercising yet','已经很亮 · 还没开始运动'], follow:['following you · never darker','跟着你 · 永不变暗'], light:['follows lightly','只轻微跟随'],
+    hold:['holding steady (within +8)','稳住不动（+8 以内）'], thin:[`steadier: events −${Math.round((k.ex||0)*25)}%`,`更稳：事件 −${Math.round((k.ex||0)*25)}%`],
+    arc:[`wind-down arc · pace ×${(k.pace||1).toFixed(2)}`,`入睡弧 · 速度 ×${(k.pace||1).toFixed(2)}`], guide:['pick a strategy · nothing forced','自己选策略 · 不强加']}[k.phase];
+  return P?pick(P[0],P[1]):'';
+}
+let kOut={atmos:55, eq:'clear', phase:'light'};
+let hrOff=0, hrDisp=0;   // heart rate minus baseline (demo trace), BPM
+
 const BOARD_BPM={ sleep:'50–60 BPM', relax:'60–72 BPM', focus:'72–88 BPM', cinematic:'60–96 BPM', motion:'125–140 BPM', guide:'—' };
 
 const BOARDS={
@@ -540,14 +583,14 @@ const T={
   sub:{en:'System Model',zh:'状态 → 声音 映射模型'},
   topcite:{en:'Output waveform · glass2.wav · a track from the system',zh:'输出波形 · glass2.wav · 系统里的一首曲目'},
   col1:{en:'Inputs',zh:'输入状态'}, col2:{en:'Russell Circumplex',zh:'情感环状模型'}, col3:{en:'Sound reshaped',zh:'声音被重塑'},
-  arTitle:{en:'Arousal',zh:'唤醒度'}, arSrc:{en:'Axis Y · heart rate · real system',zh:'纵轴 · 心率 · 真实系统'},
-  arHi1:{en:'+1 tense',zh:'+1 紧张'}, arHi2:{en:'excited',zh:'兴奋'}, arLo1:{en:'calm',zh:'平静'}, arLo2:{en:'−1 sleepy',zh:'−1 昏沉'},
-  vaTitle:{en:'Valence',zh:'效价'}, vaSrc:{en:'Axis X · self-reported',zh:'横轴 · 自我报告'},
+  arTitle:{en:'Heart rate',zh:'心率'}, arSrc:{en:'vs your resting baseline · demo trace',zh:'相对你的静息基线 · 演示轨迹'},
+  arHi1:{en:'+25 BPM',zh:'+25 BPM'}, arHi2:{en:'',zh:''}, arLo1:{en:'',zh:''}, arLo2:{en:'−25 BPM',zh:'−25 BPM'},
+  vaTitle:{en:'Valence',zh:'效价'}, vaSrc:{en:'Axis X · self-reported · drag the point for Y',zh:'横轴 · 自我报告 · 纵轴在圆盘上拖动'},
   vaLo:{en:'◀ negative',zh:'◀ 低落'}, vaHi:{en:'positive ▶',zh:'愉悦 ▶'},
   vaHint:{en:'you set this; the sensor reads how aroused you are, not whether it’s joy or dread',zh:'由你设定：传感器读得出你多亢奋，读不出是喜是忧'},
-  circCap:{en:'the point is your state; the field it lands in suggests a sound world — you choose',zh:'点是你此刻的状态；它落在哪个区，就建议哪个声音世界——选择在你'},
-  atmosK:{en:'Atmosphere',zh:'氛围深度'}, atmosSub:{en:'low-pass ← arousal',zh:'低通 ← 唤醒'},
-  eqK:{en:'EQ preset',zh:'音色'}, eqSub:{en:'character ← arousal',zh:'音色性格 ← 唤醒'},
+  circCap:{en:'the point is where you say you are (drag it); its field suggests a state — you choose. Heart rate never moves it.',zh:'点是你自己说的状态（可拖动）；它落在哪个区就建议哪个状态——由你来选。心率从不移动它。'},
+  atmosK:{en:'Atmosphere',zh:'氛围深度'}, atmosSub:{en:'set by this state’s heart-rate rule',zh:'由这个状态的心率规则决定'},
+  eqK:{en:'EQ preset',zh:'音色'}, eqSub:{en:'chosen by the state',zh:'由状态决定'},
   dsTag:{en:'Demo note',zh:'演示说明'},
   oCoordK:{en:'Coordinate',zh:'坐标'}, oBoardK:{en:'Sound world',zh:'板块'}, oEQK:{en:'EQ',zh:'音色'}, oAtmosK:{en:'Atmosphere',zh:'氛围'}, oBPMK:{en:'Target tempo',zh:'目标节奏'},
   sweepLab:{en:'auto journey',zh:'自动巡览'},
@@ -558,8 +601,8 @@ function applyLang(){
   document.querySelectorAll('.langtog button').forEach(b=>b.classList.toggle('on',b.dataset.lang===langMode));
   // flow chips (rebuilt with new language)
   const rt=t=>`<span class="rt">${t}</span>`;
-  $('flowLab1').innerHTML=`<span class="mech">${pick('state','状态')} → ${pick('coordinate','坐标')}</span><span class="cap">Russell 1980</span>`;
-  $('flowLab2').innerHTML=`<span class="mech">${pick('arousal','唤醒')} → ${rt(pick('low-pass + character','低通 + 音色性格'))} · ${pick('brain-stem reflex','脑干反射')}</span><span class="mech">${pick('valence','效价')} → ${rt(pick('warm/cool tilt','冷暖倾斜'))} · ${pick('emotional contagion','情绪感染')}</span><span class="cap">BRECVEMA · Juslin 2013</span>`;
+  $('flowLab1').innerHTML=`<span class="mech">${pick('you','你')} → ${pick('suggested state','建议的状态')}</span><span class="cap">Russell 1980</span>`;
+  $('flowLab2').innerHTML=`<span class="mech">${pick('heart rate','心率')} → ${rt(pick('this state’s rule','这个状态的规则'))}</span><span class="mech">${pick('valence','效价')} → ${rt(pick('warm/cool tilt','冷暖倾斜'))} · ${pick('emotional contagion','情绪感染')}</span><span class="cap">${pick('same heartbeat, different meaning','同一个心率，意思不同')}</span>`;
 }
 // x = valence (right +), y = arousal (up +)  →  drawn at (cx + x*R, cy - y*R)
 const ZONES=NAV_SECTORS.map(sec=>{const m=(sec.from+sec.to)/2*Math.PI/180; return {board:sec.board,x:.66*Math.cos(m),y:.66*Math.sin(m)};}).concat([{board:'focus',x:0,y:-.17}]);
@@ -745,7 +788,7 @@ function drawWave(){
   const {w,h}=fitCanvas(wave,wctx);
   wctx.clearRect(0,0,w,h);
   const mid=h*0.5, n=PEAKS.length;
-  const atmos=algoAtmosVal(arousalDisp);       // 10..100
+  const atmos=kOut.atmos??55;                   // from the chosen state's heart-rate rule
   const veil=clamp(1-atmos/100,0,1);            // low arousal → more veiled
   const warmth=(valenceDisp+1)/2;               // 0 cool .. 1 warm
   const tint=mix([110,150,210],[210,150,95],warmth);
@@ -808,21 +851,23 @@ function drawWave(){
    ============================================================ */
 function updateReadouts(){
   const v=valenceDisp, a=arousalDisp;
-  const board=algoBoard(v,a), eq=algoEQPreset(v,a), atmos=algoAtmosVal(a), bpm=BOARD_BPM[board];
+  const board=algoBoard(v,a), eq=kOut.eq||'flat', atmos=kOut.atmos??55, bpm=BOARD_BPM[board], none=kOut.atmos===null;
   const col=BOARDS[board].col, warmth=(v+1)/2;
   const tint=mix([110,150,210],[210,150,95],warmth);
 
   // arousal meter
-  $('aFill').style.height=((a+1)/2*100)+'%';
-  $('aCap').style.bottom=((a+1)/2*100)+'%';
-  $('aValTxt').textContent=(a>=0?'+':'')+a.toFixed(2);
+  const hn=clamp(hrDisp/25,-1,1);
+  $('aFill').style.height=((hn+1)/2*100)+'%';
+  $('aCap').style.bottom=((hn+1)/2*100)+'%';
+  $('aValTxt').textContent=(hrDisp>=0?'+':'−')+Math.abs(Math.round(hrDisp));
   // valence
   $('vValTxt').textContent=(v>=0?'+':'')+v.toFixed(2);
   // sound cards
-  $('atmosTxt').textContent=atmos;
+  $('atmosTxt').textContent=none?'—':atmos;
+  $('atmosSubTxt').textContent=kRuleText(kOut);
   $('atmosBar').style.width=atmos+'%';
   $('atmosBar').style.background=`rgba(${BOARDS[board].col.join(',')},.85)`;
-  $('eqTxt').textContent=pick(EQ_NAMES[eq].en,EQ_NAMES[eq].zh);
+  $('eqTxt').textContent=none?'—':pick(EQ_NAMES[eq].en,EQ_NAMES[eq].zh);
   $('eqBar').style.width=Math.round(EQ_WARMTH[eq]*100)+'%';
   $('eqBar').style.background=`rgba(${tint.join(',')},.9)`;
   $('waveTagL').textContent= atmos>60?pick('natural','满/亮') : atmos>30?pick('veiled','半掩') : pick('muffled','闷/包裹');
@@ -833,8 +878,8 @@ function updateReadouts(){
   $('oCoord').innerHTML=`V ${v>=0?'+':''}${v.toFixed(2)} &nbsp; A ${a>=0?'+':''}${a.toFixed(2)}`;
   $('oBoard').textContent=pick(BOARDS[board].en,BOARDS[board].zh);
   $('oDot').style.color=`rgb(${col.join(',')})`;
-  $('oEQ').textContent=pick(EQ_NAMES[eq].en,EQ_NAMES[eq].zh);
-  $('oAtmos').textContent=atmos;
+  $('oEQ').textContent=none?'—':pick(EQ_NAMES[eq].en,EQ_NAMES[eq].zh);
+  $('oAtmos').textContent=none?'—':atmos;
   $('oBPM').textContent=bpm;
 }
 
@@ -854,6 +899,11 @@ function drawFlow(){
     const x1=a.right-gb.left, x2=b.left-gb.left, y=(Math.max(a.top,b.top)+Math.min(a.bottom,b.bottom))/2-gb.top;
     return {x1,x2,y};
   });
+  // 第一条连线放在心率表那一行:那里左栏右半边是空的,小标签不会压住下面的说明文字
+  const ar=document.querySelector('.arows');
+  if(ar&&seg[0]){ const b=ar.getBoundingClientRect(), a0=cols[0].getBoundingClientRect(), a1=cols[1].getBoundingClientRect();
+    const y=b.top+b.height/2-gb.top, lo=Math.max(a0.top,a1.top)-gb.top+20, hi=Math.min(a0.bottom,a1.bottom)-gb.top-20;
+    if(hi>lo) seg[0].y=Math.max(lo,Math.min(hi,y)); }
   let html='';
   seg.forEach(s=>{
     html+=`<line x1="${s.x1}" y1="${s.y}" x2="${s.x2}" y2="${s.y}"/>`;
@@ -866,7 +916,8 @@ function drawFlow(){
   // position the mechanism chips on each connector
   const lab1=$('flowLab1'), lab2=$('flowLab2');
   if(lab1&&seg[0]){ lab1.style.left=((seg[0].x1+seg[0].x2)/2)+'px'; lab1.style.top=seg[0].y+'px'; }
-  if(lab2&&seg[1]){ lab2.style.left=((seg[1].x1+seg[1].x2)/2)+'px'; lab2.style.top=seg[1].y+'px'; }
+  // 第二个标签整个放进右栏(压在波形左侧),让开圆盘:圆盘上的点会移到这一带,不能被挡
+  if(lab2&&seg[1]){ lab2.style.left=(seg[1].x2+10+lab2.offsetWidth/2)+'px'; lab2.style.top=seg[1].y+'px'; }
 }
 
 /* ============================================================
@@ -883,22 +934,24 @@ function tick(now){
   }
   const fi=Math.floor(frame)%NF;
 
-  // state source (priority): held preset → choreographed journey → manual valence + auto arousal
+  // the point = what you report (held preset → tour of choices → where you dragged it); heart rate never moves it
   if(arousalOverride!==null){
-    arousal=arousalOverride;                       // frozen preset (keys 1-5); valence already set
+    arousal=arousalOverride;                       // frozen preset (keys 1-5) or dragged point
   } else if(sweep && playing){
-    const j=journey(frame/FPS);                     // deliberate tour of the five boards
+    const j=journey(frame/FPS);                     // a tour of five choices
     valence=j.v; arousal=j.a; vSlider.value=Math.round(j.v*100);
-  } else {
-    arousal=demoTrace(frame/FPS);                   // manual valence, arousal keeps roaming
   }
+  // heart rate: its own input (demo trace), vs your baseline
+  if(presetHr!==null) hrOff=presetHr; else if(playing) hrOff=demoTrace(frame/FPS)*25;
+  hrDisp=lerp(hrDisp,hrOff,0.14);
   // smooth for buttery motion
   arousalDisp=lerp(arousalDisp,arousal,0.14);
   valenceDisp=lerp(valenceDisp,valence,0.16);
-  if(audioOn && audioReady) applyDSP(arousalDisp,valenceDisp);
+  kOut=kRule(algoBoard(valenceDisp,arousalDisp), hrDisp, playing?dt:0);
+  if(audioOn && audioReady) applyDSP(kOut,valenceDisp);
 
-  // heart beat rate hint from arousal
-  const hb=$('hbeat'); if(hb) hb.style.animationDuration=(1.15-((arousalDisp+1)/2)*0.6).toFixed(2)+'s';
+  // heart beat rate from heart rate (resting 70 + offset)
+  const hb=$('hbeat'); if(hb) hb.style.animationDuration=(60/(70+hrDisp)).toFixed(2)+'s';
 
   flowPulse=(flowPulse+dt*0.55)%1;
 
@@ -913,12 +966,23 @@ function tick(now){
 /* ============================================================
    Controls
    ============================================================ */
-$('playBtn').addEventListener('click',()=>{ if(!playing) arousalOverride=null; setPlay(!playing); });
+$('playBtn').addEventListener('click',()=>{ if(!playing) presetHr=null; setPlay(!playing); });
 function setPlay(on){
   playing=on;
   $('playIcon').innerHTML= on ? '<path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/>' : '<path d="M8 5v14l11-7z"/>';
   if(audioOn && audioReady){ on ? track.play() : track.pause(); }
 }
+/* drag the point: where you say you are (heart rate never moves it) */
+let dragging=false;
+function setPointFrom(e){
+  const r=circ.getBoundingClientRect(), R=Math.min(r.width,r.height)*0.40;
+  let x=(e.clientX-r.left-r.width/2)/R, y=-(e.clientY-r.top-r.height/2)/R; const m=Math.hypot(x,y); if(m>1){x/=m;y/=m;}
+  valence=x; arousalOverride=y; vSlider.value=Math.round(x*100); setSweep(false);
+}
+circ.style.cursor='grab'; circ.style.touchAction='none';
+circ.addEventListener('pointerdown',e=>{ dragging=true; circ.setPointerCapture(e.pointerId); setPointFrom(e); });
+circ.addEventListener('pointermove',e=>{ if(dragging) setPointFrom(e); });
+circ.addEventListener('pointerup',()=>{ dragging=false; });
 vSlider.addEventListener('input',e=>{
   valence=+e.target.value/100;
   setSweep(false);
@@ -926,17 +990,18 @@ vSlider.addEventListener('input',e=>{
 scrub.addEventListener('input',e=>{ frame=(+e.target.value/1000)*NF; arousalOverride=null; trail.length=0; if(audioOn && audioReady) track.currentTime=(frame/FPS)%DUR; });
 
 // preset states → one clean still per sound world (keys 1–5)
+let presetHr=null;   // a still also fixes the heart rate it is shown with
 const PRESETS={
-  '1':{v:0.30,a:0.62},  // Motion
-  '2':{v:0.42,a:0.20},  // Imagine (cinematic)
-  '3':{v:0.44,a:-0.14}, // Relax — 放松扇区靠上,点不压板块名
-  '4':{v:0.10,a:-0.62}, // Sleep
-  '5':{v:0.06,a:0.06},  // Work (focus) — 中心:情绪平稳
+  '1':{v:0.30,a:0.62, hr:40},  // Motion, mid-workout
+  '2':{v:0.42,a:0.20, hr:5},   // Imagine (cinematic)
+  '3':{v:0.44,a:-0.14,hr:15},  // Relax — 放松扇区靠上,点不压板块名;心跳偏快 → 先匹配
+  '4':{v:0.10,a:-0.62,hr:4},   // Sleep — 离入睡目标还远 → 弧放慢
+  '5':{v:0.06,a:0.06, hr:4},   // Work (focus) — 中心:情绪平稳;+8 以内不动
 };
 addEventListener('keydown',e=>{
   if(e.key===' '){e.preventDefault(); setPlay(!playing); return;}
   const p=PRESETS[e.key];
-  if(p){ setPlay(false); setSweep(false); valence=p.v; arousalOverride=p.a; vSlider.value=Math.round(p.v*100); trail.length=0; }
+  if(p){ setPlay(false); setSweep(false); valence=p.v; arousalOverride=p.a; presetHr=p.hr; vSlider.value=Math.round(p.v*100); trail.length=0; }
 });
 function setSweep(on){ sweep=on; const t=$('sweepToggle'); t.classList.toggle('on',on); t.setAttribute('aria-checked',on); }
 $('sweepToggle').addEventListener('click',()=>setSweep(!sweep));
@@ -969,13 +1034,13 @@ function buildAudio(){
     return true;
   }catch(err){ console.warn('audio wiring failed',err); return false; }
 }
-function applyDSP(a,v){
+function applyDSP(k,v){
   if(!actx) return;
   const now=actx.currentTime, tc=0.08;
-  // atmosphere lowpass ← arousal
-  lp.frequency.setTargetAtTime(sliderToFreq(algoAtmosVal(a)), now, tc);
-  // EQ preset ← arousal (algoEQPreset ignores v)
-  const key=algoEQPreset(v,a), p=AUDIO_EQ[key];
+  // atmosphere low-pass ← the chosen state's heart-rate rule
+  lp.frequency.setTargetAtTime(sliderToFreq(k.atmos??55), now, tc);
+  // EQ preset ← the chosen state
+  const key=k.eq||'flat', p=AUDIO_EQ[key];
   if(key!==curEQ){ curEQ=key;
     eqL.frequency.setValueAtTime(p.low.freq,now);
     eqM.frequency.setValueAtTime(p.mid.freq,now); eqM.Q.setValueAtTime(p.mid.Q||1,now);
@@ -1002,7 +1067,7 @@ $('soundBtn').addEventListener('click',()=>{
     audioOn=true; setSoundIcon(true);
     if(actx.state==='suspended') actx.resume();
     track.currentTime=(frame/FPS)%DUR;
-    curEQ=null; applyDSP(arousalDisp,valenceDisp);
+    curEQ=null; applyDSP(kOut,valenceDisp);
     track.play().then(()=>{audioReady=true; setPlay(true);})
       .catch(err=>{ audioReady=false; console.warn('play blocked',err); });
   }else{
@@ -1013,7 +1078,7 @@ $('soundBtn').addEventListener('click',()=>{
 // deep-link a preset still: model-diagram.html#s=1 … #s=5
 (function(){
   const m=(location.hash.match(/s=([1-5])/)||[])[1];
-  if(m && PRESETS[m]){ const p=PRESETS[m]; setPlay(false); setSweep(false); valence=p.v; arousalDisp=p.a; valenceDisp=p.v; arousalOverride=p.a; frame=NF*0.5; vSlider.value=Math.round(p.v*100); }
+  if(m && PRESETS[m]){ const p=PRESETS[m]; setPlay(false); setSweep(false); valence=p.v; arousalDisp=p.a; valenceDisp=p.v; arousalOverride=p.a; presetHr=p.hr; hrDisp=p.hr; frame=NF*0.5; vSlider.value=Math.round(p.v*100); }
 })();
 
 // language toggle

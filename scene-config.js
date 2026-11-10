@@ -19,11 +19,11 @@ const SCENES = {
       files:['rain-demo-assets/thunder.m4a','scene-assets/thunder-evt_1.m4a','scene-assets/thunder-evt_2.m4a'], ivMin:12, ivMax:26, ang:0, spread:1.2, dist:2.2, lp:1200 },
   ]},
   homework: { label:'雨天在家办公(工作)', layers:[
-    { key:'glue', role:'K', label:'底胶·粉噪(掩蔽)', preset:'glue-pink  粉噪·通用底胶', vol:0.48, ambient:true, color:'#7a8a90', range:[0.45,0.5] },
-    { key:'wind', role:'K', label:'室内嗡(风近似)', preset:'wind-sea  海风·空旷',      vol:0.12, ang:Math.PI, dist:1.3, send:0.2, color:'#8fd0e2', range:[0.1,0.15] },
-    { key:'ai:rainwin',  role:'K', label:'窗外雨(隔窗·某侧)', kind:'bed', vol:0.4, send:0.3, color:'#6a9aa8', range:[0.3,0.5],
-      files:['rain-demo-assets/far_loop.m4a'], pos:[{ang:-1.6,dist:1.7}] },
-    { key:'ai:raindrip', role:'M', label:'雨滴(隔窗·闷)', kind:'bed', vol:0.13, send:0.2, color:'#6a9aa8', range:[0.08,0.18],
+    { key:'glue', role:'K', label:'底胶·粉噪(掩蔽)', preset:'glue-pink  粉噪·通用底胶', vol:0.2, ambient:true, color:'#7a8a90', range:[0.16,0.24] },   // 11-08：底噪再降(原 0.45–0.5)；带 range 的层混音表不生效，要改这里
+    { key:'wind', role:'K', label:'室内嗡(风近似)', preset:'wind-sea  海风·空旷',      vol:0.12, ang:Math.PI, dist:1.3, send:0.2, color:'#8fd0e2', range:[0.1,0.15], off:true },   // 11-08 关掉：海风音色让雨天办公听起来像海边
+    { key:'ai:rainwin',  role:'K', label:'窗外雨(隔窗·某侧)', kind:'bed', vol:0.62, send:0.2, color:'#6a9aa8', range:[0.55,0.7],
+      files:['rain-demo-assets/near_loop.m4a','rain-demo-assets/far_loop.m4a'], pos:[{ang:-1.4,dist:1.4},{ang:-2.0,dist:1.9}] },   // 11-08：加上近雨(带 G 提亮)，雨声成为主角
+    { key:'ai:raindrip', role:'M', label:'雨滴(隔窗·闷)', kind:'bed', vol:0.22, send:0.2, color:'#6a9aa8', range:[0.18,0.26],
       files:['rain-demo-assets/drops_loop.m4a'], pos:[{ang:-1.4,dist:1.8}] },
     { key:'ai:keyboard', role:'S', label:'键盘(手边)', kind:'evt', vol:0.1, send:0.12, color:'#c0b060', group:'desk', range:[0,0.15],
       files:['scene-assets/keyboard-evt_1.m4a','scene-assets/keyboard-evt_2.m4a','scene-assets/keyboard-evt_3.m4a','scene-assets/keyboard-evt_4.m4a'], ivMin:7, ivMax:17, ang:0.35, spread:0.3, dist:0.9, rate:0.8 },
@@ -86,11 +86,11 @@ const MIX = {
   },
   rain: {
     sleep:{ g:{tone:3000,radius:2.0,reverb:0.9}, layers:{ glue:0.60, wind:0.26, drip:0.68, 'ai:rainbed':0.72, 'ai:thunder':0.40 } },
-    work: { g:{tone:8000,radius:1.2,reverb:0.5}, layers:{ glue:0.48, wind:0.32, drip:0.85, 'ai:rainbed':0.66, 'ai:thunder':0.30 } },
+    work: { g:{tone:8000,radius:1.2,reverb:0.35}, layers:{ glue:0.22, wind:0.32, drip:0.85, 'ai:rainbed':0.66, 'ai:thunder':0.30 } },   // 11-08：底噪 0.48→0.22、混响 0.5→0.35(雨要透亮)
   },
   homework: {
     sleep:{ g:{tone:3500,radius:1.8,reverb:0.7}, layers:{ glue:0.55, 'ai:rainwin':0.66, 'ai:keyboard':0.30 } },
-    work: { g:{tone:8500,radius:1.1,reverb:0.45}, layers:{ glue:0.55, 'ai:rainwin':0.55, 'ai:keyboard':0.52, 'ai:pen':0.40, 'ai:paper':0.40, 'ai:mouse':0.38, 'ai:chair':0.42 } },
+    work: { g:{tone:8500,radius:1.1,reverb:0.35}, layers:{ glue:0.32, 'ai:rainwin':0.55, 'ai:keyboard':0.52, 'ai:pen':0.40, 'ai:paper':0.40, 'ai:mouse':0.38, 'ai:chair':0.42 } },   // 11-08：底噪 0.55→0.32、混响 0.45→0.35
   },
   beach: {
     sleep:{ g:{tone:3000,radius:2.0,reverb:0.8}, layers:{ glue:0.55, wind:0.18, 'ai:wave':0.78, 'ai:gull':0.20 } },

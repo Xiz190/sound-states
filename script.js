@@ -47,9 +47,12 @@ const UI = {
   valWarm:       { en: 'Warmer — low end lifted, highs eased', zh: '偏暖 —— 低频抬起、高频收敛' },
   valCool:       { en: 'Cooler — highs open, low end trimmed', zh: '偏冷 —— 高频打开、低频收住' },
   valNeutral:    { en: 'Neutral — warmth untouched', zh: '中性 —— 不加暖冷' },
-  ctrlLogic:     { en: 'Character follows your state — heart rate sets the space & clarity automatically. Mood is the warm↔cool axis; slide it in free listening.',
-                   zh: '音色性格随状态自动 —— 心率决定空间感与清晰度。心情是暖↔冷这条轴，自由聆听时可手动滑。' },
+  ctrlLogic:     { en: 'Your heart rate sets the space and clarity, in the way this state calls for. Mood is the warm↔cool axis; slide it in free listening.',
+                   zh: '心率按这个状态的方式设定空间感和清晰度。心情是冷暖轴，在自由聆听时手动滑。' },
   restingLabel:  { en: 'Resting HR', zh: '静息基线' },
+  ageLabel:      { en: 'Age (optional, Motion only)', zh: '年龄（选填，仅运动板块）' },
+  ageHint:       { en: 'Why: in Motion the music builds with how hard you are working, and how hard depends on age: 140 BPM is a moderate effort at 20 and a hard one at 60. With your age, it keeps building until you near your own limit (estimated as 208 − 0.7 × age, about ±10 BPM off for any one person). Without it, it tops out at a fixed distance above your resting rate (numbers below). Used only here, saved only on this device. The finger sensor can’t read while you move: stop, then measure.',
+                   zh: '为什么要填：运动板块的音乐随你"有多吃力"变满变亮，而吃力程度和年龄有关——同样心跳 140，20 岁是中等强度，60 岁已经很吃力。填了年龄：声音会一直跟到接近你自己的极限（按 208 − 0.7 × 年龄估算，对个人约有 ±10 拍误差）。不填：比静息心率高出固定的拍数就到顶（具体数字见下一行）。只在运动板块使用，只保存在这台设备上。手指传感器在运动中读不准：先停下，再测。' },
   restingHint:   { en: 'seated, still for 5 min, 2 h after a meal · median of 3 days · unsure? keep 70 or use By hand', zh: '坐姿静坐 5 分钟、饭后 2 小时测 · 取 3 天中位数 · 不知道？先用 70 或选手动' },
   headphoneHint: { en: 'Best with headphones', zh: '建议佩戴耳机' },
   placeholderNote: { en: 'Cinematic now plays a real track — drag the Atmosphere slider to morph its tone in real time.',
@@ -101,8 +104,8 @@ const UI = {
     zh: '我离不开音乐。我写歌、录音、混音，几乎全天戴着耳机。但有些状态下，连我喜爱的音乐都变得太重——极度疲惫或情绪混乱时，旋律的重量让人难以承受；那时我需要的是没有走向的纹理，没有情节的氛围。我在身边的人身上也观察到这件事：朋友用番茄时钟配着雨声或海浪声专注学习；另一些人长时间学习时默认打开 lofi；睡不着时放 ASMR 让脑子安静。每个人都已经在凭直觉用声音管理自己的状态——只是没有一个系统。\n\n后来在 UC San Diego 的 Musical Psychoacoustics 课上，有一次我听出的东西和全班不一样。教授把我叫去课下——她首先怀疑是我搞错了。有一次确实是我错了：我的耳机线坏了。但另一次，我是真的听到了不同的东西；我把依据说清楚之后，她信了我。她告诉我：这个领域不存在像数学那样唯一精确、100% 正确的标准。\n\n那一刻我意识到：声音感知没有标准答案。但今天几乎所有音乐产品都在假设它有。',
   },
   aboutP2: {
-    en: 'Sound States is the answer I built. Its core fits in one sentence: your state is the input; the structure of the sound is the output. Building it meant answering three questions.\n\nWhat should change? Melody makes the brain predict the next note, and a predicting brain cannot rest (Huron, 2006). So the non-melodic boards — Work and Sleep — are synthesised in code, layer by layer, in real time. The melodic boards keep their melody and change around it: in Relax, instrument layers step in and out with your arousal.\n\nHow should it change? Your heart rate, read against your own resting baseline, gives arousal — from a real optical sensor (MAX30102 over Web Serial), a demo slider, or by hand. As it rises, layers fill in and the sound opens; as you settle, it thins and closes around you. Space is placed by psychoacoustic cues, not by ear. The direction comes from theory (Russell, 1980; Juslin, 2013); the amounts are design choices, and I say so.\n\nWho decides? Heart rate measures arousal, not intention — it can tell how activated you are, not whether that is excitement or dread. So you choose where you want to be; your heart rate only shapes how the sound takes you there. If you are tense or low, the system does not pretend to fix it: it offers three strategies — let it out, get away from it, be comforted (Saarikallio & Erkkilä, 2007) — and you pick. You can see what it is changing, and you can always take over by hand.\n\nMusic that follows the body is not new: RockMyRun matched tempo to heart rate in 2014, and Endel has generated soundscapes from heart rate since 2018. What I am adding is an answer to what should change, what should not, and who decides.\n\nOn the music side: I write my own songs, but this system needs more music than one person can produce in time. The tracks here are generated with AI from my prompts and refined over several rounds; I then select them, remix them, split them into stems, and design how each layer moves. The system design is mine.',
-    zh: 'Sound States 是我给出的答案。它的核心可以用一句话说完：你的状态是输入，声音的结构是输出。做它，就是在回答三个问题。\n\n什么该变？旋律会让大脑忍不住预测下一个音，而正在预测的大脑没法休息（Huron，2006）。所以无旋律的两个板块——工作和睡眠——由代码一层一层实时合成；有旋律的板块保留旋律，只改变旋律周围的东西：在放松板块里，各个声部随你的唤醒进进出出。\n\n怎么变？你的心率，以你自己的静息基线为参照，得出唤醒度——来源可以是真实的光学传感器（MAX30102，经 Web Serial）、演示滑条，或者手动。唤醒升高，声部补满、声音打开；平静下来，它变轻、收拢、包住你。空间按心理声学的线索摆放，而不是凭耳朵。方向来自理论（Russell，1980；Juslin，2013）；幅度是设计取舍，我会明说。\n\n由谁决定？心率测的是唤醒，不是意图——它读得出你有多激动，读不出那是兴奋还是恐惧。所以去哪里由你选，心率只负责调整声音怎么带你过去。如果你正紧张或低落，系统不假装能替你解决：它给出三种策略——宣泄、转移、慰藉（Saarikallio & Erkkilä，2007）——由你来挑。你看得见它在改什么，也随时可以亲手接管。\n\n让音乐跟着身体走，并不是新想法：RockMyRun 2014 年就让节奏跟随心率，Endel 从 2018 年起用心率生成声景。我想补上的，是对"什么该变、什么不该变、由谁决定"的回答。\n\n音乐这边：我自己写歌，但这个系统需要的音乐量一个人来不及做。这里的曲目是按我的关键词用 AI 生成、再经过几轮迭代得到的；之后由我筛选、重新混音、拆成分轨，并设计每一层怎么随状态移动。系统的设计是我的。',
+    en: 'Sound States is the answer I built. Its core fits in one sentence: your state is the input; the structure of the sound is the output. Building it meant answering three questions.\n\nWhat should change? Melody makes the brain predict the next note, and a predicting brain cannot rest (Huron, 2006). So the non-melodic boards — Work and Sleep — are synthesised in code, layer by layer, in real time. The melodic boards keep their melody and change around it: in Relax, instrument layers step in and out with your arousal.\n\nHow should it change? Your heart rate, read against your own resting baseline, tells the system how far you are from where you chose to be. It comes from a real optical sensor (MAX30102 over Web Serial), a demo slider, or by hand. The same heartbeat means something different in each state. In Relax, the sound starts where you are, then spends a minute or two easing you toward calm; if your heart rate keeps climbing, it slows down instead of pushing. In Motion it follows you and only ever gets brighter. In Work it holds still, because a working brain runs a little high. In Sleep it sets how slowly the wind-down unfolds. Space is placed by psychoacoustic cues, not by ear. The direction comes from research (Russell, 1980; Juslin, 2013; Lowe-Brown et al., 2026); the amounts are design choices, and I say so.\n\nWho decides? Heart rate measures arousal, not intention — it can tell how activated you are, not whether that is excitement or dread. So you choose where you want to be; your heart rate only shapes how the sound takes you there. If you are tense or low, the system does not pretend to fix it: it offers three strategies — let it out, get away from it, be comforted (Saarikallio & Erkkilä, 2007) — and you pick. You can see what it is changing, and you can always take over by hand.\n\nMusic that follows the body is not new: RockMyRun matched tempo to heart rate in 2014, and Endel has generated soundscapes from heart rate since 2018. What I am adding is an answer to what should change, what should not, and who decides.\n\nOn the music side: I write my own songs, but this system needs more music than one person can produce in time. The tracks here are generated with AI from my prompts and refined over several rounds; I then select them, remix them, split them into stems, and design how each layer moves. The system design is mine.',
+    zh: 'Sound States 是我给出的答案。它的核心可以用一句话说完：你的状态是输入，声音的结构是输出。做它，就是在回答三个问题。\n\n什么该变？旋律会让大脑忍不住预测下一个音，而正在预测的大脑没法休息（Huron，2006）。所以无旋律的两个板块——工作和睡眠——由代码一层一层实时合成；有旋律的板块保留旋律，只改变旋律周围的东西：在放松板块里，各个声部随你的唤醒进进出出。\n\n怎么变？你的心率，以你自己的静息基线为参照，告诉系统你离自己选的目标还有多远。来源可以是真实的光学传感器（MAX30102，经 Web Serial）、演示滑条，或者手动。同一个心率，在不同状态里意思不一样。放松时，声音先从你此刻的状态出发，再用一两分钟把你带向平静；心率还在往上走，它就放慢，不硬推。运动时，它跟着你走，只会越来越亮。工作时，它稳住不动，因为用脑时心率本来就会略高。睡眠时，心率决定入睡的那条弧走多慢。空间按心理声学的线索摆放，而不是凭耳朵。方向来自研究（Russell，1980；Juslin，2013；Lowe-Brown 等，2026）；幅度是设计取舍，我会明说。\n\n由谁决定？心率测的是唤醒，不是意图——它读得出你有多激动，读不出那是兴奋还是恐惧。所以去哪里由你选，心率只负责调整声音怎么带你过去。如果你正紧张或低落，系统不假装能替你解决：它给出三种策略——宣泄、转移、慰藉（Saarikallio & Erkkilä，2007）——由你来挑。你看得见它在改什么，也随时可以亲手接管。\n\n让音乐跟着身体走，并不是新想法：RockMyRun 2014 年就让节奏跟随心率，Endel 从 2018 年起用心率生成声景。我想补上的，是对"什么该变、什么不该变、由谁决定"的回答。\n\n音乐这边：我自己写歌，但这个系统需要的音乐量一个人来不及做。这里的曲目是按我的关键词用 AI 生成、再经过几轮迭代得到的；之后由我筛选、重新混音、拆成分轨，并设计每一层怎么随状态移动。系统的设计是我的。',
   },
   aboutRole: {
     en: 'Built for myself first. Then I became the user — and found the questions worth asking for others.',
@@ -120,8 +123,8 @@ const UI = {
     zh: '1 · 起点 —— 两件事碰在一起。一是在课上听出了和全班不一样的东西，并被告知：声音感知没有唯一正确的标准。二是发现，无论是我自己还是身边的人，都已经在凭直觉用声音管理状态——专注时配雨声、长时间学习开 lofi、睡不着时放 ASMR——只是没有一个系统。如果声音可以用数学描述，它能否被情绪地设计？',
   },
   proc2: {
-    en: '2 · Research — I read across several frameworks rather than one: Russell\'s (1980) Circumplex Model maps affect onto valence × arousal coordinates; Juslin\'s BRECVEM (Juslin & Västfjäll, 2008) explains the mechanisms — including the brain-stem reflex — by which sound modulates how we feel before conscious cognition; Huron\'s Sweet Anticipation (2006) explains attention through expectancy and surprise-density; Karageorghis & Priest (2012) recommend tempi below 80 BPM for recuperative, sedative music; Farnell\'s Designing Sound supplies the synthesis recipes.',
-    zh: '2 · 调研 —— 我横着读了一批框架，而不是只抓一个：Russell（1980）情感环状模型把情感映射为效价 × 唤醒坐标；Juslin 的 BRECVEM（Juslin & Västfjäll, 2008）解释了声音在意识介入之前调节感受的机制，包括脑干反射；Huron《Sweet Anticipation》（2006）用期待与惊奇密度解释注意力；Karageorghis & Priest（2012）建议恢复性、镇静用途的音乐节奏低于 80 BPM；Farnell《Designing Sound》提供合成配方。',
+    en: '2 · Research — I read across several frameworks rather than one: Russell\'s (1980) Circumplex Model maps affect onto valence × arousal coordinates; Juslin & Västfjäll\'s (2008) mechanism framework — later extended by Juslin (2013) as BRECVEMA — explains how sound can shift how we feel before conscious thought, for example through the brain-stem reflex; Huron\'s Sweet Anticipation (2006) explains attention through expectancy and surprise-density; Karageorghis & Priest (2012) recommend tempi below 80 BPM for recuperative, sedative music; Farnell\'s Designing Sound supplies the synthesis recipes.',
+    zh: '2 · 调研 —— 我横着读了一批框架，而不是只抓一个：Russell（1980）情感环状模型把情感映射为效价 × 唤醒坐标；Juslin & Västfjäll（2008）的机制框架（后由 Juslin 2013 扩展为 BRECVEMA）解释了声音在意识介入之前调节感受的机制，包括脑干反射；Huron《Sweet Anticipation》（2006）用期待与惊奇密度解释注意力；Karageorghis & Priest（2012）建议恢复性、镇静用途的音乐节奏低于 80 BPM；Farnell《Designing Sound》提供合成配方。',
   },
   proc3: {
     en: '3 · One principle, then the structure — the principle: melodic, rhythmic material gives the brain something to predict, and predicting costs attention; a brain that is predicting cannot settle. That single line explains why temples and spas use water and modelled nature sounds: nothing to predict. It also splits the five boards into two layers: non-melodic (Work, Sleep) and melodic (Relax, Imagine, Motion). Work and Sleep are both non-melodic but aim at opposite ends — I cannot fall asleep while working, and cannot work while falling asleep — so they are separated by time-form instead.',
@@ -132,29 +135,32 @@ const UI = {
     zh: '4 · 两套声音逻辑 —— 有旋律的板块用完整的歌；无旋律的板块用一套生成式引擎，每一层都由代码实时合成。这套引擎与场景无关：它只认标签（角色、音高、类别），所以一个场景就是一份配置——加一个世界等于加一份数据，不用改引擎代码。同一套引擎驱动三处：主站、调音台、试听台，共享同一个配置源。',
   },
   proc5: {
-    en: '5 · Stems, on one board only — the melodic boards play whole, with one exception. Relax is split into stems so its layers can enter and leave with your arousal. Two questions decided this: can the source be cleanly separated (is it discrete acoustic instruments?), and does "becoming empty" belong in this state (is sparse actually better here)? Only Relax passed both. The layers run on different curves — the piano almost constant, the bass rising with arousal, strings and drums bound tightest. At your usual resting heart rate the mix is about half-full — it meets you where you are rather than assuming you are already calm (the ISO principle: match first); it thins out only as your body actually settles, and fills in as you rouse. The drums are not removed; they are tied to arousal, arriving only once you are already activated. Which board uses stems and which does not is itself the decision.',
-    zh: '5 · 只有一块用了分轨 —— 有旋律的板块整首播放，只有一个例外。放松被拆成分轨，让各层随你的唤醒度进出。决定这件事的是两个问题：源素材能不能被干净切开（是不是离散的原声乐器）？「变空」在这个状态里对不对味（稀疏是不是真的更好）？只有放松两条都过。各层走不同的曲线——钢琴几乎恒定，贝司随唤醒上来，弦乐与鼓绑得最紧。在你平常的静息心率下，混音大约半满——先和你此刻的状态对上，而不是假设你已经平静（ISO 原则：先匹配）；身体真的平静下来它才变轻，唤醒上来它就补满。鼓不是被删掉，而是被绑在唤醒轴上：只有你已经兴奋起来时它才会进来。哪一块用分轨、哪一块不用，本身就是决定。',
+    en: '5 · Stems, on one board only. The melodic boards play whole, with one exception: Relax is split into stems so its layers can enter and leave. Two questions decided this: can the source be cleanly separated (is it discrete acoustic instruments?), and does "becoming empty" belong in this state (is sparse actually better here)? Only Relax passed both. The layers run on different curves: the piano almost constant, the bass rising through the middle, strings and drums bound tightest. So a fuller mix means more layers, and calmer means sparser, down toward piano alone.\n\nWhat sets the fullness is the Relax strategy. For the first few seconds it matches you, so a racing heart starts with a fuller mix (the ISO principle: meet people where they are). Then, over a minute or two, it guides the mix down to a calm landing: piano in front, bass softer, strings and drums pulled well back. The experiments are clear that matching alone doesn\'t calm people any better than going straight to calm music (Lowe-Brown et al., 2026). What helps is a guided sequence that ends calm, and people who start with a match are more likely to keep listening (Ding et al., 2026, preprint). So the match is short and the guide does the work. If your heart rate keeps climbing, the guide slows down rather than pushing; if you are already calm, it simply stays with you. Darkening the sound helps less than I expected, so the low-pass filter is only a helper; the layers do the work. Which board uses stems and which does not is itself the decision.',
+    zh: '5 · 只有一块用了分轨。有旋律的板块整首播放，只有一个例外：放松被拆成分轨，让各层可以进出。决定这件事的是两个问题：源素材能不能被干净切开（是不是离散的原声乐器）？「变空」在这个状态里对不对味（稀疏是不是真的更好）？只有放松两条都过。各层走不同的曲线：钢琴几乎恒定，贝司在中段逐渐上来，弦乐与鼓绑得最紧。所以混音越满，层越多；越平静，越稀，一直到只剩钢琴。\n\n决定满与空的，是放松板块的策略。开头几秒先和你对上：心跳快，就从更满的混音开始（ISO 原则：先接住你此刻的状态）。之后用一两分钟，把混音带到一个平静的落点：钢琴在前，贝司变轻，弦乐和鼓退到很后面。实验结论很清楚：光是先匹配，并不比直接放平静音乐更能让人平静（Lowe-Brown 等，2026）；真正有帮助的是有引导、并以平静收尾的顺序，而从匹配开始的人更愿意坚持听下去（Ding 等，2026，预印本）。所以匹配很短，主要靠引导。心率还在往上走，引导就放慢，不硬推；你本来就平静，它就跟着你。让声音变暗的作用比我预想的小，所以低通只作辅助，主要靠层的进出。哪一块用分轨、哪一块不用，本身就是决定。',
   },
   proc6: {
     en: '6 · The soundscape engine — Work and Sleep. Every layer gets a role: resident (a base bed that habituates and recedes), triggered (a bell, distant thunder — it should catch attention), or in-between (insects, drips — density decides). That dividing line is computable: events spaced closer than the fusion threshold merge into a continuous surface; sparser ones separate into individual signals. Each layer is then placed in space by psychoacoustic rules rather than by ear — azimuth, distance, diffusion, early reflections. Attention itself is placed too: a warning sound never sits directly behind you, layers sharing a frequency band are separated in azimuth, and the overall spatial strategy is diffuse rather than pinpointed — because a sharp location triggers an orienting reflex and steals attention.',
     zh: '6 · 声景引擎 —— 工作与睡眠。每一层都有角色：常驻（会习惯化退隐的底胶）、触发（钟、远雷——本来就该抢注意）、或介于两者（虫鸣、滴水——由密度决定）。这条分界线是可以算的：间隔近于融合阈值的事件会融成连续表面，稀疏的则分离成一个个信号。接着每一层按心理声学规则摆进空间，而不是凭耳朵——方位、距离、弥散、早反射。注意力本身也被放置：该被听见的声音绝不放在正后方，共用频段的层在方位上岔开，而整体的空间策略是弥散而非精确指向——因为尖锐的定位会触发定向反射，把注意力抢走。',
   },
   proc7: {
-    en: '7 · Heart rate, and two states on one engine — heart rate drives layer levels, event density and brightness, so the sound follows the body. It can come from a real MAX30102 optical sensor over Web Serial, from a simulated source, or from a manual slider — three sources behind one interface, so the system degrades gracefully when no device is present. Work and Sleep share every sound and differ only in time-form: Work is a steady plateau; Sleep is a descending arc, its events growing sparser, slower, darker and more distant over 120 seconds. Controls come in two layers — a few macro knobs by default, every per-layer detail folded into an advanced mixer. And the player shows, in plain language, what the sound is doing right now — which layers are in, how open it is — and draws a live portrait of what you are hearing, so the loop stays visible rather than hidden.',
-    zh: '7 · 心率，以及两种状态共享一套引擎 —— 心率驱动各层音量、事件密度与亮度，让声音跟着身体走。它可以来自真实的 MAX30102 光传感器（经 Web Serial）、模拟源、或手动滑块——三条来源藏在同一个接口之后，所以没有设备时系统也能优雅降级。工作与睡眠共用全部声音，只在时间形态上不同：工作是稳态平台；睡眠是下行弧，事件在 120 秒里越来越稀、越来越慢、越来越暗、越来越远。控制分两层——默认只露几个宏观旋钮，每层的细节收进「高级混音台」。而播放器会用平常的话告诉你声音此刻在做什么——哪些声部在响、有多通透——并把你正在听到的声音实时画成一幅肖像，让这个闭环看得见，而不是藏起来。',
+    en: '7 · Heart rate, and two states on one engine. Heart rate can come from a real MAX30102 optical sensor over Web Serial, from a simulated source, or from a manual slider: three sources behind one interface, so the system degrades gracefully when no device is present. What heart rate does depends on the state you chose. Work holds steady: a few beats above your baseline changes nothing, because thinking hard raises heart rate a little (Hughes et al., 2019); only a clearly higher, lasting rate slowly thins the events out. Sleep is a descending arc, its events growing sparser, slower, darker and more distant, and your heart rate sets the pace: while you are still well above the falling-asleep target, the arc slows down. Work and Sleep share every sound and differ only in time-form. Controls come in two layers: a few macro knobs by default, every per-layer detail folded into an advanced mixer. And the player shows, in plain language, what the sound is doing right now (which layers are in, how open it is) and draws a live portrait of what you are hearing, so the loop stays visible rather than hidden.',
+    zh: '7 · 心率，以及两种状态共享一套引擎。心率可以来自真实的 MAX30102 光传感器（经 Web Serial）、模拟源、或手动滑块：三条来源藏在同一个接口之后，所以没有设备时系统也能优雅降级。心率起什么作用，取决于你选的状态。工作时稳住：比基线高几拍什么都不变，因为用脑本来就会让心率略升（Hughes 等，2019）；只有明显更高、并持续一段时间，事件才会慢慢变稀。睡眠是一条下行弧，事件越来越稀、越来越慢、越来越暗、越来越远，而心率决定它走多快：离入睡的目标心率还远时，弧会放慢。工作与睡眠共用全部声音，只在时间形态上不同。控制分两层：默认只露几个宏观旋钮，每层的细节收进「高级混音台」。播放器会用平常的话告诉你声音此刻在做什么（哪些声部在响、有多通透），并把你正在听到的声音实时画成一幅肖像，让这个闭环看得见，而不是藏起来。',
   },
   // 深入了解 / Go deeper — 两组入口(机制 / 愿景)
   gdHowTitle:    { en: 'Go deeper · how it works', zh: '深入了解 · 幕后机制' },
   gdVisionTitle: { en: 'Where it’s going', zh: '走向何处' },
   gdMore:        { en: 'Two more, for the curious — spatial orchestration and the synthesis engine', zh: '还有两页，给想深入的人：空间编排、合成引擎' },
   gdModel:  { en: 'Interactive system model', zh: '交互系统模型' },
-  gdModelD: { en: 'Watch a state map to sound in real time — arousal → structure.', zh: '实时看一个状态如何映射成声音——唤醒 → 结构。' },
+  gdModelD: { en: 'Watch one heartbeat mean different things in different states.', zh: '看同一个心率，在不同状态里意味着什么。' },
   gdStems:  { en: 'Stems, on one board', zh: '分轨讲解台' },
-  gdStemsD: { en: 'Hear the layers enter and leave with arousal (real audio).', zh: '亲耳听见各层随唤醒进退（真实音频）。' },
+  gdStemsD: { en: 'Hear Relax\'s layers leave as it guides you toward calm (real audio).', zh: '亲耳听放松板块把你带向平静时，各层怎么退出（真实音频）。' },
   gdScene:  { en: 'Spatial orchestration', zh: '空间编排' },
   gdSceneD: { en: 'Every source placed by a psychoacoustic cue, not by ear.', zh: '每个声源由心理声学线索定位，而非凭耳朵。' },
   gdSynth:  { en: 'Synthesis engine', zh: '合成引擎' },
   gdSynthD: { en: 'The generative soundscape layers, built in code. (Page in Chinese — the sounds need no translation.)', zh: '生成式声景的每一层，由代码构建。' },
+  gdBodyTitle: { en: 'Into the body', zh: '走进身体' },
+  gdHand:    { en: 'The hand that listens — wearable prototype', zh: '会听的手 · 可穿戴原型' },
+  gdHandD:   { en: 'The same model, worn at the ear: each finger follows one voice of the song. (VIS 147B, simulated data for now.)', zh: '同一个模型，戴在耳边：每根手指跟着歌里的一个声部。（VIS 147B，目前是模拟数据。）' },
   gdVision:  { en: 'From mirror to guide — the vision', zh: '从镜子到向导 · 愿景' },
   gdVisionD: { en: 'Closed-loop biofeedback, the ISO principle, and personal baseline — where this is headed.', zh: '闭环生物反馈、ISO 原则与个人基线——它要去的地方。' },
 
@@ -162,13 +168,13 @@ const UI = {
   reflTitle:   { en: 'Reflection', zh: '反思' },
   reflWorkedH: { en: 'What worked', zh: '有效的部分' },
   reflWorked: {
-    en: 'Building for myself first meant I could sense immediately when something was wrong — the wrong EQ for a tired state, a rhythm too fast for sleep. That subjective testing is what theory alone cannot replace. Two things surprised me. One was how expressive a lowpass filter turns out to be: the Atmosphere control produces a clear, felt drop in arousal, consistent with BRECVEM\'s brain-stem-reflex prediction. The other was that a synthesised soundscape can hold a state at all — the engine has no melody to carry you, so the state has to be carried by space, density and time instead. Russell\'s circumplex gave the interface a framework that is both theoretically grounded and visually immediate: the disc became the way in, and the live portrait turned the sound itself into something you can watch change.',
-    zh: '先为自己构建，意味着我可以立刻感知到什么地方不对——疲惫状态下错误的 EQ，睡眠场景里过快的节奏。这种主观测试是理论无法替代的。有两件事出乎我意料。一是低通滤波器的表现力：氛围控件产生的唤醒度下降是能明显感觉到的，与 BRECVEM 脑干反射机制的预测一致。二是一套合成声景居然能撑住一个状态——引擎没有旋律来带你，所以状态只能靠空间、密度和时间来承载。Russell 圆盘给了界面一个既有理论根基、又视觉直接的框架：圆盘成了入口，实时肖像则把声音本身变成了你能看着它变化的东西。',
+    en: 'Building for myself first meant I could sense immediately when something was wrong — the wrong EQ for a tired state, a rhythm too fast for sleep. That subjective testing is what theory alone cannot replace. Two things surprised me. One was where calm actually comes from. I expected the low-pass filter to do it, since darker should feel calmer. But in my own A/B listening, making the stems much darker added little to how calm they felt; layers leaving did more. The research points the same way: softer attacks lower how energetic a sound feels, while changing brightness alone doesn\'t reliably do it (Eerola et al., 2012). So in Relax the layers do the work and the filter only helps. The other was that a synthesised soundscape can hold a state at all — the engine has no melody to carry you, so the state has to be carried by space, density and time instead. Russell\'s circumplex gave the interface a framework that is both theoretically grounded and visually immediate: the disc became the way in, and the live portrait turned the sound itself into something you can watch change.',
+    zh: '先为自己构建，意味着我可以立刻感知到什么地方不对——疲惫状态下错误的 EQ，睡眠场景里过快的节奏。这种主观测试是理论无法替代的。有两件事出乎我意料。一是平静到底从哪里来。我原以为靠低通，越暗应该越平静。但我自己 A/B 试听时，把分轨压得更暗，平静感并没有明显增加；层的退出作用更大。研究的方向也一样：起音变软会让声音听起来能量更低，而单靠改变明暗并不可靠（Eerola 等，2012）。所以放松板块主要靠层的进出，低通只是辅助。二是一套合成声景居然能撑住一个状态——引擎没有旋律来带你，所以状态只能靠空间、密度和时间来承载。Russell 圆盘给了界面一个既有理论根基、又视觉直接的框架：圆盘成了入口，实时肖像则把声音本身变成了你能看着它变化的东西。',
   },
   reflLimitH:  { en: 'Limitations', zh: '局限' },
   reflLimit: {
-    en: 'Timbre perception is subjective — psychoacoustics confirms that perception varies between individuals, bodies and listening environments. The mappings — arousal to layers, openness and character; valence to a warm/cool tilt — are theory-informed but not individually validated: their direction comes from theory, their amounts are designed approximations, not calibrated measurements. Heart rate is also a coarse, slow signal: seated and at rest it moves only a few beats, so its effect on the sound is subtle by nature; it reads large shifts (after exercise, during recovery), not fine moods. Heart rate measures arousal; valence is self-reported — a deliberate choice that keeps the interface accessible while grounding the arousal axis in real physiology.\n\nThere is no formal user study — only informal feedback from friends. Five people heard each Relax, Imagine and Motion track without being told which state it was for, and said what state and images it brought up; I reworked songs over several rounds and kept a track only once their answers matched the state I meant. Two or three people tried the site itself: "really interesting", "I could hear it change" — and also "not as polished as what\'s on the market". None of this proves these soundscapes improve sleep or focus: the mechanisms are defensible, the effects are a design hypothesis. The sleep arc runs on a fixed 120 seconds for everyone, which is almost certainly wrong — some people fall asleep in five minutes and others lie awake for an hour. And the soundscape boards are the least finished part of the project: one pair of hands and synthesised audio will not match the production polish of a commercial team. I would rather be judged on the design decisions than on that polish.',
-    zh: '音色感知是主观的——心理声学证实，感知因个体、体型与听音环境不同而存在差异。这些映射——唤醒决定声部、通透与音色性格，效价只给冷暖倾斜——基于理论，但未经个体验证：方向来自理论，量级是设计近似，而非校准过的测量。心率也是一个粗而慢的信号：安静坐着时只上下几拍，所以它对声音的影响本来就细微；它读得出大的变化（运动后、平复中），读不出细微的情绪。唤醒度由心率测量；效价由自我报告输入——这是有意为之的选择：在唤醒轴接入真实生理数据的同时，保持界面的可及性。\n\n没有正式的用户研究，只有朋友的非正式反馈：5 位朋友在不知道是哪个板块的情况下听放松、想象、运动的曲目，说出听到的状态和画面；我据此改歌、再给他们听，反复几轮，反馈与我想放的板块一致才录用。2–3 位朋友实际用过网站："非常有意思"、"听感上发生了变化"——也有人直说"没有市面上的那么精美"。这些都不能证明这些声景改善了睡眠或专注：机制站得住，效果是设计假设。睡眠下行弧对所有人都是固定的 120 秒，这几乎肯定是错的——有人五分钟就睡着，有人躺一小时还醒着。而声景板块是整个项目里完成度最低的部分：一个人一双手加合成音频，比不过商业团队的制作打磨度。我更愿意被评价设计判断，而不是那层打磨。',
+    en: 'Timbre perception is subjective — psychoacoustics confirms that perception varies between individuals, bodies and listening environments. The mappings (what heart rate does in each state, how the layers and openness move, valence to a warm/cool tilt) are theory-informed but not individually validated: their direction comes from research, their amounts are designed approximations, and the zone widths come from one person\'s data, mine. Heart rate is also a coarse, slow signal: seated and at rest it moves only a few beats, so its effect on the sound is subtle by nature; it reads large shifts (after exercise, during recovery), not fine moods. Heart rate measures arousal; valence is self-reported — a deliberate choice that keeps the interface accessible while grounding the arousal axis in real physiology.\n\nThere is no formal user study — only informal feedback from friends. Five people heard each Relax, Imagine and Motion track without being told which state it was for, and said what state and images it brought up; I reworked songs over several rounds and kept a track only once their answers matched the state I meant. Two or three people tried the site itself: "really interesting", "I could hear it change" — and also "not as polished as what\'s on the market". None of this proves these soundscapes improve sleep or focus: the mechanisms are defensible, the effects are a design hypothesis. The sleep arc now stretches while your heart rate is still high, but its target (your seated baseline minus about 16 beats) is an estimate from published averages, not measured on you. Nobody has yet shown that the guided parts, Relax and Sleep, actually help. And in Motion, the maximum heart rate estimated from age can be off by about ten beats either way. And the soundscape boards are the least finished part of the project: one pair of hands and synthesised audio will not match the production polish of a commercial team. I would rather be judged on the design decisions than on that polish.',
+    zh: '音色感知是主观的——心理声学证实，感知因个体、体型与听音环境不同而存在差异。这些映射（心率在每个状态里起什么作用、层和通透度怎么动、效价对应冷暖倾向）有理论依据，但没有逐个人验证：方向来自研究，幅度是设计出来的近似值，区间宽度只来自一个人的数据——我自己。心率也是一个粗而慢的信号：安静坐着时只上下几拍，所以它对声音的影响本来就细微；它读得出大的变化（运动后、平复中），读不出细微的情绪。唤醒度由心率测量；效价由自我报告输入——这是有意为之的选择：在唤醒轴接入真实生理数据的同时，保持界面的可及性。\n\n没有正式的用户研究，只有朋友的非正式反馈：5 位朋友在不知道是哪个板块的情况下听放松、想象、运动的曲目，说出听到的状态和画面；我据此改歌、再给他们听，反复几轮，反馈与我想放的板块一致才录用。2–3 位朋友实际用过网站："非常有意思"、"听感上发生了变化"——也有人直说"没有市面上的那么精美"。这些都不能证明这些声景改善了睡眠或专注：机制站得住，效果是设计假设。睡眠弧现在会在心率还高时拉长，但它的目标（坐姿基线减约 16 拍）是根据文献平均值估出来的，不是在你身上测的。放松和睡眠里「引导」的部分，还没有证据证明真的有用。运动板块按年龄估算的最大心率，个人误差大约上下 10 拍。而声景板块是整个项目里完成度最低的部分：一个人一双手加合成音频，比不过商业团队的制作打磨度。我更愿意被评价设计判断，而不是那层打磨。',
   },
   reflFutureH: { en: 'Future', zh: '未来' },
   reflFuture: {
@@ -376,6 +382,7 @@ function applyLang() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(UI[el.dataset.i18n]);
   });
+  if (typeof refreshAgeCalc === 'function') refreshAgeCalc();
   // 动态部分重渲染 / re-render dynamic parts
   renderCards();
   if (document.getElementById('browse') && document.getElementById('browse').classList.contains('active')) renderBrowse();
@@ -612,6 +619,7 @@ document.getElementById('dailyBtn').addEventListener('click', () => {
 const coverflowEl = document.getElementById('coverflow');
 let currentScene = null, currentSceneId = null;
 var genMode = false, sceneEng = null, genBreatheOn = true, _pendingArousal = null;   // 生成板块(工作/睡眠)状态 + 引擎单例 + 导航器待应用唤醒度(var=提升,showScreen 早引用也安全)
+var userAge = null;   // 选填;只给运动板块估最大心率(Tanaka 2001),不填就不做强度分档
 var restingBPM = 70;   // 静息基线(个人)默认占位=70(典型静息):相对心率映射的 0 点;测出你自己的安静心率后在输入框覆盖 / resting baseline placeholder 70, override with your measured resting HR
 
 // 工作/睡眠 = 生成式声景板块:每张 cover = 一个生成场景(复用现有播放器界面);引擎=SceneStack
@@ -651,6 +659,7 @@ async function sceneEnginePlay(){
   const e = await ensureSceneEngine(); if (!e) return;
   const c = currentScene.covers[currentIndex]; e.setScene(c.scene); if (c.phase) e.setPhase(c.phase);
   await e.ensureRunning();
+  if (currentSceneId === 'focus') e.applyWork();   // 工作板块:一播放就套用工作混音(以前只有点高级面板的「工作」才生效,默认是混响 0.9 的湿声) — 11-08
 }
 function sceneEngineStop(){ if (sceneEng) sceneEng.stop(); }
 
@@ -668,6 +677,8 @@ function togglePlay(){
 
 async function openGenScene(id){
   genMode = true; currentSceneId = id; currentScene = GEN_SCENES[id]; currentIndex = 0;
+  document.body.classList.remove('scene-motion');
+  if (typeof refreshGenNow === 'function') setTimeout(refreshGenNow, 0);   // 工作 / 睡眠说明不同
   { const gs = document.getElementById('genSleep'), gw = document.getElementById('genWork');   // 每个板块只显示属于自己的预设
     if (gs) gs.style.display = id === 'sleep' ? '' : 'none'; if (gw) gw.style.display = id === 'focus' ? '' : 'none'; }
   document.documentElement.style.setProperty('--glow-color', currentScene.glow);
@@ -685,7 +696,7 @@ async function openGenScene(id){
   e.setBreathe(genBreatheOn); updateBreatheBtn();
   if (typeof applyHeartMode === 'function') applyHeartMode(heartMode, false);   // 同步心率模式栏到本板块(工作/睡眠现在也有心率),不重复驱动
   if (_pendingArousal != null) { e.hrDrive(restingBPM + (_pendingArousal + 1) / 2 * 34); _pendingArousal = null; }   // 导航器推荐的唤醒度→落到声景(暖冷/远近/密度);基线用个人静息(相对基线)
-  else if (heartMode === 'sim') { const sim = document.getElementById('heartSimSlider'); if (sim) e.hrDrive(+sim.value); }   // sim 模式:进板块即按当前模拟心率驱动声景
+  else if (heartMode === 'sim') { const sim = document.getElementById('heartSimSlider'); if (sim) e.hrDrive(+sim.value, id); }   // sim 模式:进板块即按当前模拟心率驱动声景
   refreshPlayBtn();   // 打开=浏览,不自动启引擎;按钮显示 ▶ 等你按
 }
 
@@ -783,6 +794,7 @@ function setGenPhase(p){
 let currentIndex = 0;
 
 function openScene(id) {
+  _guideReset();   // 每次进入板块,放松的「先匹配 → 引导」从头开始
   if (genMode) { sceneEngineStop(); genMode = false; isPlaying = false; }   // 离开生成板块先停引擎
   // 工作/睡眠 = 站内生成式声景(复用播放器界面),不走 mp3 曲目
   // 打开生成板块=浏览,不停旋律、不启引擎;按 ▶ 才切(togglePlay 里 stopVoices+启引擎)
@@ -790,6 +802,7 @@ function openScene(id) {
   document.querySelector('.player').classList.remove('gen-mode'); document.body.classList.remove('gen-scene');   // mp3 板块:恢复原控件+背景
 
   currentSceneId = id;
+  document.body.classList.toggle('scene-motion', id === 'motion');   // 年龄框只在运动板块出现
   // 只显示能真正播放的曲目(有 audio 或 stems);空壳会 fallback 播错歌,过滤掉
   // filter out empty-shell tracks (no audio/stems) — they'd fall back to the wrong default song
   currentScene = { ...SCENES[id], covers: SCENES[id].covers.filter(isPlayableSong) };
@@ -873,7 +886,7 @@ function selectCover(i) {
   refreshSceneText();
   if (genMode) {
     const c = currentScene.covers[currentIndex];
-    if (sceneEng) { sceneEng.setScene(c.scene); sceneEng.setPhase(c.phase || 'night'); if (genPlaying()) sceneEng.restart(); }
+    if (sceneEng) { sceneEng.setScene(c.scene); sceneEng.setPhase(c.phase || 'night'); if (genPlaying()) { sceneEng.restart(); if (currentSceneId === 'focus') sceneEng.applyWork(); } }   // 换场景:按新场景重新套工作混音
     setGenBg(c); buildGenSceneList(); updateGenControls(); syncMacroSliders(); refreshGenLayersIfOpen();
     return;
   }
@@ -1235,6 +1248,14 @@ function sliderToFreq(v) {
   return 350 * Math.pow(18000 / 350, Math.max(0, Math.min(100, v)) / 100);
 }
 
+// 分轨低通只作辅助(事实表 K2,11-04 A/B 试听定):下限 2.5kHz,变平静主要靠分轨进出;?lpf=classic = 旧的 350Hz 下限(stem-test 版),留作对比
+// stem lowpass is only a helper (fact sheet K2, 11-04 A/B): floor 2.5kHz; ?lpf=classic restores the old 350Hz floor for comparison
+const LPF_CLASSIC = new URLSearchParams(location.search).get('lpf') === 'classic';
+function stemCutoff(v) {
+  if (LPF_CLASSIC) return sliderToFreq(v);
+  return 2500 * Math.pow(18000 / 2500, Math.max(0, Math.min(100, v)) / 100);
+}
+
 // 应用氛围:实时改变真实音轨(和合成声)的低通 + 低值时给画面加"朦胧"
 // apply atmosphere: morph the lowpass on the real track (+ synth), veil visuals when low
 function applyAtmos(v) {
@@ -1413,7 +1434,7 @@ function ensureStemBus() {
   if (stemBus || !ctx) return;
   stemBus    = ctx.createGain(); stemBus.gain.value = 1.12;   // 分轨响度补偿:留余量,让"满"不被末端限制器压扁(保留空↔满对比)
   stemFilter = ctx.createBiquadFilter(); stemFilter.type = 'lowpass';
-  stemFilter.frequency.value = sliderToFreq(atmosSlider ? +atmosSlider.value : 100);
+  stemFilter.frequency.value = stemCutoff(atmosSlider ? +atmosSlider.value : 100);
   stemVol    = ctx.createGain(); stemVol.gain.value = 0;      // 随 play/soundOn 淡入
   stemBus.connect(stemFilter); stemFilter.connect(stemVol); stemVol.connect(analyser);
 }
@@ -1498,7 +1519,7 @@ function applyStemArousal(v) {
   }
   if (stemFilter) {
     stemFilter.frequency.cancelScheduledValues(now);
-    stemFilter.frequency.linearRampToValueAtTime(sliderToFreq(v), now + 0.2);
+    stemFilter.frequency.linearRampToValueAtTime(stemCutoff(v), now + 0.2);
   }
 }
 
@@ -2117,6 +2138,12 @@ function bgLoop() {
   if (typeof renderNow === 'function') renderNow();
   if (genMode && typeof renderGenNow === 'function') renderGenNow();   // 此刻的声音
 
+  // 放松 K2:引导要随时间往前走,不只在心率读数到来时才动(模拟滑条不拖就没有新读数)
+  if (!genMode && currentSceneId === 'relax' && _heartSmooth > 0 && bgFrame % 30 === 0
+      && ((_heartConnected && heartMode === 'auto') || heartMode === 'sim')) {
+    _atmosLerpTarget = _relaxAtmos(_heartSmooth);
+  }
+
   // 心率驱动氛围缓动 / heart-rate atmosphere lerp (每10帧更新一次)
   // 仅在心率实时驱动时接管滑块;否则用户手动拖动不被拉回 / only auto-lerp when heart sensor is live
   if ((_heartConnected || heartMode === 'sim') && atmosSlider && bgFrame % 10 === 0 && Math.abs(_atmosLerpTarget - +atmosSlider.value) > 0.5) {
@@ -2292,7 +2319,9 @@ Object.assign(UI, {
   selGuideRevival: { en: 'Rest and recover', zh: '休息恢复' },
   selSleep:    { en: '→ Sleep', zh: '→ 睡眠' },
   selGuideSrc: { en: 'Strategies from Saarikallio & Erkkilä (2007) and Saarikallio (2008) — you choose; nothing is prescribed.', zh: '策略来自 Saarikallio & Erkkilä（2007）与 Saarikallio（2008）——由你选择，不替你规定。' },
-  genNowHR:     { en: 'Your heart rate sets these three: as it rises the sound gets brighter, nearer and busier; as you settle it darkens, drifts away and thins out.', zh: '这三项由你的心率来调：心率升高，声音更亮、更近、更密；平静下来，它变暗、变远、变稀。' },
+  // 心率在工作 / 睡眠里的作用不同(事实表 K3 / K4),说明按板块分开
+  genNowHR:     { en: 'These three show what the sound is doing. Your heart rate keeps Work steady: a few beats above your baseline changes nothing; only if it stays clearly higher does the density slowly drop.', zh: '这三项显示声音此刻的状态。心率让工作板块保持稳定：比基线高几拍不会有任何变化；只有持续明显更高，密度才会慢慢下降。' },
+  genNowHRSleep: { en: 'These three show the wind-down: over time the sound grows darker, further away and sparser. Your heart rate sets the pace: while it\'s still well above your falling-asleep target, the arc slows down.', zh: '这三项显示入睡的过程：随着时间推移，声音越来越暗、越来越远、越来越稀。心率决定节奏：离入睡目标还远时，这条弧会放慢。' },
   genBright:    { en: 'Brightness', zh: '明亮' },
   genNear:      { en: 'Nearness',   zh: '贴近' },
   genDense:     { en: 'Density',    zh: '密度' },
@@ -2336,7 +2365,7 @@ Object.assign(UI, {
   compareManual:     { en: 'Manual', zh: '自主选择' },
   compareManualDesc: { en: 'You know what you need — pick a sound world and go in.', zh: '你知道自己现在需要什么，直接选板块进入。' },
   compareAlgo:       { en: 'Algorithm', zh: '情绪算法' },
-  compareAlgoDesc:   { en: 'Not sure? Map your current arousal and mood — the system routes you automatically based on Russell (1980).', zh: '不确定？输入唤醒度和情绪方向，系统根据 Russell 情绪模型自动匹配。' },
+  compareAlgoDesc:   { en: 'Not sure? Mark how activated and how good you feel. The disc suggests a state (Russell, 1980); you choose.', zh: '拿不准？标出你此刻有多兴奋、心情如何。圆盘会给出建议（Russell，1980），由你来选。' },
   algoSourceTag:     { en: 'Russell (1980) · Juslin (2013) · Karageorghis & Priest (2012)', zh: 'Russell (1980) · Juslin (2013) · Karageorghis & Priest (2012)' },
 });
 
@@ -2724,18 +2753,18 @@ const miniCtx    = miniCanvas ? miniCanvas.getContext('2d') : null;
 })();
 
 // EQ预设 → Russell 情感方向(valence) / EQ preset → valence mapping
-// 来源: Sethares音色理论 + BRECVEM中的感染机制
+// 来源: Sethares音色理论 + Juslin 情绪感染(设计解读,非文献结论)
 const EQ_TO_VALENCE = {
   flat:  0.0,   // 中性 / neutral
   grand: 0.25,  // 宏大 → 崇敬感 (GEMS: Wonder) → 正情绪
-  power: -0.15, // 力量 → 攻击性(BRECVEM: Brain stem reflex) → 略负
+  power: -0.15, // 力量 → 攻击性(Juslin 脑干反射) → 略负
   clear: 0.35,  // 透彻 → 清晰明亮 → 正情绪
   warm:  0.30,  // 温暖 → 温柔包裹 (GEMS: Tenderness) → 正情绪
   dark:  -0.35, // 深沉 → 沉重压抑 → 略负情绪
 };
 
 // Atmosphere(0..100) → Russell 唤醒度(arousal) / atmosphere slider → arousal
-// 来源: BRECVEM Brain stem reflex — 低频截止降低唤醒
+// 来源: 设计取舍 + 作者听测(低通 → 唤醒下降不是文献结论;Eerola 2012 只发现亮音色听起来更有能量,相关性)
 function atmosToArousal(atmos) {
   return -0.7 + (atmos / 100) * 1.0;  // 0→-0.7, 50→-0.2, 100→+0.3
 }
@@ -2848,7 +2877,7 @@ openScene = function(id) {
       atmosSlider.value = savedAtmos;
     }
     if (savedEQ && EQ_PRESETS[savedEQ]) currentEQPreset = savedEQ;
-    if (savedResting !== null && !isNaN(+savedResting)) restingBPM = Math.max(40, Math.min(120, +savedResting));
+    if (savedResting !== null && !isNaN(+savedResting)) restingBPM = Math.max(45, Math.min(120, +savedResting));
   } catch (e) {}
 })();
 applyLang();
@@ -2909,12 +2938,65 @@ function _heartbeatAudioPulse() {
   eqLow.gain.linearRampToValueAtTime(base, now + 0.22);
 }
 
-// 设置静息基线(UI 输入调用):clamp 40-120、存 localStorage、同步进声景引擎
+// 设置静息基线(UI 输入调用):clamp 45-120(下限=心率滑条最低值,刻度才落在滑条上)、存 localStorage、同步进声景引擎
 function setRestingBPM(v) {
-  restingBPM = Math.max(40, Math.min(120, Math.round(+v) || 70));
+  restingBPM = Math.max(45, Math.min(120, Math.round(+v) || 70));
   try { localStorage.setItem('ss_resting', restingBPM); } catch (e) {}
   if (sceneEng && sceneEng.setResting) sceneEng.setResting(restingBPM);
+  if (typeof refreshAgeCalc === 'function') refreshAgeCalc();
   return restingBPM;
+}
+
+// 年龄提示:按你现在的基线和年龄,算出"从哪开始往上加、到哪到顶",和不填年龄对比(同 _motionIntensity / _motionAtmos)
+function refreshAgeCalc() {
+  const el = document.getElementById('ageCalcTxt'); if (!el) return;
+  const at = (span, f) => Math.round(restingBPM + f * span), noAge = at(60, .9);
+  if (userAge) {
+    const span = Math.max(30, (208 - 0.7 * userAge) - restingBPM);
+    el.textContent = t({ en: `With your numbers: the sound starts building at about ${at(span, .3)} BPM and is full at about ${at(span, .9)} BPM. Without age it would be full at about ${noAge}.`,
+                         zh: `按你现在的数字：心率约 ${at(span, .3)} 开始往上加，约 ${at(span, .9)} 到顶。不填年龄的话，约 ${noAge} 就到顶。` });
+  } else {
+    el.textContent = t({ en: `Right now (no age): the sound starts building at about ${at(60, .3)} BPM and is already full at about ${noAge} BPM.`,
+                         zh: `现在（没填年龄）：心率约 ${at(60, .3)} 开始往上加，约 ${noAge} 就已经到顶。` });
+  }
+}
+function setUserAge(v) {
+  const n = Math.round(+v);
+  userAge = (n >= 10 && n <= 100) ? n : null;
+  try { if (userAge) localStorage.setItem('ss_age', userAge); else localStorage.removeItem('ss_age'); } catch (e) {}
+  refreshAgeCalc();
+  return userAge;
+}
+
+// ── 板块心率策略(事实表 K 节):同一个心率,在不同意图下意义不同 ──
+// 放松 K2 = 方案 A:短暂先匹配 → 引导 → 以平静收尾(Lowe-Brown 2026;Ding 2026)。心率下不来就放慢,不硬推
+const RELAX_MATCH_SEC = 10, RELAX_GUIDE_SEC = 60, RELAX_CALM_ATMOS = 45, RELAX_ZONE = 5;   // 🎛 设计值;11-03 试听后从 20 + 120 秒缩短,等 3 天基线数据再校准
+let _guide = null;   // { t0, last, level(1=完全贴合当下 → 0=到达平静), lastHr }
+function _guideReset() { _guide = null; }
+function _relaxAtmos(bpm) {
+  const now = performance.now();
+  const match = algoAtmosVal(_bpmToArousal(bpm));
+  if (!_guide) _guide = { t0: now, last: now, level: 1, lastHr: bpm };
+  const g = _guide, dt = (now - g.last) / 1000;
+  g.last = now;
+  if ((now - g.t0) / 1000 > RELAX_MATCH_SEC) {
+    let pace = 1;
+    if (bpm <= restingBPM + RELAX_ZONE) pace = 1.5;     // 已经回到区间:可以稍快收尾
+    else if (bpm > g.lastHr + 1) pace = 0.3;            // 心率还在往上走:放慢,不硬推
+    g.level = Math.max(0, g.level - dt / RELAX_GUIDE_SEC * pace);
+  }
+  g.lastHr = bpm;
+  if (match <= RELAX_CALM_ATMOS) return Math.max(30, match);   // 本来就平静:跟着你,不再往下压
+  return RELAX_CALM_ATMOS + (match - RELAX_CALM_ATMOS) * g.level;
+}
+// 运动 K1:跟随,永不变暗。有年龄 → 储备心率百分比(ACSM 2011 分档;最大心率 = Tanaka 2001);没有 → 比基线高 60 拍算满(🎛)
+function _motionIntensity(bpm) {
+  const span = userAge ? Math.max(30, (208 - 0.7 * userAge) - restingBPM) : 60;
+  return Math.max(0, Math.min(1, (bpm - restingBPM) / span));
+}
+function _motionAtmos(bpm) {
+  const hrr = _motionIntensity(bpm);
+  return 80 + 20 * Math.max(0, Math.min(1, (hrr - 0.3) / 0.6));   // 30% 以下 = 80(已经很亮);到 90% 满;再往上封顶
 }
 
 function _bpmToArousal(bpm) {
@@ -2925,11 +3007,23 @@ function _bpmToArousal(bpm) {
 // 心率(真机或模拟)→ 声音的共享驱动 / shared heart-rate → sound (real sensor OR sim slider)
 // 生成板块:直接喂引擎(暖冷/远近/事件率);有旋律板块:心率→唤醒→氛围值(渲染循环 lerp→applyAtmos→分轨层进退+低通)+EQ
 function _driveFromHeart(bpm, immediate) {
-  if (genMode) { if (sceneEng) sceneEng.hrDrive(bpm); return; }   // 工作/睡眠:引擎接管,不走氛围/分轨路径
+  if (genMode) { if (sceneEng) sceneEng.hrDrive(bpm, currentSceneId); return; }   // 工作/睡眠:引擎按板块处理(K3 稳住 / K4 弧长随心率)
   const arousal = _bpmToArousal(bpm);
   // 不再写 navArousal:导航器是你自我报告的位置,心率测唤醒不测意图,不覆盖它
-  _atmosLerpTarget = algoAtmosVal(arousal);
-  const eqKey = algoEQPreset(navValence, arousal);
+  let eqKey;
+  if (currentSceneId === 'relax') {            // K2:先匹配再引导;EQ 只用清透 / 原声,不切力量
+    _atmosLerpTarget = _relaxAtmos(bpm);
+    eqKey = arousal < -0.25 ? 'flat' : 'clear';
+  } else if (currentSceneId === 'motion') {    // K1:跟随,永不变暗
+    _atmosLerpTarget = _motionAtmos(bpm);
+    eqKey = _motionIntensity(bpm) > 0.6 ? 'power' : 'grand';
+  } else if (currentSceneId === 'cinematic') { // K5:只轻微跟随
+    _atmosLerpTarget = 55 + 20 * arousal;
+    eqKey = currentEQPreset;
+  } else {
+    _atmosLerpTarget = algoAtmosVal(arousal);
+    eqKey = algoEQPreset(navValence, arousal);
+  }
   const now = Date.now();
   // 真实心率:12s 节流防抖动乱跳;模拟滑条(immediate)是主动拖动,立即响应 / sim slider = deliberate drag, no throttle
   if (eqKey !== currentEQPreset && (immediate || now - _lastEQChange > 12000)) {
@@ -3071,6 +3165,12 @@ document.getElementById('heartSimSlider')?.addEventListener('input', (e) => {
 });
 
 // 静息基线输入 / resting-baseline input — 测出你自己的安静心率后填这里;改完立即同步映射 + 引擎
+const ageInput = document.getElementById('ageInput');
+if (ageInput) {
+  try { const a = localStorage.getItem('ss_age'); if (a) setUserAge(a); } catch (e) {}
+  if (userAge) ageInput.value = userAge;
+  ageInput.addEventListener('change', () => { const a = setUserAge(ageInput.value); ageInput.value = a || ''; });
+}
 const restingInput = document.getElementById('restingBPMInput');
 if (restingInput) {
   restingInput.value = restingBPM;   // 初始对齐(可能被 restorePrefs 覆盖过)
@@ -3329,7 +3429,7 @@ function renderGenNow() {
 }
 function refreshGenNow() {
   const cap = document.getElementById('genNowCap');
-  if (cap) cap.textContent = t(heartMode === 'free' ? UI.genNowFree : UI.genNowHR);
+  if (cap) cap.textContent = t(heartMode === 'free' ? UI.genNowFree : currentSceneId === 'sleep' ? UI.genNowHRSleep : UI.genNowHR);
   const title = document.querySelector('#genNow .now-title');
   if (title) title.textContent = t(UI.nowTitle);
 }
