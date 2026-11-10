@@ -1602,3 +1602,23 @@ body:not(.scene-motion) .hr-age, body:not(.scene-motion) .hr-age-hint { display:
 .gd-more[open] summary::before { content: '−'; }
 .gd-more summary:hover { color: var(--ink); }
 .gd-more .gd-list { margin-top: .3rem; }
+
+/* ── 关于页：折叠列表（11-10）——先看目录，点哪段开哪段 / About: outline first, open what you want ── */
+#about .acc-list .acc-lead { margin: .2rem 0 1.4rem; }
+#about details.acc { border-top: 1px solid rgba(231,227,218,.1); }
+#about details.acc:last-of-type { border-bottom: 1px solid rgba(231,227,218,.1); }
+#about details.acc > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 2rem minmax(0,1fr) 1.2rem; align-items: baseline; gap: .2rem; padding: 1rem 0; }
+#about details.acc > summary::-webkit-details-marker { display: none; }
+#about details.acc > summary::after { content: "+"; color: var(--muted); font-size: 1.1rem; line-height: 1; justify-self: end; transition: transform .2s ease; }
+#about details.acc[open] > summary::after { transform: rotate(45deg); }
+#about details.acc > summary:hover .acc-t, #about details.acc > summary:focus-visible .acc-t { color: var(--accent); }
+#about .acc-n { font-size: .8rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+#about .acc-h { display: flex; flex-direction: column; gap: .25rem; }
+#about .acc-t { color: var(--ink); font-size: 1.05rem; letter-spacing: .02em; transition: color .2s; }
+#about .acc-s { color: var(--muted); font-size: .85rem; line-height: 1.55; font-weight: 300; }
+#about details.acc[open] .acc-s { display: none; }
+#about details.acc > p { padding: 0 0 1.2rem 2rem; margin: 0; }
+#about .acc-list .emphasis { margin-top: 1.8rem; }
+@media (max-width: 600px) { #about details.acc > summary { grid-template-columns: 1.5rem minmax(0,1fr) 1rem; } #about details.acc > p { padding-left: 1.5rem; } }
+/* 故事讲完，接下来是答案：引言做成过渡，而不是夹在折叠项中间的普通段落 */
+#about .acc-list .acc-bridge { font-family: "Fraunces", "Noto Serif SC", Georgia, serif; font-size: 1.12rem; line-height: 1.7; color: var(--ink); margin: 2.4rem 0 1.6rem; font-weight: 300; }

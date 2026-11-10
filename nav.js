@@ -61,4 +61,5 @@
 
   // 讲解页返回时带着 #about / #browse 进站:直接落到对应页
   if (HASHABLE.includes(startHash)) showScreen(startHash);
+  else if (startHash === 'next' && typeof goToNext === 'function') goToNext();   // 引导区「下一步」/ 旧愿景页
 })();

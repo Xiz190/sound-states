@@ -93,7 +93,7 @@
             <button data-go-board="sleep"><span data-i18n="selGuideRevival"></span><small data-i18n="selSleep"></small></button>
           </div>
           <p class="sel2-src" data-i18n="selGuideSrc"></p>
-          <a class="sel2-vis" href="vision-page.html" target="_blank" rel="noopener" data-i18n="navGuideVision"></a>
+          <a class="sel2-vis" href="index.html#next" target="_blank" rel="noopener" data-i18n="navGuideVision"></a>
         </div>
       </div>
     </div>
@@ -366,24 +366,64 @@
 
     <!-- 面板 1：关于 / Panel 1: About -->
     <div class="about-panel active" id="panel-about" role="tabpanel">
-      <div class="prose">
-        <p data-i18n="aboutP1"></p>
-        <p data-i18n="aboutP2"></p>
+      <div class="prose acc-list">
+        <details class="acc" open>
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="aboutStoryT"></span><span class="acc-s" data-i18n="aboutStoryS"></span></span></summary>
+          <p data-i18n="aboutP1"></p>
+        </details>
+        <p class="acc-lead acc-bridge" data-i18n="aboutLead"></p>
+        <details class="acc">
+          <summary><span class="acc-n">1</span><span class="acc-h"><span class="acc-t" data-i18n="aboutQ1t"></span><span class="acc-s" data-i18n="aboutQ1s"></span></span></summary>
+          <p data-i18n="aboutQ1"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n">2</span><span class="acc-h"><span class="acc-t" data-i18n="aboutQ2t"></span><span class="acc-s" data-i18n="aboutQ2s"></span></span></summary>
+          <p data-i18n="aboutQ2"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n">3</span><span class="acc-h"><span class="acc-t" data-i18n="aboutQ3t"></span><span class="acc-s" data-i18n="aboutQ3s"></span></span></summary>
+          <p data-i18n="aboutQ3"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="aboutPriorT"></span><span class="acc-s" data-i18n="aboutPriorS"></span></span></summary>
+          <p data-i18n="aboutPrior"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="aboutMusicT"></span><span class="acc-s" data-i18n="aboutMusicS"></span></span></summary>
+          <p data-i18n="aboutMusic"></p>
+        </details>
         <p class="emphasis" data-i18n="aboutRole"></p>
       </div>
     </div>
 
     <!-- 面板 2：制作过程 / Panel 2: Process -->
     <div class="about-panel" id="panel-process" role="tabpanel">
-      <div class="prose">
-        <p data-i18n="processIntro"></p>
-        <p data-i18n="proc1"></p>
-        <p data-i18n="proc2"></p>
-        <p data-i18n="proc3"></p>
-        <p data-i18n="proc4"></p>
-        <p data-i18n="proc5"></p>
-        <p data-i18n="proc6"></p>
-        <p data-i18n="proc7"></p>
+      <div class="prose acc-list">
+        <p class="acc-lead" data-i18n="processIntro"></p>
+        <details class="acc">
+          <summary><span class="acc-n">1</span><span class="acc-h"><span class="acc-t" data-i18n="proc3t"></span><span class="acc-s" data-i18n="proc3s"></span></span></summary>
+          <p data-i18n="proc3"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n">2</span><span class="acc-h"><span class="acc-t" data-i18n="proc4t"></span><span class="acc-s" data-i18n="proc4s"></span></span></summary>
+          <p data-i18n="proc4"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n">3</span><span class="acc-h"><span class="acc-t" data-i18n="proc5t"></span><span class="acc-s" data-i18n="proc5s"></span></span></summary>
+          <p data-i18n="proc5"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n">4</span><span class="acc-h"><span class="acc-t" data-i18n="proc6t"></span><span class="acc-s" data-i18n="proc6s"></span></span></summary>
+          <p data-i18n="proc6"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n">5</span><span class="acc-h"><span class="acc-t" data-i18n="proc7t"></span><span class="acc-s" data-i18n="proc7s"></span></span></summary>
+          <p data-i18n="proc7"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="proc2t"></span><span class="acc-s" data-i18n="proc2s"></span></span></summary>
+          <p data-i18n="proc2"></p>
+        </details>
       </div>
 
       <!-- 深入了解 / Go deeper — 分两组:往里看(机制) / 往前看(愿景) -->
@@ -418,7 +458,7 @@
         </ul>
         <h4 class="gd-group-title" data-i18n="gdVisionTitle"></h4>
         <ul class="gd-list">
-          <li><a href="vision-page.html" target="_blank" rel="noopener" class="gd-vision">
+          <li><a href="vision-wearable.html" target="_blank" rel="noopener" class="gd-vision">
             <span class="gd-name" data-i18n="gdVision"></span>
             <span class="gd-desc" data-i18n="gdVisionD"></span></a></li>
         </ul>
@@ -427,13 +467,19 @@
 
     <!-- 面板 3：反思 / Panel 3: Reflection -->
     <div class="about-panel" id="panel-reflection" role="tabpanel">
-      <div class="prose">
-        <h3 data-i18n="reflWorkedH"></h3>
-        <p data-i18n="reflWorked"></p>
-        <h3 data-i18n="reflLimitH"></h3>
-        <p data-i18n="reflLimit"></p>
-        <h3 data-i18n="reflFutureH"></h3>
-        <p data-i18n="reflFuture"></p>
+      <div class="prose acc-list">
+        <details class="acc">
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="reflWorkedH"></span><span class="acc-s" data-i18n="reflWorkedS"></span></span></summary>
+          <p data-i18n="reflWorked"></p>
+        </details>
+        <details class="acc">
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="reflLimitH"></span><span class="acc-s" data-i18n="reflLimitS"></span></span></summary>
+          <p data-i18n="reflLimit"></p>
+        </details>
+        <details class="acc" id="refl-next">
+          <summary><span class="acc-n"></span><span class="acc-h"><span class="acc-t" data-i18n="reflFutureH"></span><span class="acc-s" data-i18n="reflFutureS"></span></span></summary>
+          <p data-i18n="reflFuture"></p>
+        </details>
       </div>
     </div>
 
@@ -527,7 +573,7 @@
             <button class="nav-guide-btn" data-board="cinematic"><span data-i18n="navGuideDiversion"></span><small data-i18n="navImagine"></small></button>
             <button class="nav-guide-btn" data-board="relax"><span data-i18n="navGuideSolace"></span><small data-i18n="navRelax"></small></button>
           </div>
-          <a class="nav-guide-vision" href="vision-page.html" target="_blank" rel="noopener" data-i18n="navGuideVision"></a>
+          <a class="nav-guide-vision" href="index.html#next" target="_blank" rel="noopener" data-i18n="navGuideVision"></a>
         </div>
 
         <!-- ③ 进入 / Step 3: enter -->

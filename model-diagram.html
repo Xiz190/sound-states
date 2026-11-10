@@ -445,7 +445,7 @@ footer .cite b{color:var(--muted); font-weight:400}
 
   <footer class="foot">
     <div class="cite">
-      Disc: <b>Russell (1980)</b> circumplex, self-reported &nbsp;·&nbsp; heart-rate rules per state: Relax match → guide <b>Lowe-Brown et al. (2026)</b>, <b>Ding et al. (2026, preprint)</b> · Motion intensity <b>Tanaka et al. (2001)</b> · Work holds <b>Hughes et al. (2019)</b> · Sleep target <b>Carrington et al. (2005)</b> &nbsp;·&nbsp; tempo &lt;80 BPM for recuperation <b>Karageorghis &amp; Priest (2012)</b>
+      Disc: <b>Russell (1980)</b> circumplex, self-reported &nbsp;·&nbsp; heart-rate rules per state: Relax match → guide <b>Lowe-Brown et al. (2026)</b>, <b>Ding et al. (2026, preprint)</b> · Motion intensity <b>Tanaka et al. (2001)</b> · Work holds <b>Hughes et al. (2019)</b> · Sleep target <b>Carrington et al. (2005)</b> &nbsp;·&nbsp; tempo &lt;80 BPM for sedative music <b>Karageorghis &amp; Priest (2012)</b>
     </div>
     <div class="cite">Output waveform: real analysis of a track from the system · <b>glass2.wav</b> (AI-generated from my prompts, remixed by me) &nbsp;·&nbsp; heart-rate input = labeled demo trace</div>
   </footer>
@@ -471,7 +471,7 @@ footer .cite b{color:var(--muted); font-weight:400}
         <span class="fc-arrow">→</span>
         <span class="fc-body">
           <span class="fc-title"><span class="i18n-en">Vertical remixing — the mechanism</span><span class="i18n-zh">分轨 · 机制深潜</span></span>
-          <span class="fc-desc"><span class="i18n-en">Hear layers enter &amp; leave with heart rate — proof it reshapes structure, not just EQ.</span><span class="i18n-zh">听乐器层随心率进退——证明改的是结构，不是 EQ。</span></span>
+          <span class="fc-desc"><span class="i18n-en">Hear Relax's layers leave as it guides you toward calm: structure, not just EQ.</span><span class="i18n-zh">听放松板块把你带向平静时各层怎么退出：变的是结构，不只是 EQ。</span></span>
         </span>
       </a>
       <a class="fcard" href="vision-wearable.html">
@@ -602,7 +602,7 @@ function applyLang(){
   // flow chips (rebuilt with new language)
   const rt=t=>`<span class="rt">${t}</span>`;
   $('flowLab1').innerHTML=`<span class="mech">${pick('you','你')} → ${pick('suggested state','建议的状态')}</span><span class="cap">Russell 1980</span>`;
-  $('flowLab2').innerHTML=`<span class="mech">${pick('heart rate','心率')} → ${rt(pick('this state’s rule','这个状态的规则'))}</span><span class="mech">${pick('valence','效价')} → ${rt(pick('warm/cool tilt','冷暖倾斜'))} · ${pick('emotional contagion','情绪感染')}</span><span class="cap">${pick('same heartbeat, different meaning','同一个心率，意思不同')}</span>`;
+  $('flowLab2').innerHTML=`<span class="mech">${pick('heart rate','心率')} → ${rt(pick('this state’s rule','这个状态的规则'))}</span><span class="mech">${pick('valence','效价')} → ${rt(pick('warm/cool tilt','冷暖倾斜'))} · ${pick('design choice','设计取舍')}</span><span class="cap">${pick('same heartbeat, different meaning','同一个心率，意思不同')}</span>`;
 }
 // x = valence (right +), y = arousal (up +)  →  drawn at (cx + x*R, cy - y*R)
 const ZONES=NAV_SECTORS.map(sec=>{const m=(sec.from+sec.to)/2*Math.PI/180; return {board:sec.board,x:.66*Math.cos(m),y:.66*Math.sin(m)};}).concat([{board:'focus',x:0,y:-.17}]);
