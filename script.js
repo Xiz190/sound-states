@@ -188,6 +188,8 @@ const UI = {
   },
   // 深入了解 / Go deeper — 两组入口(机制 / 愿景)
   gdHowTitle:    { en: 'Go deeper · see it running', zh: '深入了解 · 看它运行' },
+  gdPlotter:  { en: 'The card plotter: a record you keep', zh: '绘图机：一张你带走的记录' },
+  gdPlotterD: { en: 'VIS 147B final, on show Dec 2–3. Planned, parts ordered, not yet built; this is a simulation.', zh: 'VIS 147B 期末，12 月 2–3 日展出。方案已定、零件已订、还没造；这里是模拟。' },
   gdVisionTitle: { en: 'Where it’s going', zh: '走向何处' },
   gdMore:        { en: 'Two more, for the curious — spatial orchestration and the synthesis engine', zh: '还有两页，给想深入的人：空间编排、合成引擎' },
   gdModel:  { en: 'Interactive system model', zh: '交互系统模型' },

@@ -13,6 +13,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--sans);ov
 #view canvas{display:block;width:100%;height:100%;touch-action:none}
 .top{position:fixed;left:24px;right:24px;top:calc(env(safe-area-inset-top,0px) + 20px);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;pointer-events:none}
 .kick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.back-to-site{pointer-events:auto;display:inline-block;margin-bottom:12px;font-size:12px;letter-spacing:.04em;color:var(--muted);text-decoration:none}.back-to-site:hover{color:var(--accent,#b9a16b)}
 h1{font:400 30px/1.1 var(--display);margin:6px 0 4px;text-wrap:balance}
 .sub{color:var(--muted);max-width:440px;font-size:13px}
 #badge{font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:3px 8px;border:1px solid currentColor;border-radius:3px;color:var(--accent);white-space:nowrap}
@@ -39,7 +40,7 @@ h1{font:400 30px/1.1 var(--display);margin:6px 0 4px;text-wrap:balance}
 <div id="view"></div>
 <div id="loading">Loading the plotter…</div>
 <div class="top">
-  <div><div class="kick">Sound States · Call and Response · II. Record</div><h1>A card that keeps your heartbeat</h1>
+  <div><a class="back-to-site" href="../index.html">← Sound States</a><div class="kick">Sound States · Call and Response · II. Record</div><h1>A card that keeps your heartbeat</h1>
     <div class="sub">While you listen, the pen draws the time between your heartbeats. First you just listen; then the music starts breathing at six breaths a minute, and if you follow it, the line settles into a wave. You take the card home. This is a simulation; the real machine is being built. Drag to turn.</div></div>
   <div id="badge">simulated</div>
 </div>

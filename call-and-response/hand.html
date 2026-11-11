@@ -31,8 +31,23 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:0}
 .hide{display:none}
 #loading{position:fixed;inset:0;display:grid;place-items:center;color:var(--faint);font-size:13px}
 .legend{position:fixed;right:24px;bottom:22px;font-size:12px;color:var(--muted);text-align:right;line-height:1.9}
-.legend span{display:inline-block;width:10px;height:10px;border-radius:2px;margin-left:8px;vertical-align:-1px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;flex:none;box-shadow:inset 0 0 0 1px rgba(231,227,218,.28)}
 @media (max-width:700px){.legend{display:none}.top{left:16px;right:16px}.panel{left:16px}}
+
+/* parts you can click: the legend and the model both open a card */
+.legend{pointer-events:auto;display:flex;flex-direction:column;align-items:flex-end}
+.legend .lg{display:flex;justify-content:flex-end;align-items:center;gap:8px;white-space:nowrap;font:inherit;font-size:12px;color:var(--muted);background:none;border:0;padding:1px 0;cursor:pointer;text-align:right}
+.legend .lg:hover,.legend .lg.on{color:var(--ink)}
+.legend .lg.on .sw{box-shadow:0 0 0 2px rgba(231,227,218,.5)}
+.legend .lg-hint{font-size:11px;color:var(--faint);margin-bottom:4px}
+#partCard{position:fixed;right:24px;bottom:236px;width:min(330px,calc(100vw - 48px));background:rgba(12,14,20,.9);border:1px solid var(--rule);border-radius:6px;padding:14px 16px 12px;backdrop-filter:blur(6px);font-size:13px;line-height:1.55}
+#partCard h3{margin:0 0 8px;font:400 18px var(--display)}
+#partCard dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:5px 12px}
+#partCard dt{color:var(--faint);font-size:12px}#partCard dd{margin:0;color:var(--muted)}
+#partCard .x{position:absolute;right:8px;top:6px;background:none;border:0;color:var(--faint);font-size:18px;cursor:pointer}
+.how{color:var(--muted);max-width:430px;font-size:12.5px;margin-top:8px}
+.how b{color:var(--ink);font-weight:500}
+@media (max-width:700px){#partCard{left:16px;right:16px;width:auto;bottom:auto;top:210px}}
 </style></head>
 <body>
 <div id="view"></div>
@@ -49,7 +64,7 @@ input[type=range]{width:100%;accent-color:var(--accent);margin:0}
   <div class="meta" id="simMeta"><span>Heart <b id="hr">–</b> BPM</span><span>Phase <b id="phase">–</b></span><span>Breath <b id="rip">–</b></span></div>
   <div class="tools"><button id="fast">Time ×4</button><button id="xray">See the line</button><button id="restart">Restart</button></div>
 </div>
-<div class="legend">printed parts<span style="background:#e7e3da"></span><br>MG90S servo<span style="background:#4a505c"></span><br>pulley<span style="background:#b9a16b"></span><br>fishing line<span style="background:#f0d79a"></span><br>rubber band<span style="background:#d9826b"></span></div>
+<div class="legend"><div class="lg-hint">click a part</div><button class="lg" data-p="printed">printed parts<span class="sw" style="background:#e7e3da"></span></button><button class="lg" data-p="servo">MG90S servo<span class="sw" style="background:#4a505c"></span></button><button class="lg" data-p="pulley">pulley<span class="sw" style="background:#b9a16b"></span></button><button class="lg" data-p="line">fishing line<span class="sw" style="background:#f0d79a"></span></button><button class="lg" data-p="band">rubber band<span class="sw" style="background:#d9826b"></span></button><button class="lg" data-p="screw">M3 screw<span class="sw" style="background:#23262d"></span></button></div>
 
 <script type="importmap">
 { "imports": {
@@ -144,6 +159,60 @@ document.querySelectorAll('.seg button').forEach(b => b.onclick = () => {
 $('fast').onclick = () => { fast = !fast; $('fast').classList.toggle('on', fast); };
 $('xray').onclick = () => { xray = !xray; $('xray').classList.toggle('on', xray); MAT.printed.opacity = xray ? .28 : 1; MAT.printed.depthWrite = !xray; };
 $('restart').onclick = () => { t = 0; guide = null; hrHist.length = 0; };
+
+/* ===== parts you can click (legend or model): what it is · what it does · how it's attached ===== */
+const PARTS_ZH = document.body.classList.contains('zh');
+const PART_INFO = {
+  printed: { en: ['Printed parts', 'InMoov i2 right hand by Gaël Langevin (CC BY-NC 3.0): palm, finger segments, fingertips. Printed in black PLA; shown light here so the parts read.', 'The frame everything rides on. Each finger has three segments that hinge on screws.', 'Fingers pin to the palm on M3 screws; the servos sit in printed adapters in the palm.'],
+             zh: ['打印件', 'InMoov i2 右手（Gaël Langevin，CC BY-NC 3.0）：手掌、指节、指尖。实物是黑色 PLA，这里画成浅色，方便看清零件。', '所有零件都装在它上面。每根手指三节，靠螺丝转动。', '手指用 M3 螺丝连在手掌上；舵机装在手掌里的打印转接件中。'] },
+  servo:   { en: ['MG90S servo', 'A micro servo, one per moving finger: index, middle, ring, pinky. The thumb stays fixed.', 'Turns its pulley to wind the fishing line in or let it out. Speed is limited: open to closed takes at least 3.5 s, so the hand never jerks.', 'Lies on its side in a printed adapter in the palm, shaft toward the fingers; wired to a PCA9685 driver on the hat.'],
+             zh: ['MG90S 舵机', '微型舵机，每根会动的手指一个：食指、中指、无名指、小指。拇指固定不动。', '转动滑轮，把鱼线卷进或放出。速度有限制：从张开到合拢至少 3.5 秒，所以手不会抽动。', '侧躺在手掌里的打印转接件中，转轴朝向手指；接到帽子上的 PCA9685 驱动板。'] },
+  pulley:  { en: ['Pulley', 'A small spool on each servo, modelled from scratch because the original part did not fit.', 'Winds the fishing line: the more it turns, the more the finger curls.', 'Sits on the servo shaft; the line goes through an off-centre hole and wraps in the groove.'],
+             zh: ['滑轮', '每个舵机上一个小线轴；原来的零件装不上，所以自己重新建了模型。', '卷鱼线：转得越多，手指弯得越多。', '装在舵机转轴上；鱼线穿过偏心孔，绕在槽里。'] },
+  line:    { en: ['Fishing line', 'One line per finger.', 'Pulled in by the pulley, it curls the finger in, over the ear.', 'Runs from the pulley through the finger segments to the fingertip.'],
+             zh: ['鱼线', '每根手指一根。', '被滑轮卷进时，把手指拉弯，罩向耳朵。', '从滑轮出发，穿过各节手指，一直到指尖。'] },
+  band:    { en: ['Rubber band', 'A band along each finger.', 'Springs the finger straight again when the servo lets the line out, so one motor per finger is enough.', 'Runs along the back of the finger segments.'],
+             zh: ['皮筋', '每根手指一条。', '舵机放出鱼线时，把手指弹回伸直，所以每根手指一个电机就够了。', '沿着手指背面的各节走。'] },
+  screw:   { en: ['M3 screw', 'Black M3 screws.', 'The knuckle axles each segment turns on.', 'Pushed through the cross holes in each segment, heads seated in hex recesses.'],
+             zh: ['M3 螺丝', '黑色 M3 螺丝。', '每一节手指转动所绕的轴。', '横穿各节的销孔，螺丝头落在六角沉孔里。'] },
+};
+const PART_LAB = PARTS_ZH ? ['是什么', '做什么', '怎么装'] : ['What', 'Does', 'Fitted'];
+const card = document.createElement('div'); card.id = 'partCard'; document.body.appendChild(card);
+const HOW = PARTS_ZH
+  ? ['怎么动', '舵机转动滑轮，滑轮卷进鱼线，鱼线把手指拉弯；舵机放开，皮筋把手指拉直。', '模型画的是计划中的五指整手；实物目前装好了三指。', '点右下角的零件名，或直接点模型上的零件。']
+  : ['How it moves', 'The servo turns a pulley, the pulley winds in fishing line, and the line curls the finger. When the servo lets go, a rubber band pulls the finger straight.', 'The model shows the planned five-finger hand; on the real one, three fingers are fitted so far.', 'Click a part name below, or a part on the model.'];
+function showHow() { card.innerHTML = `<h3>${HOW[0]}</h3><p style="margin:0 0 8px;color:var(--muted)">${HOW[1]}</p><p style="margin:0 0 8px;color:var(--faint);font-size:12px">${HOW[2]}</p><p style="margin:0;color:var(--faint);font-size:12px">${HOW[3]}</p>`; card.hidden = false; }
+showHow();
+let focusPart = null;
+const typeOfMat = m => Object.keys(MAT).find(k => MAT[k] === m);
+function setFocus(k) {
+  focusPart = focusPart === k ? null : k;
+  for (const [name, m] of Object.entries(MAT)) {
+    const dim = focusPart && name !== focusPart;
+    if (!m.transparent) { m.transparent = true; m.needsUpdate = true; }
+    m.opacity = dim ? .12 : (name === 'printed' && xray ? .28 : 1);
+    m.depthWrite = !dim && !(name === 'printed' && xray);
+  }
+  document.querySelectorAll('.legend .lg').forEach(b => b.classList.toggle('on', b.dataset.p === focusPart));
+  if (!focusPart) { showHow(); return; }
+  const [name, what, does, fit] = PART_INFO[focusPart][PARTS_ZH ? 'zh' : 'en'];
+  card.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${name}</h3><dl><dt>${PART_LAB[0]}</dt><dd>${what}</dd><dt>${PART_LAB[1]}</dt><dd>${does}</dd><dt>${PART_LAB[2]}</dt><dd>${fit}</dd></dl>`;
+  card.hidden = false; card.querySelector('.x').onclick = () => setFocus(focusPart);
+}
+document.querySelectorAll('.legend .lg').forEach(b => b.onclick = () => setFocus(b.dataset.p));
+addEventListener('keydown', e => { if (e.key === 'Escape' && focusPart) setFocus(focusPart); });
+{ // click the model: pick the part under the pointer (a drag to turn the hand doesn't count)
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
+  renderer.domElement.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) { down = null; return; } down = null;
+    const r = renderer.domElement.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hits = ray.intersectObjects([hand, ...tubes.map(t => t.mesh)], true).filter(h => h.object.material && !(focusPart && h.object.material.opacity < .5));
+    const k = hits.length ? typeOfMat(hits[0].object.material) : null;
+    if (k) { if (k !== focusPart) setFocus(k); } else if (focusPart) setFocus(focusPart);
+  });
+}
 
 /* ===== loop ===== */
 let t = 0, guide = null, atm = 55, last = performance.now();
